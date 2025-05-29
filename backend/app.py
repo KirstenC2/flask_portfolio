@@ -790,5 +790,110 @@ def admin_education_detail(current_admin, education_id):
             'message': 'Education entry deleted successfully'
         })
 
+@app.route('/api/admin/experience', methods=['GET', 'POST'])
+@token_required
+def admin_experience(current_admin):
+    if request.method == 'GET':
+        experience_entries = Experience.query.order_by(Experience.order.desc()).all()
+        experience_data = [{
+            'id': exp.id,
+            'title': exp.title,
+            'company': exp.company,
+            'description': exp.description,
+            'start_date': exp.start_date.isoformat() if exp.start_date else None,
+            'end_date': exp.end_date.isoformat() if exp.end_date else None,
+            'is_current': exp.is_current,
+            'order': exp.order
+        } for exp in experience_entries]
+        
+        return jsonify(experience_data)
+    
+    elif request.method == 'POST':
+        data = request.json
+        
+        # Parse dates
+        start_date = None
+        if data.get('start_date'):
+            start_date = datetime.fromisoformat(data.get('start_date').replace('Z', '+00:00'))
+        
+        end_date = None
+        if data.get('end_date') and not data.get('is_current'):
+            end_date = datetime.fromisoformat(data.get('end_date').replace('Z', '+00:00'))
+        
+        # Get highest order value
+        highest_order = db.session.query(db.func.max(Experience.order)).scalar() or 0
+        
+        new_experience = Experience(
+            title=data.get('title'),
+            company=data.get('company'),
+            description=data.get('description'),
+            start_date=start_date,
+            end_date=end_date,
+            is_current=data.get('is_current', False),
+            order=highest_order + 1
+        )
+        
+        db.session.add(new_experience)
+        db.session.commit()
+        
+        return jsonify({
+            'message': 'Experience entry created successfully',
+            'id': new_experience.id
+        }), 201
+
+@app.route('/api/admin/experience/<int:experience_id>', methods=['GET', 'PUT', 'DELETE'])
+@token_required
+def admin_experience_detail(current_admin, experience_id):
+    experience = Experience.query.get_or_404(experience_id)
+    
+    if request.method == 'GET':
+        return jsonify({
+            'id': experience.id,
+            'title': experience.title,
+            'company': experience.company,
+            'description': experience.description,
+            'start_date': experience.start_date.isoformat() if experience.start_date else None,
+            'end_date': experience.end_date.isoformat() if experience.end_date else None,
+            'is_current': experience.is_current,
+            'order': experience.order
+        })
+    
+    elif request.method == 'PUT':
+        data = request.json
+        
+        experience.title = data.get('title', experience.title)
+        experience.company = data.get('company', experience.company)
+        experience.description = data.get('description', experience.description)
+        experience.is_current = data.get('is_current', experience.is_current)
+        
+        # Parse dates
+        if data.get('start_date'):
+            experience.start_date = datetime.fromisoformat(data.get('start_date').replace('Z', '+00:00'))
+        
+        # Handle end date based on is_current flag
+        if experience.is_current:
+            experience.end_date = None
+        elif data.get('end_date'):
+            experience.end_date = datetime.fromisoformat(data.get('end_date').replace('Z', '+00:00'))
+        
+        # Update order if provided
+        if 'order' in data:
+            experience.order = data.get('order')
+        
+        db.session.commit()
+        
+        return jsonify({
+            'message': 'Experience entry updated successfully',
+            'id': experience.id
+        })
+    
+    elif request.method == 'DELETE':
+        db.session.delete(experience)
+        db.session.commit()
+        
+        return jsonify({
+            'message': 'Experience entry deleted successfully'
+        })
+
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5001, debug=True)

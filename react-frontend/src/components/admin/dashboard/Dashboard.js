@@ -20,6 +20,7 @@ import MessagesPanel from '../messages/MessagesPanel';
 import ProjectsPanel from '../projects/ProjectsPanel';
 import SkillsPanel from '../skills/SkillsPanel';
 import EducationPanel from '../education/EducationPanel';
+import ExperiencePanel from '../experience/ExperiencePanel';
 
 const Dashboard = () => {
   const navigate = useNavigate();
@@ -78,6 +79,8 @@ const Dashboard = () => {
         return <SkillsPanel />;
       case 'education':
         return <EducationPanel />;
+      case 'experience':
+        return <ExperiencePanel />;
       case 'overview':
       default:
         return (

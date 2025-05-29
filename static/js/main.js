@@ -6,12 +6,14 @@ document.addEventListener('DOMContentLoaded', () => {
     initTypingEffect();
     initParticlesBackground();
     initSkillBars();
+    detectSystemInfo();
 });
 
 // Smooth scrolling for anchor links
 function initNavigation() {
     const header = document.querySelector('header');
     let lastScrollY = window.scrollY;
+    let lastScrollTop = 0;
     let ticking = false;
     
     // Handle scroll events for hiding/showing navigation
@@ -36,6 +38,15 @@ function initNavigation() {
                 ticking = false;
             });
             ticking = true;
+        }
+    });
+    
+    // Add active class to nav links based on current page
+    const currentLocation = window.location.pathname;
+    const navLinks = document.querySelectorAll('nav a');
+    navLinks.forEach(link => {
+        if (link.getAttribute('href') === currentLocation) {
+            link.classList.add('active');
         }
     });
     

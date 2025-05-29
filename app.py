@@ -1,6 +1,6 @@
 import os
 from flask import Flask, render_template, request, redirect, url_for, flash
-from models import db, Project, Skill
+from models import db, Project, Skill, Study
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'dev-key-for-testing')
@@ -39,11 +39,56 @@ with app.app_context():
             Skill(name='Flask', category='Frameworks', proficiency=4),
             Skill(name='React', category='Frameworks', proficiency=3),
             Skill(name='Docker', category='DevOps', proficiency=4),
-            Skill(name='UI/UX Design', category='Design', proficiency=3)
+            
+        ]
+        
+        sample_studies = [
+            Study(
+                title='Advanced Machine Learning',
+                description='Deep dive into advanced machine learning algorithms including neural networks, deep learning, and reinforcement learning.',
+                category='Course',
+                source='Coursera - Stanford University',
+                status='In Progress',
+                progress=65,
+                start_date=datetime.strptime('2025-01-15', '%Y-%m-%d'),
+                github_url='https://github.com/KirstenC2/machine-learning-study'
+            ),
+            Study(
+                title='Rust Programming',
+                description='Learning Rust programming language for systems programming and high-performance applications.',
+                category='Self-study',
+                source='Rust Programming Book',
+                status='In Progress',
+                progress=40,
+                start_date=datetime.strptime('2025-03-10', '%Y-%m-%d'),
+                github_url='https://github.com/KirstenC2/rust-learning'
+            ),
+            Study(
+                title='AWS Solutions Architect',
+                description='Preparation for the AWS Solutions Architect certification, covering cloud architecture best practices.',
+                category='Certification',
+                source='Amazon Web Services',
+                status='Planned',
+                progress=0,
+                start_date=datetime.strptime('2025-06-01', '%Y-%m-%d')
+            ),
+            Study(
+                title='Full Stack Development with MERN',
+                description='Comprehensive course on building full-stack applications with MongoDB, Express, React, and Node.js.',
+                category='Course',
+                source='Udemy',
+                status='Completed',
+                progress=100,
+                start_date=datetime.strptime('2024-09-01', '%Y-%m-%d'),
+                completion_date=datetime.strptime('2024-12-20', '%Y-%m-%d'),
+                github_url='https://github.com/KirstenC2/mern-project',
+                certificate_url='https://udemy.com/certificate/123456'
+            )
         ]
         
         db.session.add_all(sample_projects)
         db.session.add_all(sample_skills)
+        db.session.add_all(sample_studies)
         db.session.commit()
 
 @app.route('/')

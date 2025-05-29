@@ -1,0 +1,26 @@
+version: '3.8'
+
+services:
+  backend:
+    build: ./backend
+    container_name: portfolio-backend
+    restart: always
+    ports:
+      - "5001:5001"
+    volumes:
+      - ./backend:/app
+      - backend_data:/app/instance
+    environment:
+      - FLASK_ENV=production
+
+  frontend:
+    build: ./react-frontend
+    container_name: portfolio-frontend
+    restart: always
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
+
+volumes:
+  backend_data:

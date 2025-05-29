@@ -1,0 +1,197 @@
+/* StudiesPage.css */
+.studies-page {
+  min-height: 100vh;
+  padding: 4rem 0;
+}
+
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 1.5rem;
+}
+
+/* Page Header */
+.page-title {
+  font-size: 2.5rem;
+  text-align: center;
+  margin-bottom: 1rem;
+  color: #333333;
+}
+
+.page-subtitle {
+  text-align: center;
+  font-size: 1.2rem;
+  color: #666666;
+  max-width: 800px;
+  margin: 0 auto 3rem;
+}
+
+/* Studies Sections */
+.studies-section {
+  margin-bottom: 4rem;
+}
+
+.section-title {
+  font-size: 1.8rem;
+  margin-bottom: 2rem;
+  color: #333333;
+  position: relative;
+  padding-left: 1rem;
+  border-left: 4px solid #61dafb;
+}
+
+/* Studies Grid */
+.studies-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+  gap: 2rem;
+}
+
+/* Study Card */
+.study-card {
+  background-color: #ffffff;
+  border-radius: 8px;
+  padding: 1.5rem;
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.study-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+}
+
+.study-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 0.8rem;
+}
+
+.study-header h3 {
+  font-size: 1.4rem;
+  margin: 0;
+  flex: 1;
+}
+
+.study-status {
+  font-size: 0.8rem;
+  padding: 0.3rem 0.6rem;
+  border-radius: 4px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.study-status.in-progress {
+  background-color: #3498db;
+  color: #ffffff;
+}
+
+.study-status.completed {
+  background-color: #2ecc71;
+  color: #ffffff;
+}
+
+.study-status.planned {
+  background-color: #f39c12;
+  color: #ffffff;
+}
+
+.study-category {
+  font-size: 0.9rem;
+  color: #666666;
+  margin-bottom: 1rem;
+}
+
+.study-description {
+  font-size: 1rem;
+  color: #333333;
+  margin-bottom: 1.5rem;
+  line-height: 1.5;
+}
+
+/* Progress Bar */
+.study-progress-container {
+  margin-bottom: 1.5rem;
+}
+
+.study-progress-bar {
+  height: 10px;
+  background-color: #eeeeee;
+  border-radius: 5px;
+  overflow: hidden;
+  margin-bottom: 0.5rem;
+}
+
+.study-progress-fill {
+  height: 100%;
+  background-color: #61dafb;
+  border-radius: 5px;
+  width: 0; /* Will be set by JavaScript */
+}
+
+.study-progress-text {
+  font-size: 0.9rem;
+  color: #666666;
+}
+
+.study-footer {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+/* Buttons */
+.btn {
+  display: inline-block;
+  padding: 0.8rem 1.5rem;
+  border-radius: 4px;
+  text-decoration: none;
+  font-weight: 600;
+  transition: background-color 0.3s ease, transform 0.2s ease;
+}
+
+.btn:hover {
+  transform: translateY(-2px);
+}
+
+.btn-small {
+  padding: 0.5rem 1rem;
+  font-size: 0.9rem;
+  background-color: #61dafb;
+  color: #1e1e1e;
+}
+
+.btn-small:hover {
+  background-color: #4ecdf9;
+}
+
+.no-items {
+  color: #999999;
+  font-style: italic;
+  text-align: center;
+  grid-column: 1 / -1;
+  padding: 2rem;
+}
+
+/* Loading and Error States */
+.loading, .error {
+  text-align: center;
+  padding: 3rem 1rem;
+  font-size: 1.2rem;
+}
+
+.error {
+  color: #e74c3c;
+}
+
+/* Media Queries */
+@media (max-width: 768px) {
+  .studies-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .page-title {
+    font-size: 2rem;
+  }
+}

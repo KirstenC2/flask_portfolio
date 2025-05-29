@@ -1,4 +1,5 @@
 import os
+from datetime import datetime
 from flask import Flask, render_template, request, redirect, url_for, flash
 from models import db, Project, Skill, Study
 
@@ -39,7 +40,7 @@ with app.app_context():
             Skill(name='Flask', category='Frameworks', proficiency=4),
             Skill(name='React', category='Frameworks', proficiency=3),
             Skill(name='Docker', category='DevOps', proficiency=4),
-            
+            Skill(name='UI/UX Design', category='Design', proficiency=3)
         ]
         
         sample_studies = [
@@ -131,6 +132,30 @@ def skills():
         skill_categories[skill.category].append(skill)
             
     return render_template('skills.html', skill_categories=skill_categories)
+
+@app.route('/studies')
+def studies():
+    # Get all studies and group them by status
+    all_studies = Study.query.order_by(Study.start_date.desc()).all()
+    
+    study_by_status = {
+        'In Progress': [],
+        'Completed': [],
+        'Planned': []
+    }
+    
+    for study in all_studies:
+        if study.status in study_by_status:
+            study_by_status[study.status].append(study)
+        else:
+            study_by_status['Planned'].append(study)  # Default to planned if status not recognized
+    
+    return render_template('studies.html', study_by_status=study_by_status, active_page='studies')
+
+@app.route('/study/<int:study_id>')
+def study_detail(study_id):
+    study = Study.query.get_or_404(study_id)
+    return render_template('study_detail.html', study=study)
 
 @app.route('/contact')
 def contact():

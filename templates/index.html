@@ -11,11 +11,29 @@
         <nav>
             <a href="/">Home</a>
             <a href="/about">About</a>
+            <a href="{{ url_for('new_post') }}">New Post</a>
         </nav>
     </header>
     <main>
         <h1>Welcome to Flask</h1>
-        <p>This is a simple Flask application.</p>
+        <p>This is a simple Flask application with a SQLite database.</p>
+        
+        <section class="posts">
+            <h2>Recent Posts</h2>
+            {% if posts %}
+                {% for post in posts %}
+                <article class="post">
+                    <h3><a href="{{ url_for('post', post_id=post.id) }}">{{ post.title }}</a></h3>
+                    <div class="post-date">{{ post.date_posted.strftime('%Y-%m-%d') }}</div>
+                    <div class="post-content">
+                        {{ post.content[:150] }}{% if post.content|length > 150 %}...{% endif %}
+                    </div>
+                </article>
+                {% endfor %}
+            {% else %}
+                <p>No posts yet. <a href="{{ url_for('new_post') }}">Create the first post!</a></p>
+            {% endif %}
+        </section>
     </main>
     <footer>
         <p>&copy; 2025 Flask Demo</p>

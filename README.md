@@ -1,11 +1,12 @@
 # Flask Project
 
-A simple Flask web application with basic routing and templates.
+A simple Flask web application with basic routing, templates, and SQLite database integration.
 
 ## Project Structure
 ```
 project_root/
 ├── app.py              # Main application file
+├── models.py           # Database models
 ├── requirements.txt    # Dependencies
 ├── Dockerfile          # Docker configuration
 ├── .dockerignore       # Files to exclude from Docker image
@@ -14,7 +15,9 @@ project_root/
 │       └── style.css   # CSS styles
 └── templates/          # HTML templates
     ├── index.html      # Home page
-    └── about.html      # About page
+    ├── about.html      # About page
+    ├── create_post.html # New post form
+    └── post.html       # Individual post view
 ```
 
 ## Setup
@@ -57,3 +60,5 @@ project_root/
 - Simple navigation between Home and About pages
 - Responsive design with basic CSS styling
 - Docker containerization for easy deployment
+- SQLite database integration with Flask-SQLAlchemy
+- Blog-like functionality with posts creation and viewing

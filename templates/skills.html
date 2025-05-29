@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Skills | Kirsten Choo</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body>
+    <header>
+        <div class="header-container">
+            <div class="logo">KC</div>
+            <nav>
+                <a href="/">Home</a>
+                <a href="/projects">Projects</a>
+                <a href="/skills" class="active">Skills</a>
+                <a href="/about">About</a>
+                <a href="/contact">Contact</a>
+            </nav>
+        </div>
+    </header>
+    
+    <div class="page-header">
+        <div class="container">
+            <h1>My Skills</h1>
+            <p>Technical skills and competencies</p>
+        </div>
+    </div>
+    
+    <main>
+        <section class="skills-section">
+            <div class="container">
+                {% for category, skills in skill_categories.items() %}
+                <div class="skill-category-card">
+                    <h2>{{ category }}</h2>
+                    <div class="skills-list">
+                        {% for skill in skills %}
+                        <div class="skill-item">
+                            <div class="skill-header">
+                                <span class="skill-name">{{ skill.name }}</span>
+                                <span class="skill-rating">
+                                    {% for i in range(1, 6) %}
+                                        {% if i <= skill.proficiency %}
+                                        <i class="fas fa-star"></i>
+                                        {% else %}
+                                        <i class="far fa-star"></i>
+                                        {% endif %}
+                                    {% endfor %}
+                                </span>
+                            </div>
+                            <div class="skill-bar">
+                                <div class="skill-level skill-level-{{ skill.proficiency }}"></div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </section>
+    </main>
+    
+    <footer>
+        <div class="footer-container">
+            <div class="footer-content">
+                <div class="footer-info">
+                    <h3>Kirsten Choo</h3>
+                    <p>Software Developer & Designer</p>
+                </div>
+                <div class="footer-links">
+                    <a href="https://github.com/KirstenC2" target="_blank"><i class="fab fa-github"></i></a>
+                    <a href="https://linkedin.com/in/" target="_blank"><i class="fab fa-linkedin"></i></a>
+                    <a href="mailto:contact@example.com"><i class="fas fa-envelope"></i></a>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>&copy; 2025 Kirsten Choo. All rights reserved.</p>
+            </div>
+        </div>
+    </footer>
+</body>
+</html>

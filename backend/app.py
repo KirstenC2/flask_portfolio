@@ -1,8 +1,10 @@
 import os
-from datetime import datetime
-from flask import Flask, request, jsonify
+import jwt
+from functools import wraps
+from datetime import datetime, timedelta
+from flask import Flask, request, jsonify, make_response
 from flask_cors import CORS
-from models import db, Project, Skill, Study, Experience, Education
+from models import db, Project, Skill, Study, Experience, Education, Message, Admin
 
 app = Flask(__name__)
 CORS(app)  # Enable CORS for all routes
@@ -376,13 +378,60 @@ def study_detail(study_id):
     
     return jsonify(study_data)
 
+# JWT Secret Key
+APP_SECRET_KEY = os.environ.get('APP_SECRET_KEY', 'dev-secret-key-change-in-production')
+
+# Token required decorator for admin routes
+def token_required(f):
+    @wraps(f)
+    def decorated(*args, **kwargs):
+        token = None
+        
+        # Check if token is in headers
+        if 'Authorization' in request.headers:
+            auth_header = request.headers['Authorization']
+            if auth_header.startswith('Bearer '):
+                token = auth_header.split(' ')[1]
+        
+        if not token:
+            return jsonify({'message': 'Token is missing!'}), 401
+        
+        try:
+            # Decode the token
+            data = jwt.decode(token, APP_SECRET_KEY, algorithms=['HS256'])
+            current_admin = Admin.query.filter_by(id=data['admin_id']).first()
+            
+            if not current_admin:
+                return jsonify({'message': 'Invalid token!'}), 401
+                
+        except jwt.ExpiredSignatureError:
+            return jsonify({'message': 'Token has expired!'}), 401
+        except jwt.InvalidTokenError:
+            return jsonify({'message': 'Invalid token!'}), 401
+            
+        return f(current_admin, *args, **kwargs)
+    
+    return decorated
+
 @app.route('/api/contact', methods=['GET', 'POST'])
 def contact():
     if request.method == 'POST':
         # Handle contact form submission
         contact_data = request.json
-        # Here you would typically send an email or save to database
-        # For now, we'll just return success
+        
+        # Create new message record
+        new_message = Message(
+            name=contact_data.get('name', ''),
+            email=contact_data.get('email', ''),
+            subject=contact_data.get('subject', ''),
+            message=contact_data.get('message', ''),
+            read=False
+        )
+        
+        # Save to database
+        db.session.add(new_message)
+        db.session.commit()
+        
         return jsonify({'success': True, 'message': 'Message received! I will get back to you soon.'})
     
     # GET request - return contact information
@@ -391,6 +440,143 @@ def contact():
         'github': 'https://github.com/KirstenC2',
         'linkedin': 'https://linkedin.com/in/'
     })
+
+# Admin Routes
+@app.route('/api/admin/login', methods=['POST'])
+def login():
+    auth = request.json
+    
+    if not auth or not auth.get('username') or not auth.get('password'):
+        return jsonify({'message': 'Could not verify', 'error': 'Missing username or password'}), 401
+    
+    admin = Admin.query.filter_by(username=auth.get('username')).first()
+    
+    if not admin:
+        return jsonify({'message': 'Could not verify', 'error': 'User not found'}), 401
+    
+    if admin.check_password(auth.get('password')):
+        # Generate token
+        token = jwt.encode({
+            'admin_id': admin.id,
+            'exp': datetime.utcnow() + timedelta(hours=24)
+        }, APP_SECRET_KEY, algorithm='HS256')
+        
+        # Update last login time
+        admin.last_login = datetime.utcnow()
+        db.session.commit()
+        
+        return jsonify({
+            'token': token,
+            'admin': {
+                'id': admin.id,
+                'username': admin.username,
+                'email': admin.email
+            }
+        })
+    
+    return jsonify({'message': 'Could not verify', 'error': 'Invalid password'}), 401
+
+@app.route('/api/admin/register', methods=['POST'])
+def register_admin():
+    # This endpoint should only be used for initial setup
+    # Check if any admin exists already
+    if Admin.query.count() > 0:
+        return jsonify({'message': 'Admin already exists', 'error': 'Registration is disabled'}), 403
+    
+    data = request.json
+    
+    if not data or not data.get('username') or not data.get('email') or not data.get('password'):
+        return jsonify({'message': 'Missing data', 'error': 'Please provide username, email and password'}), 400
+    
+    # Create new admin
+    new_admin = Admin(username=data.get('username'), email=data.get('email'))
+    new_admin.set_password(data.get('password'))
+    
+    db.session.add(new_admin)
+    db.session.commit()
+    
+    return jsonify({'message': 'Admin registered successfully'}), 201
+
+@app.route('/api/admin/messages', methods=['GET'])
+@token_required
+def get_messages(current_admin):
+    messages = Message.query.order_by(Message.date_received.desc()).all()
+    message_list = [{
+        'id': msg.id,
+        'name': msg.name,
+        'email': msg.email,
+        'subject': msg.subject,
+        'message': msg.message,
+        'read': msg.read,
+        'date_received': msg.date_received.isoformat()
+    } for msg in messages]
+    
+    return jsonify(message_list)
+
+@app.route('/api/admin/messages/<int:message_id>', methods=['GET', 'PUT', 'DELETE'])
+@token_required
+def manage_message(current_admin, message_id):
+    message = Message.query.get_or_404(message_id)
+    
+    if request.method == 'GET':
+        return jsonify({
+            'id': message.id,
+            'name': message.name,
+            'email': message.email,
+            'subject': message.subject,
+            'message': message.message,
+            'read': message.read,
+            'date_received': message.date_received.isoformat()
+        })
+    
+    elif request.method == 'PUT':
+        data = request.json
+        message.read = data.get('read', message.read)
+        db.session.commit()
+        return jsonify({'message': 'Message updated successfully'})
+    
+    elif request.method == 'DELETE':
+        db.session.delete(message)
+        db.session.commit()
+        return jsonify({'message': 'Message deleted successfully'})
+
+@app.route('/api/admin/projects', methods=['GET', 'POST'])
+@token_required
+def admin_projects(current_admin):
+    if request.method == 'GET':
+        projects = Project.query.all()
+        projects_data = [{
+            'id': project.id,
+            'title': project.title,
+            'description': project.description,
+            'technologies': project.technologies,
+            'image_url': project.image_url,
+            'project_url': project.project_url,
+            'github_url': project.github_url,
+            'date_created': project.date_created.isoformat() if project.date_created else None
+        } for project in projects]
+        
+        return jsonify(projects_data)
+    
+    elif request.method == 'POST':
+        data = request.json
+        new_project = Project(
+            title=data.get('title'),
+            description=data.get('description'),
+            technologies=data.get('technologies'),
+            image_url=data.get('image_url'),
+            project_url=data.get('project_url'),
+            github_url=data.get('github_url'),
+            date_created=datetime.utcnow()
+        )
+        
+        db.session.add(new_project)
+        db.session.commit()
+        
+        return jsonify({
+            'message': 'Project created successfully',
+            'id': new_project.id
+        }), 201
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5001, debug=True)

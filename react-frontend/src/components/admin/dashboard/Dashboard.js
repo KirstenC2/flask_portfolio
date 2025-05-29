@@ -19,6 +19,7 @@ import './Dashboard.css';
 import MessagesPanel from '../messages/MessagesPanel';
 import ProjectsPanel from '../projects/ProjectsPanel';
 import SkillsPanel from '../skills/SkillsPanel';
+import EducationPanel from '../education/EducationPanel';
 
 const Dashboard = () => {
   const navigate = useNavigate();
@@ -75,6 +76,8 @@ const Dashboard = () => {
         return <ProjectsPanel />;
       case 'skills':
         return <SkillsPanel />;
+      case 'education':
+        return <EducationPanel />;
       case 'overview':
       default:
         return (

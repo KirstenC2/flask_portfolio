@@ -685,5 +685,110 @@ def admin_skill_detail(current_admin, skill_id):
             'message': 'Skill deleted successfully'
         })
 
+@app.route('/api/admin/education', methods=['GET', 'POST'])
+@token_required
+def admin_education(current_admin):
+    if request.method == 'GET':
+        education_entries = Education.query.order_by(Education.order.desc()).all()
+        education_data = [{
+            'id': edu.id,
+            'degree': edu.degree,
+            'school': edu.school,
+            'description': edu.description,
+            'start_date': edu.start_date.isoformat() if edu.start_date else None,
+            'end_date': edu.end_date.isoformat() if edu.end_date else None,
+            'is_current': edu.is_current,
+            'order': edu.order
+        } for edu in education_entries]
+        
+        return jsonify(education_data)
+    
+    elif request.method == 'POST':
+        data = request.json
+        
+        # Parse dates
+        start_date = None
+        if data.get('start_date'):
+            start_date = datetime.fromisoformat(data.get('start_date').replace('Z', '+00:00'))
+        
+        end_date = None
+        if data.get('end_date') and not data.get('is_current'):
+            end_date = datetime.fromisoformat(data.get('end_date').replace('Z', '+00:00'))
+        
+        # Get highest order value
+        highest_order = db.session.query(db.func.max(Education.order)).scalar() or 0
+        
+        new_education = Education(
+            degree=data.get('degree'),
+            school=data.get('school'),
+            description=data.get('description'),
+            start_date=start_date,
+            end_date=end_date,
+            is_current=data.get('is_current', False),
+            order=highest_order + 1
+        )
+        
+        db.session.add(new_education)
+        db.session.commit()
+        
+        return jsonify({
+            'message': 'Education entry created successfully',
+            'id': new_education.id
+        }), 201
+
+@app.route('/api/admin/education/<int:education_id>', methods=['GET', 'PUT', 'DELETE'])
+@token_required
+def admin_education_detail(current_admin, education_id):
+    education = Education.query.get_or_404(education_id)
+    
+    if request.method == 'GET':
+        return jsonify({
+            'id': education.id,
+            'degree': education.degree,
+            'school': education.school,
+            'description': education.description,
+            'start_date': education.start_date.isoformat() if education.start_date else None,
+            'end_date': education.end_date.isoformat() if education.end_date else None,
+            'is_current': education.is_current,
+            'order': education.order
+        })
+    
+    elif request.method == 'PUT':
+        data = request.json
+        
+        education.degree = data.get('degree', education.degree)
+        education.school = data.get('school', education.school)
+        education.description = data.get('description', education.description)
+        education.is_current = data.get('is_current', education.is_current)
+        
+        # Parse dates
+        if data.get('start_date'):
+            education.start_date = datetime.fromisoformat(data.get('start_date').replace('Z', '+00:00'))
+        
+        # Handle end date based on is_current flag
+        if education.is_current:
+            education.end_date = None
+        elif data.get('end_date'):
+            education.end_date = datetime.fromisoformat(data.get('end_date').replace('Z', '+00:00'))
+        
+        # Update order if provided
+        if 'order' in data:
+            education.order = data.get('order')
+        
+        db.session.commit()
+        
+        return jsonify({
+            'message': 'Education entry updated successfully',
+            'id': education.id
+        })
+    
+    elif request.method == 'DELETE':
+        db.session.delete(education)
+        db.session.commit()
+        
+        return jsonify({
+            'message': 'Education entry deleted successfully'
+        })
+
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5001, debug=True)

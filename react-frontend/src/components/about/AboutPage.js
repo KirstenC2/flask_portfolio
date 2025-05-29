@@ -84,7 +84,7 @@ const AboutPage = () => {
               <ul className="expertise-list">
                 <li>
                   <FontAwesomeIcon icon={faChevronRight} className="list-icon" />
-                  React & Redux
+                  React
                 </li>
                 <li>
                   <FontAwesomeIcon icon={faChevronRight} className="list-icon" />
@@ -126,7 +126,7 @@ const AboutPage = () => {
               <ul className="expertise-list">
                 <li>
                   <FontAwesomeIcon icon={faChevronRight} className="list-icon" />
-                  Docker & Kubernetes
+                  Docker & Docker compose
                 </li>
                 <li>
                   <FontAwesomeIcon icon={faChevronRight} className="list-icon" />
@@ -134,11 +134,7 @@ const AboutPage = () => {
                 </li>
                 <li>
                   <FontAwesomeIcon icon={faChevronRight} className="list-icon" />
-                  Git & GitHub
-                </li>
-                <li>
-                  <FontAwesomeIcon icon={faChevronRight} className="list-icon" />
-                  AWS & Cloud Services
+                  Gitlab & GitHub
                 </li>
               </ul>
             </div>

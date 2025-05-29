@@ -60,7 +60,7 @@ const AboutPage = () => {
                 </div>
                 <div className="contact-item">
                   <FontAwesomeIcon icon={faMapMarkerAlt} className="contact-icon" />
-                  <span>Singapore</span>
+                  <span>Taipei, Taiwan</span>
                 </div>
               </div>
               

@@ -13,9 +13,9 @@ import StudyDetail from './components/studies/StudyDetail';
 import SkillsPage from './components/skills/SkillsPage';
 import ProjectsPage from './components/projects/ProjectsPage';
 import AboutPage from './components/about/AboutPage';
+import ContactPage from './components/contact/ContactPage';
 
 // Placeholder components for pages we haven't created yet
-const ContactPage = () => <div className="container" style={{ padding: '5rem 1.5rem' }}><h1>Contact Page</h1><p>This page is under construction.</p></div>;
 const ProjectDetail = () => <div className="container" style={{ padding: '5rem 1.5rem' }}><h1>Project Detail</h1><p>This page is under construction.</p></div>;
 
 function App() {

@@ -9,7 +9,6 @@ services:
       - "5001:5001"
     volumes:
       - ./backend:/app
-      - backend_data:/app/instance
     environment:
       - FLASK_ENV=production
 
@@ -22,5 +21,4 @@ services:
     depends_on:
       - backend
 
-volumes:
-  backend_data:
+# No named volumes needed anymore since we're using host directory mapping

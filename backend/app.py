@@ -7,6 +7,7 @@ from models import db, Project, Skill, Study
 app = Flask(__name__)
 CORS(app)  # Enable CORS for all routes
 app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'dev-key-for-testing')
+# Use a relative path that will work better with Docker
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///portfolio.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
@@ -17,7 +18,7 @@ db.init_app(app)
 with app.app_context():
     db.create_all()
     
-    # Add sample data if database is empty
+    # Add sample data if respective tables are empty
     if Project.query.count() == 0:
         sample_projects = [
             Project(
@@ -37,25 +38,39 @@ with app.app_context():
         ]
         
         sample_skills = [
+            # Programming Languages
             Skill(name='Python', category='Programming', proficiency=5),
             Skill(name='JavaScript', category='Programming', proficiency=4),
+            Skill(name='TypeScript', category='Programming', proficiency=4),
+            Skill(name='SQL', category='Programming', proficiency=4),
+            Skill(name='HTML/CSS', category='Programming', proficiency=5),
+            Skill(name='Java', category='Programming', proficiency=3),
+            Skill(name='C#', category='Programming', proficiency=3),
+            
+            # Frameworks & Libraries
             Skill(name='Flask', category='Frameworks', proficiency=4),
-            Skill(name='React', category='Frameworks', proficiency=3),
+            Skill(name='React', category='Frameworks', proficiency=4),
+            Skill(name='Node.js', category='Frameworks', proficiency=3),
+            Skill(name='Express', category='Frameworks', proficiency=3),
+            Skill(name='Django', category='Frameworks', proficiency=3),
+            Skill(name='Bootstrap', category='Frameworks', proficiency=5),
+            Skill(name='Redux', category='Frameworks', proficiency=3),
+            
+            # DevOps & Tools
             Skill(name='Docker', category='DevOps', proficiency=4),
-            Skill(name='UI/UX Design', category='Design', proficiency=3)
+            Skill(name='Git', category='DevOps', proficiency=5),
+            Skill(name='CI/CD', category='DevOps', proficiency=3),
+            Skill(name='AWS', category='DevOps', proficiency=3),
+            Skill(name='Jira', category='DevOps', proficiency=4),
+            
+            # Databases
+            Skill(name='SQLite', category='Databases', proficiency=4),
+            Skill(name='PostgreSQL', category='Databases', proficiency=3),
+            Skill(name='MongoDB', category='Databases', proficiency=3),
+            
         ]
         
         sample_studies = [
-            Study(
-                title='Advanced Machine Learning',
-                description='Deep dive into advanced machine learning algorithms including neural networks, deep learning, and reinforcement learning.',
-                category='Course',
-                source='Coursera - Stanford University',
-                status='In Progress',
-                progress=65,
-                start_date=datetime.strptime('2025-01-15', '%Y-%m-%d'),
-                github_url='https://github.com/KirstenC2/machine-learning-study'
-            ),
             Study(
                 title='Rust Programming',
                 description='Learning Rust programming language for systems programming and high-performance applications.',
@@ -79,18 +94,24 @@ with app.app_context():
                 title='Full Stack Development with MERN',
                 description='Comprehensive course on building full-stack applications with MongoDB, Express, React, and Node.js.',
                 category='Course',
-                source='Udemy',
                 status='Completed',
                 progress=100,
                 start_date=datetime.strptime('2024-09-01', '%Y-%m-%d'),
                 completion_date=datetime.strptime('2024-12-20', '%Y-%m-%d'),
-                github_url='https://github.com/KirstenC2/mern-project',
-                certificate_url='https://udemy.com/certificate/123456'
+                github_url='https://github.com/KirstenC2/mern-project'
             )
         ]
         
         db.session.add_all(sample_projects)
+        db.session.commit()
+        
+    # Add sample skills if skills table is empty
+    if Skill.query.count() == 0:
         db.session.add_all(sample_skills)
+        db.session.commit()
+        
+    # Add sample studies if studies table is empty
+    if Study.query.count() == 0:
         db.session.add_all(sample_studies)
         db.session.commit()
 

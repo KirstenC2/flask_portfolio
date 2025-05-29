@@ -24,13 +24,6 @@ with app.app_context():
                 technologies='Python, Flask, SQLAlchemy, HTML, CSS, Docker',
                 image_url='portfolio_website.jpg',
                 github_url='https://github.com/KirstenC2/flask_portfolio'
-            ),
-            Project(
-                title='E-commerce Platform',
-                description='A fully-featured e-commerce platform with user authentication, product catalog, and payment processing.',
-                technologies='React, Node.js, Express, MongoDB',
-                image_url='ecommerce.jpg',
-                github_url='https://github.com/username/ecommerce'
             )
         ]
         

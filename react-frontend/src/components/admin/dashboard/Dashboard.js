@@ -15,8 +15,10 @@ import {
 } from '@fortawesome/free-solid-svg-icons';
 import './Dashboard.css';
 
-// Import admin components as needed
+// Import admin components
 import MessagesPanel from '../messages/MessagesPanel';
+import ProjectsPanel from '../projects/ProjectsPanel';
+import SkillsPanel from '../skills/SkillsPanel';
 
 const Dashboard = () => {
   const navigate = useNavigate();
@@ -69,6 +71,10 @@ const Dashboard = () => {
     switch (activeSection) {
       case 'messages':
         return <MessagesPanel onMessageRead={fetchUnreadMessagesCount} />;
+      case 'projects':
+        return <ProjectsPanel />;
+      case 'skills':
+        return <SkillsPanel />;
       case 'overview':
       default:
         return (

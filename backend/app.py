@@ -578,5 +578,112 @@ def admin_projects(current_admin):
             'id': new_project.id
         }), 201
 
+@app.route('/api/admin/projects/<int:project_id>', methods=['GET', 'PUT', 'DELETE'])
+@token_required
+def admin_project_detail(current_admin, project_id):
+    project = Project.query.get_or_404(project_id)
+    
+    if request.method == 'GET':
+        return jsonify({
+            'id': project.id,
+            'title': project.title,
+            'description': project.description,
+            'technologies': project.technologies,
+            'image_url': project.image_url,
+            'project_url': project.project_url,
+            'github_url': project.github_url,
+            'date_created': project.date_created.isoformat() if project.date_created else None
+        })
+    
+    elif request.method == 'PUT':
+        data = request.json
+        
+        project.title = data.get('title', project.title)
+        project.description = data.get('description', project.description)
+        project.technologies = data.get('technologies', project.technologies)
+        project.image_url = data.get('image_url', project.image_url)
+        project.project_url = data.get('project_url', project.project_url)
+        project.github_url = data.get('github_url', project.github_url)
+        
+        db.session.commit()
+        
+        return jsonify({
+            'message': 'Project updated successfully',
+            'id': project.id
+        })
+    
+    elif request.method == 'DELETE':
+        db.session.delete(project)
+        db.session.commit()
+        
+        return jsonify({
+            'message': 'Project deleted successfully'
+        })
+
+@app.route('/api/admin/skills', methods=['GET', 'POST'])
+@token_required
+def admin_skills(current_admin):
+    if request.method == 'GET':
+        skills = Skill.query.all()
+        skills_data = [{
+            'id': skill.id,
+            'name': skill.name,
+            'category': skill.category,
+            'proficiency': skill.proficiency
+        } for skill in skills]
+        
+        return jsonify(skills_data)
+    
+    elif request.method == 'POST':
+        data = request.json
+        new_skill = Skill(
+            name=data.get('name'),
+            category=data.get('category'),
+            proficiency=data.get('proficiency')
+        )
+        
+        db.session.add(new_skill)
+        db.session.commit()
+        
+        return jsonify({
+            'message': 'Skill created successfully',
+            'id': new_skill.id
+        }), 201
+
+@app.route('/api/admin/skills/<int:skill_id>', methods=['GET', 'PUT', 'DELETE'])
+@token_required
+def admin_skill_detail(current_admin, skill_id):
+    skill = Skill.query.get_or_404(skill_id)
+    
+    if request.method == 'GET':
+        return jsonify({
+            'id': skill.id,
+            'name': skill.name,
+            'category': skill.category,
+            'proficiency': skill.proficiency
+        })
+    
+    elif request.method == 'PUT':
+        data = request.json
+        
+        skill.name = data.get('name', skill.name)
+        skill.category = data.get('category', skill.category)
+        skill.proficiency = data.get('proficiency', skill.proficiency)
+        
+        db.session.commit()
+        
+        return jsonify({
+            'message': 'Skill updated successfully',
+            'id': skill.id
+        })
+    
+    elif request.method == 'DELETE':
+        db.session.delete(skill)
+        db.session.commit()
+        
+        return jsonify({
+            'message': 'Skill deleted successfully'
+        })
+
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5001, debug=True)

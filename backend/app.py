@@ -2,7 +2,7 @@ import os
 from datetime import datetime
 from flask import Flask, request, jsonify
 from flask_cors import CORS
-from models import db, Project, Skill, Study
+from models import db, Project, Skill, Study, Experience, Education
 
 app = Flask(__name__)
 CORS(app)  # Enable CORS for all routes
@@ -114,6 +114,76 @@ with app.app_context():
     if Study.query.count() == 0:
         db.session.add_all(sample_studies)
         db.session.commit()
+        
+    # Add sample experiences if experiences table is empty
+    if Experience.query.count() == 0:
+        sample_experiences = [
+            Experience(
+                title="Senior Full Stack Developer",
+                company="Tech Innovations Inc.",
+                description="Leading development of enterprise web applications using React, Node.js, and MongoDB. Implementing CI/CD pipelines and mentoring junior developers.",
+                start_date=datetime(2023, 1, 1),
+                end_date=None,
+                is_current=True,
+                order=4
+            ),
+            Experience(
+                title="Full Stack Developer",
+                company="Digital Solutions Ltd.",
+                description="Developed responsive web applications with React and Express. Implemented RESTful APIs and worked with SQL and NoSQL databases.",
+                start_date=datetime(2020, 3, 1),
+                end_date=datetime(2022, 12, 31),
+                is_current=False,
+                order=3
+            ),
+            Experience(
+                title="Frontend Developer",
+                company="Web Creators Studio",
+                description="Created responsive user interfaces using HTML, CSS, JavaScript, and React. Collaborated with designers to implement pixel-perfect UIs.",
+                start_date=datetime(2018, 5, 1),
+                end_date=datetime(2020, 2, 28),
+                is_current=False,
+                order=2
+            ),
+            Experience(
+                title="Web Development Intern",
+                company="Startup Incubator",
+                description="Assisted in development of web applications. Learned modern JavaScript frameworks and best practices in web development.",
+                start_date=datetime(2017, 6, 1),
+                end_date=datetime(2018, 4, 30),
+                is_current=False,
+                order=1
+            )
+        ]
+        
+        db.session.add_all(sample_experiences)
+        db.session.commit()
+        
+    # Add sample education if education table is empty
+    if Education.query.count() == 0:
+        sample_education = [
+            Education(
+                degree="Bachelor of Science in Computer Science",
+                school="University of Technology",
+                description="Focused on software engineering, web development, and database systems. Graduated with honors.",
+                start_date=datetime(2014, 9, 1),
+                end_date=datetime(2018, 5, 31),
+                is_current=False,
+                order=1
+            ),
+            Education(
+                degree="Full Stack Web Development Certification",
+                school="Tech Academy",
+                description="Intensive program covering modern JavaScript frameworks, backend development, and deployment technologies.",
+                start_date=datetime(2020, 1, 15),
+                end_date=datetime(2020, 4, 15),
+                is_current=False,
+                order=2
+            )
+        ]
+        
+        db.session.add_all(sample_education)
+        db.session.commit()
 
 # API endpoints
 @app.route('/api/home', methods=['GET'])
@@ -146,15 +216,61 @@ def home():
 
 @app.route('/api/about', methods=['GET'])
 def about():
-    # You can return any about page content as JSON
-    return jsonify({
+    # Basic about information
+    about_info = {
         'name': 'Kirsten Choo',
         'title': 'Fullstack Developer',
         'bio': 'Passionate about creating elegant, user-friendly applications with clean code.',
-        'education': 'University of Technology',
-        'experience': '5+ years of development experience',
         'email': 'choovernjet@gmail.com'
+    }
+    
+    # Get experiences in descending order (most recent first)
+    experiences = Experience.query.order_by(Experience.order.desc()).all()
+    experience_data = [{
+        'id': exp.id,
+        'title': exp.title,
+        'company': exp.company,
+        'description': exp.description,
+        'start_date': exp.start_date.isoformat() if exp.start_date else None,
+        'end_date': exp.end_date.isoformat() if exp.end_date else None,
+        'is_current': exp.is_current,
+        'year': format_date_range(exp.start_date, exp.end_date, exp.is_current)
+    } for exp in experiences]
+    
+    # Get education in descending order (most recent first)
+    education = Education.query.order_by(Education.order.desc()).all()
+    education_data = [{
+        'id': edu.id,
+        'degree': edu.degree,
+        'school': edu.school,
+        'description': edu.description,
+        'start_date': edu.start_date.isoformat() if edu.start_date else None,
+        'end_date': edu.end_date.isoformat() if edu.end_date else None,
+        'is_current': edu.is_current,
+        'year': format_date_range(edu.start_date, edu.end_date, edu.is_current)
+    } for edu in education]
+    
+    # Combine all data
+    return jsonify({
+        **about_info,
+        'experiences': experience_data,
+        'education': education_data
     })
+
+# Helper function for formatting date ranges
+def format_date_range(start_date, end_date, is_current=False):
+    start_year = start_date.year if start_date else ''
+    
+    if is_current:
+        return f"{start_year} - Present"
+    elif end_date:
+        end_year = end_date.year
+        if start_year == end_year:
+            return str(start_year)
+        else:
+            return f"{start_year} - {end_year}"
+    else:
+        return str(start_year)
 
 @app.route('/api/projects', methods=['GET'])
 def projects():

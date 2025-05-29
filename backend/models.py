@@ -41,3 +41,29 @@ class Study(db.Model):
     
     def __repr__(self):
         return f"Study('{self.title}', '{self.category}', '{self.status}')"
+
+class Experience(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    title = db.Column(db.String(100), nullable=False)  # Job title
+    company = db.Column(db.String(100), nullable=False)  # Company name
+    description = db.Column(db.Text, nullable=False)  # Job description
+    start_date = db.Column(db.DateTime, nullable=False)  # Start date
+    end_date = db.Column(db.DateTime, nullable=True)  # End date (null if current job)
+    is_current = db.Column(db.Boolean, default=False)  # Whether this is the current job
+    order = db.Column(db.Integer, default=0)  # Order for display (higher = more recent)
+    
+    def __repr__(self):
+        return f"Experience('{self.title}', '{self.company}')"
+
+class Education(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    degree = db.Column(db.String(100), nullable=False)  # Degree/certification name
+    school = db.Column(db.String(100), nullable=False)  # Institution name
+    description = db.Column(db.Text, nullable=True)  # Description of studies
+    start_date = db.Column(db.DateTime, nullable=False)  # Start date
+    end_date = db.Column(db.DateTime, nullable=True)  # End date
+    is_current = db.Column(db.Boolean, default=False)  # Whether currently studying
+    order = db.Column(db.Integer, default=0)  # Order for display (higher = more recent)
+    
+    def __repr__(self):
+        return f"Education('{self.degree}', '{self.school}')"

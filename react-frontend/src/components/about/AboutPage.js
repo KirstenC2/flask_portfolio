@@ -33,49 +33,7 @@ const AboutPage = () => {
     fetchAboutData();
   }, []);
 
-  // Timeline data
-  const timelineData = [
-    {
-      year: '2023 - Present',
-      title: 'Senior Full Stack Developer',
-      company: 'Tech Innovations Inc.',
-      description: 'Leading development of enterprise web applications using React, Node.js, and MongoDB. Implementing CI/CD pipelines and mentoring junior developers.'
-    },
-    {
-      year: '2020 - 2023',
-      title: 'Full Stack Developer',
-      company: 'Digital Solutions Ltd.',
-      description: 'Developed responsive web applications with React and Express. Implemented RESTful APIs and worked with SQL and NoSQL databases.'
-    },
-    {
-      year: '2018 - 2020',
-      title: 'Frontend Developer',
-      company: 'Web Creators Studio',
-      description: 'Created responsive user interfaces using HTML, CSS, JavaScript, and React. Collaborated with designers to implement pixel-perfect UIs.'
-    },
-    {
-      year: '2017 - 2018',
-      title: 'Web Development Intern',
-      company: 'Startup Incubator',
-      description: 'Assisted in development of web applications. Learned modern JavaScript frameworks and best practices in web development.'
-    }
-  ];
-
-  // Education data
-  const educationData = [
-    {
-      year: '2014 - 2018',
-      degree: 'Bachelor of Science in Computer Science',
-      school: 'University of Technology',
-      description: 'Focused on software engineering, web development, and database systems. Graduated with honors.'
-    },
-    {
-      year: '2020',
-      degree: 'Full Stack Web Development Certification',
-      school: 'Tech Academy',
-      description: 'Intensive program covering modern JavaScript frameworks, backend development, and deployment technologies.'
-    }
-  ];
+  // Use data from the API response
 
   if (loading) return <div className="loading">Loading about information...</div>;
   if (error) return <div className="error">{error}</div>;
@@ -196,38 +154,46 @@ const AboutPage = () => {
         <section className="experience-section">
           <h2 className="section-title">Work Experience</h2>
           <div className="timeline">
-            {timelineData.map((item, index) => (
-              <div key={index} className="timeline-item">
-                <div className="timeline-dot">
-                  <FontAwesomeIcon icon={faBriefcase} />
+            {aboutData?.experiences?.length > 0 ? (
+              aboutData.experiences.map((experience, index) => (
+                <div key={experience.id || index} className="timeline-item">
+                  <div className="timeline-dot">
+                    <FontAwesomeIcon icon={faBriefcase} />
+                  </div>
+                  <div className="timeline-date">{experience.year}</div>
+                  <div className="timeline-content">
+                    <h3>{experience.title}</h3>
+                    <h4>{experience.company}</h4>
+                    <p>{experience.description}</p>
+                  </div>
                 </div>
-                <div className="timeline-date">{item.year}</div>
-                <div className="timeline-content">
-                  <h3>{item.title}</h3>
-                  <h4>{item.company}</h4>
-                  <p>{item.description}</p>
-                </div>
-              </div>
-            ))}
+              ))
+            ) : (
+              <p className="no-data">No experience data available</p>
+            )}
           </div>
         </section>
 
         <section className="education-section">
           <h2 className="section-title">Education</h2>
           <div className="timeline">
-            {educationData.map((item, index) => (
-              <div key={index} className="timeline-item">
-                <div className="timeline-dot">
-                  <FontAwesomeIcon icon={faUserGraduate} />
+            {aboutData?.education?.length > 0 ? (
+              aboutData.education.map((edu, index) => (
+                <div key={edu.id || index} className="timeline-item">
+                  <div className="timeline-dot">
+                    <FontAwesomeIcon icon={faUserGraduate} />
+                  </div>
+                  <div className="timeline-date">{edu.year}</div>
+                  <div className="timeline-content">
+                    <h3>{edu.degree}</h3>
+                    <h4>{edu.school}</h4>
+                    <p>{edu.description}</p>
+                  </div>
                 </div>
-                <div className="timeline-date">{item.year}</div>
-                <div className="timeline-content">
-                  <h3>{item.degree}</h3>
-                  <h4>{item.school}</h4>
-                  <p>{item.description}</p>
-                </div>
-              </div>
-            ))}
+              ))
+            ) : (
+              <p className="no-data">No education data available</p>
+            )}
           </div>
         </section>
       </div>

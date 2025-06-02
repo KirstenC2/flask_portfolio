@@ -29,13 +29,6 @@ with app.app_context():
                 technologies='Python, Flask, SQLAlchemy, HTML, CSS, Docker',
                 image_url='portfolio_website.jpg',
                 github_url='https://github.com/KirstenC2/flask_portfolio'
-            ),
-            Project(
-                title='E-commerce Platform',
-                description='A fully-featured e-commerce platform with user authentication, product catalog, and payment processing.',
-                technologies='React, Node.js, Express, MongoDB',
-                image_url='ecommerce.jpg',
-                github_url='https://github.com/username/ecommerce'
             )
         ]
         
@@ -55,8 +48,6 @@ with app.app_context():
             Skill(name='Node.js', category='Frameworks', proficiency=3),
             Skill(name='Express', category='Frameworks', proficiency=3),
             Skill(name='Django', category='Frameworks', proficiency=3),
-            Skill(name='Bootstrap', category='Frameworks', proficiency=5),
-            Skill(name='Redux', category='Frameworks', proficiency=3),
             
             # DevOps & Tools
             Skill(name='Docker', category='DevOps', proficiency=4),
@@ -82,15 +73,6 @@ with app.app_context():
                 progress=40,
                 start_date=datetime.strptime('2025-03-10', '%Y-%m-%d'),
                 github_url='https://github.com/KirstenC2/rust-learning'
-            ),
-            Study(
-                title='AWS Solutions Architect',
-                description='Preparation for the AWS Solutions Architect certification, covering cloud architecture best practices.',
-                category='Certification',
-                source='Amazon Web Services',
-                status='Planned',
-                progress=0,
-                start_date=datetime.strptime('2025-06-01', '%Y-%m-%d')
             ),
             Study(
                 title='Full Stack Development with MERN',
@@ -893,6 +875,128 @@ def admin_experience_detail(current_admin, experience_id):
         
         return jsonify({
             'message': 'Experience entry deleted successfully'
+        })
+
+@app.route('/api/admin/studies', methods=['GET', 'POST'])
+@token_required
+def admin_studies(current_admin):
+    if request.method == 'GET':
+        studies = Study.query.all()
+        studies_data = [{
+            'id': study.id,
+            'title': study.title,
+            'description': study.description,
+            'category': study.category,
+            'source': study.source,
+            'status': study.status,
+            'progress': study.progress,
+            'start_date': study.start_date.isoformat() if study.start_date else None,
+            'completion_date': study.completion_date.isoformat() if study.completion_date else None,
+            'github_url': study.github_url,
+            'certificate_url': study.certificate_url,
+            'notes': study.notes
+        } for study in studies]
+        
+        return jsonify(studies_data)
+    
+    elif request.method == 'POST':
+        data = request.json
+        
+        # Parse dates
+        start_date = None
+        if data.get('start_date'):
+            start_date = datetime.fromisoformat(data.get('start_date').replace('Z', '+00:00'))
+        
+        completion_date = None
+        if data.get('completion_date'):
+            completion_date = datetime.fromisoformat(data.get('completion_date').replace('Z', '+00:00'))
+        
+        new_study = Study(
+            title=data.get('title'),
+            description=data.get('description'),
+            category=data.get('category'),
+            source=data.get('source'),
+            status=data.get('status'),
+            progress=data.get('progress'),
+            start_date=start_date,
+            completion_date=completion_date,
+            github_url=data.get('github_url'),
+            certificate_url=data.get('certificate_url'),
+            notes=data.get('notes')
+        )
+        
+        db.session.add(new_study)
+        db.session.commit()
+        
+        return jsonify({
+            'message': 'Study entry created successfully',
+            'id': new_study.id
+        }), 201
+
+@app.route('/api/admin/studies/<int:study_id>', methods=['GET', 'PUT', 'DELETE'])
+@token_required
+def admin_study_detail(current_admin, study_id):
+    study = Study.query.get_or_404(study_id)
+    
+    if request.method == 'GET':
+        return jsonify({
+            'id': study.id,
+            'title': study.title,
+            'description': study.description,
+            'category': study.category,
+            'source': study.source,
+            'status': study.status,
+            'progress': study.progress,
+            'start_date': study.start_date.isoformat() if study.start_date else None,
+            'completion_date': study.completion_date.isoformat() if study.completion_date else None,
+            'github_url': study.github_url,
+            'certificate_url': study.certificate_url,
+            'notes': study.notes
+        })
+    
+    elif request.method == 'PUT':
+        data = request.json
+        
+        if 'title' in data:
+            study.title = data.get('title')
+        if 'description' in data:
+            study.description = data.get('description')
+        if 'category' in data:
+            study.category = data.get('category')
+        if 'source' in data:
+            study.source = data.get('source')
+        if 'status' in data:
+            study.status = data.get('status')
+        if 'progress' in data:
+            study.progress = data.get('progress')
+        if 'github_url' in data:
+            study.github_url = data.get('github_url')
+        if 'certificate_url' in data:
+            study.certificate_url = data.get('certificate_url')
+        if 'notes' in data:
+            study.notes = data.get('notes')
+        
+        # Parse dates
+        if data.get('start_date'):
+            study.start_date = datetime.fromisoformat(data.get('start_date').replace('Z', '+00:00'))
+        
+        if data.get('completion_date'):
+            study.completion_date = datetime.fromisoformat(data.get('completion_date').replace('Z', '+00:00'))
+        elif 'completion_date' in data and data.get('completion_date') is None:
+            study.completion_date = None
+        
+        db.session.commit()
+        
+        return jsonify({
+            'message': 'Study entry updated successfully'
+        })
+    
+    elif request.method == 'DELETE':
+        db.session.delete(study)
+        db.session.commit()
+        
+        return jsonify({
+            'message': 'Study entry deleted successfully'
         })
 
 if __name__ == '__main__':

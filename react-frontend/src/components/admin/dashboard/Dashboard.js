@@ -21,6 +21,7 @@ import ProjectsPanel from '../projects/ProjectsPanel';
 import SkillsPanel from '../skills/SkillsPanel';
 import EducationPanel from '../education/EducationPanel';
 import ExperiencePanel from '../experience/ExperiencePanel';
+import StudiesPanel from '../studies/StudiesPanel';
 
 const Dashboard = () => {
   const navigate = useNavigate();
@@ -81,6 +82,8 @@ const Dashboard = () => {
         return <EducationPanel />;
       case 'experience':
         return <ExperiencePanel />;
+      case 'studies':
+        return <StudiesPanel />;
       case 'overview':
       default:
         return (
@@ -107,11 +110,15 @@ const Dashboard = () => {
               <div className="action-buttons">
                 <button className="action-button" onClick={() => setActiveSection('messages')}>
                   <FontAwesomeIcon icon={faEnvelope} />
-                  Check Messages
+                  Check Messages {unreadMessages > 0 && <span className="badge">{unreadMessages}</span>}
                 </button>
                 <button className="action-button" onClick={() => setActiveSection('projects')}>
                   <FontAwesomeIcon icon={faProjectDiagram} />
                   Manage Projects
+                </button>
+                <button className="action-button" onClick={() => setActiveSection('studies')}>
+                  <FontAwesomeIcon icon={faBook} />
+                  Manage Studies
                 </button>
               </div>
             </div>

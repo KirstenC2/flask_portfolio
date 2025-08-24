@@ -1,6 +1,6 @@
 import os
 from flask import Blueprint, jsonify, request
-from models import Project, Skill, Study, Experience, Education
+from models import Project, Skill, Study, Experience, Education, LifeEvent
 from datetime import datetime
 
 home_bp = Blueprint('home', __name__)
@@ -58,7 +58,17 @@ def about():
         'start_date': exp.start_date.isoformat() if exp.start_date else None,
         'end_date': exp.end_date.isoformat() if exp.end_date else None,
         'is_current': exp.is_current,
-        'year': format_date_range(exp.start_date, exp.end_date, exp.is_current)
+        'year': format_date_range(exp.start_date, exp.end_date, exp.is_current),
+        'projects': [
+            {
+                'id': p.id,
+                'title': p.title,
+                'description': p.description,
+                'technologies': p.technologies,
+                'project_url': p.project_url,
+                'github_url': p.github_url,
+            } for p in getattr(exp, 'projects', [])
+        ]
     } for exp in experiences]
     education = Education.query.order_by(Education.order.desc()).all()
     education_data = [{
@@ -71,7 +81,72 @@ def about():
         'is_current': edu.is_current,
         'year': format_date_range(edu.start_date, edu.end_date, edu.is_current)
     } for edu in education]
-    return jsonify({**about_info, 'experiences': experience_data, 'education': education_data})
+    life_events = LifeEvent.query.order_by(LifeEvent.order.desc()).all()
+    life_events_data = [{
+        'id': ev.id,
+        'title': ev.title,
+        'description': ev.description,
+        'start_date': ev.start_date.isoformat() if ev.start_date else None,
+        'end_date': ev.end_date.isoformat() if ev.end_date else None,
+        'is_current': ev.is_current,
+        'year': format_date_range(ev.start_date, ev.end_date, ev.is_current)
+    } for ev in life_events]
+    return jsonify({**about_info, 'experiences': experience_data, 'education': education_data, 'life_events': life_events_data})
+
+@home_bp.route('/api/experience', methods=['GET'])
+def experience():
+    """Return experience page data expected by the frontend.
+    Structure includes: name, title, email, bio, experiences[], education[].
+    """
+    about_info = {
+        'name': 'Kirsten Choo',
+        'title': 'Fullstack Developer',
+        'bio': 'Passionate about creating elegant, user-friendly applications with clean code.',
+        'email': 'choovernjet@gmail.com'
+    }
+    experiences = Experience.query.order_by(Experience.order.desc()).all()
+    experience_data = [{
+        'id': exp.id,
+        'title': exp.title,
+        'company': exp.company,
+        'description': exp.description,
+        'start_date': exp.start_date.isoformat() if exp.start_date else None,
+        'end_date': exp.end_date.isoformat() if exp.end_date else None,
+        'is_current': exp.is_current,
+        'year': format_date_range(exp.start_date, exp.end_date, exp.is_current),
+        'projects': [
+            {
+                'id': p.id,
+                'title': p.title,
+                'description': p.description,
+                'technologies': p.technologies,
+                'project_url': p.project_url,
+                'github_url': p.github_url,
+            } for p in getattr(exp, 'projects', [])
+        ]
+    } for exp in experiences]
+    education = Education.query.order_by(Education.order.desc()).all()
+    education_data = [{
+        'id': edu.id,
+        'degree': edu.degree,
+        'school': edu.school,
+        'description': edu.description,
+        'start_date': edu.start_date.isoformat() if edu.start_date else None,
+        'end_date': edu.end_date.isoformat() if edu.end_date else None,
+        'is_current': edu.is_current,
+        'year': format_date_range(edu.start_date, edu.end_date, edu.is_current)
+    } for edu in education]
+    life_events = LifeEvent.query.order_by(LifeEvent.order.desc()).all()
+    life_events_data = [{
+        'id': ev.id,
+        'title': ev.title,
+        'description': ev.description,
+        'start_date': ev.start_date.isoformat() if ev.start_date else None,
+        'end_date': ev.end_date.isoformat() if ev.end_date else None,
+        'is_current': ev.is_current,
+        'year': format_date_range(ev.start_date, ev.end_date, ev.is_current)
+    } for ev in life_events]
+    return jsonify({**about_info, 'experiences': experience_data, 'education': education_data, 'life_events': life_events_data})
 
 @home_bp.route('/api/projects', methods=['GET'])
 def projects():

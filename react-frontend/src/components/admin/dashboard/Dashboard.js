@@ -11,7 +11,8 @@ import {
   faEnvelope, 
   faSignOutAlt,
   faTachometerAlt,
-  faUserCircle
+  faUserCircle,
+  faStar
 } from '@fortawesome/free-solid-svg-icons';
 import './Dashboard.css';
 
@@ -22,6 +23,7 @@ import SkillsPanel from '../skills/SkillsPanel';
 import EducationPanel from '../education/EducationPanel';
 import ExperiencePanel from '../experience/ExperiencePanel';
 import StudiesPanel from '../studies/StudiesPanel';
+import LifeEventsPanel from '../life/LifeEventsPanel';
 
 const Dashboard = () => {
   const navigate = useNavigate();
@@ -84,6 +86,8 @@ const Dashboard = () => {
         return <ExperiencePanel />;
       case 'studies':
         return <StudiesPanel />;
+      case 'life':
+        return <LifeEventsPanel />;
       case 'overview':
       default:
         return (
@@ -187,6 +191,12 @@ const Dashboard = () => {
                 Education
               </button>
             </li>
+            <li className={activeSection === 'life' ? 'active' : ''}>
+              <button onClick={() => setActiveSection('life')}>
+                <FontAwesomeIcon icon={faStar} />
+                Life Events
+              </button>
+            </li>
           </ul>
         </nav>
         
@@ -212,6 +222,7 @@ const Dashboard = () => {
             {activeSection === 'studies' && 'Studies'}
             {activeSection === 'experience' && 'Experience'}
             {activeSection === 'education' && 'Education'}
+            {activeSection === 'life' && 'Life Events'}
           </h1>
         </div>
         

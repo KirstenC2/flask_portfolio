@@ -14,6 +14,7 @@ import SkillsPage from './components/skills/SkillsPage';
 import ProjectsPage from './components/projects/ProjectsPage';
 import AboutPage from './components/about/AboutPage';
 import ContactPage from './components/contact/ContactPage';
+import ExperiencePage from './components/experience/ExperiencePage';
 
 // Admin Components
 import LoginPage from './components/admin/auth/LoginPage';
@@ -69,6 +70,7 @@ function App() {
               <Route path="/study/:id" element={<StudyDetail />} />
               <Route path="/about" element={<AboutPage />} />
               <Route path="/contact" element={<ContactPage />} />
+              <Route path="/experience" element={<ExperiencePage />} />
             </Routes>
             <Footer />
           </div>

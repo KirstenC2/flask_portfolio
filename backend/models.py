@@ -52,9 +52,24 @@ class Experience(db.Model):
     end_date = db.Column(db.DateTime, nullable=True)  # End date (null if current job)
     is_current = db.Column(db.Boolean, default=False)  # Whether this is the current job
     order = db.Column(db.Integer, default=0)  # Order for display (higher = more recent)
+    # Relationship to projects completed during this experience
+    projects = db.relationship('ExperienceProject', backref='experience', lazy=True, cascade='all, delete-orphan')
     
     def __repr__(self):
         return f"Experience('{self.title}', '{self.company}')"
+
+# Per-experience projects
+class ExperienceProject(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    experience_id = db.Column(db.Integer, db.ForeignKey('experience.id'), nullable=False)
+    title = db.Column(db.String(150), nullable=False)
+    description = db.Column(db.Text, nullable=True)
+    technologies = db.Column(db.String(200), nullable=True)
+    project_url = db.Column(db.String(200), nullable=True)
+    github_url = db.Column(db.String(200), nullable=True)
+
+    def __repr__(self):
+        return f"ExperienceProject('{self.title}', exp_id={self.experience_id})"
 
 class Education(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -97,3 +112,16 @@ class Admin(db.Model):
     def __repr__(self):
         return f"Admin('{self.username}', '{self.email}')"
         
+
+# Personal life story events (non-work experience)
+class LifeEvent(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    title = db.Column(db.String(150), nullable=False)
+    description = db.Column(db.Text, nullable=True)
+    start_date = db.Column(db.DateTime, nullable=True)
+    end_date = db.Column(db.DateTime, nullable=True)
+    is_current = db.Column(db.Boolean, default=False)
+    order = db.Column(db.Integer, default=0)  # For manual ordering if needed
+
+    def __repr__(self):
+        return f"LifeEvent('{self.title}', current={self.is_current})"

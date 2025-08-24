@@ -1,4 +1,4 @@
-from models import db, Project, Skill, Study, Experience, Education
+from models import db, Project, Skill, Study, Experience, Education, LifeEvent, ExperienceProject
 from datetime import datetime
 
 def seed_sample_data():
@@ -14,7 +14,7 @@ def seed_sample_data():
             )
         ]
         sample_skills = [
-            Skill(name='Python', category='Programming', proficiency=5),
+            Skill(name='Python', category='Programming', proficiency=4),
             Skill(name='JavaScript', category='Programming', proficiency=4),
             Skill(name='TypeScript', category='Programming', proficiency=4),
             Skill(name='SQL', category='Programming', proficiency=4),
@@ -29,7 +29,6 @@ def seed_sample_data():
             Skill(name='Docker', category='DevOps', proficiency=4),
             Skill(name='Git', category='DevOps', proficiency=5),
             Skill(name='CI/CD', category='DevOps', proficiency=3),
-            Skill(name='AWS', category='DevOps', proficiency=3),
             Skill(name='Jira', category='DevOps', proficiency=4),
             Skill(name='SQLite', category='Databases', proficiency=4),
             Skill(name='PostgreSQL', category='Databases', proficiency=3),
@@ -68,64 +67,151 @@ def seed_sample_data():
     if Experience.query.count() == 0:
         sample_experiences = [
             Experience(
-                title="Senior Full Stack Developer",
-                company="Tech Innovations Inc.",
-                description="Leading development of enterprise web applications using React, Node.js, and MongoDB. Implementing CI/CD pipelines and mentoring junior developers.",
-                start_date=datetime(2023, 1, 1),
-                end_date=None,
-                is_current=True,
-                order=4
-            ),
-            Experience(
-                title="Full Stack Developer",
-                company="Digital Solutions Ltd.",
-                description="Developed responsive web applications with React and Express. Implemented RESTful APIs and worked with SQL and NoSQL databases.",
-                start_date=datetime(2020, 3, 1),
-                end_date=datetime(2022, 12, 31),
-                is_current=False,
-                order=3
-            ),
-            Experience(
-                title="Frontend Developer",
-                company="Web Creators Studio",
+                title="Software Intern",
+                company="FootfallCam (Sungai Long)",
                 description="Created responsive user interfaces using HTML, CSS, JavaScript, and React. Collaborated with designers to implement pixel-perfect UIs.",
-                start_date=datetime(2018, 5, 1),
-                end_date=datetime(2020, 2, 28),
+                start_date=datetime(2024, 9, 1),
+                end_date=datetime(2024, 12, 22),
                 is_current=False,
                 order=2
             ),
             Experience(
-                title="Web Development Intern",
-                company="Startup Incubator",
-                description="Assisted in development of web applications. Learned modern JavaScript frameworks and best practices in web development.",
-                start_date=datetime(2017, 6, 1),
-                end_date=datetime(2018, 4, 30),
+                title="Research Intern",
+                company="UCSI University, Kuala Lumpur, Malaysia",
+                description="Conducted research on Machine Learning models for image classification.",
+                start_date=datetime(2021, 7, 1),
+                end_date=datetime(2021, 12, 31),
                 is_current=False,
                 order=1
             )
         ]
         db.session.add_all(sample_experiences)
         db.session.commit()
+        # Link sample projects to the created experiences
+        exp_intern = Experience.query.filter_by(title="Software Intern", company="FootfallCam (Sungai Long)").first()
+        exp_research = Experience.query.filter_by(title="Research Intern", company="UCSI University, Kuala Lumpur, Malaysia").first()
+        xp = []
+        if exp_intern:
+            xp.extend([
+                ExperienceProject(
+                    experience_id=exp_intern.id,
+                    title="Retail Analytics Dashboard",
+                    description="Built interactive dashboards to visualize foot traffic and conversion metrics.",
+                    technologies="React, Chart.js, REST API",
+                    github_url=None,
+                    project_url=None
+                ),
+                ExperienceProject(
+                    experience_id=exp_intern.id,
+                    title="Component Library",
+                    description="Abstracted reusable UI components and improved developer velocity.",
+                    technologies="React, CSS Modules",
+                    github_url=None,
+                    project_url=None
+                ),
+            ])
+        if exp_research:
+            xp.extend([
+                ExperienceProject(
+                    experience_id=exp_research.id,
+                    title="Image Classifier Benchmark",
+                    description="Compared CNN architectures for small dataset performance and inference speed.",
+                    technologies="Python, TensorFlow, scikit-learn",
+                    github_url=None,
+                    project_url=None
+                )
+            ])
+        if xp:
+            db.session.add_all(xp)
+            db.session.commit()
+    # If there are experiences but no per-experience projects yet, seed some defaults
+    if ExperienceProject.query.count() == 0 and Experience.query.count() > 0:
+        exp_intern = Experience.query.filter_by(title="Software Intern", company="FootfallCam (Sungai Long)").first()
+        exp_research = Experience.query.filter_by(title="Research Intern", company="UCSI University, Kuala Lumpur, Malaysia").first()
+        xp = []
+        if exp_intern:
+            xp.extend([
+                ExperienceProject(
+                    experience_id=exp_intern.id,
+                    title="Retail Analytics Dashboard",
+                    description="Built interactive dashboards to visualize foot traffic and conversion metrics.",
+                    technologies="React, Chart.js, REST API",
+                    github_url=None,
+                    project_url=None
+                ),
+                ExperienceProject(
+                    experience_id=exp_intern.id,
+                    title="Component Library",
+                    description="Abstracted reusable UI components and improved developer velocity.",
+                    technologies="React, CSS Modules",
+                    github_url=None,
+                    project_url=None
+                ),
+            ])
+        if exp_research:
+            xp.extend([
+                ExperienceProject(
+                    experience_id=exp_research.id,
+                    title="Image Classifier Benchmark",
+                    description="Compared CNN architectures for small dataset performance and inference speed.",
+                    technologies="Python, TensorFlow, scikit-learn",
+                    github_url=None,
+                    project_url=None
+                )
+            ])
+        if xp:
+            db.session.add_all(xp)
+            db.session.commit()
+
     if Education.query.count() == 0:
         sample_education = [
             Education(
-                degree="Bachelor of Science in Computer Science",
-                school="University of Technology",
+                degree="Bachelor of Science in Computing (Computer Science)",
+                school="UCSI Universi",
                 description="Focused on software engineering, web development, and database systems. Graduated with honors.",
-                start_date=datetime(2014, 9, 1),
-                end_date=datetime(2018, 5, 31),
-                is_current=False,
-                order=1
-            ),
-            Education(
-                degree="Full Stack Web Development Certification",
-                school="Tech Academy",
-                description="Intensive program covering modern JavaScript frameworks, backend development, and deployment technologies.",
-                start_date=datetime(2020, 1, 15),
-                end_date=datetime(2020, 4, 15),
+                start_date=datetime(2021, 1, 1),
+                end_date=datetime(2023, 12, 31),
                 is_current=False,
                 order=2
+            ),
+            Education(
+                degree="Foundation in Arts (Business Studies with Computing Technology)",
+                school="Universiti Tunku Abdul Rahman (UTAR), Malaysia",
+                description="Business studies with computing technology.",
+                start_date=datetime(2018, 1, 7),
+                end_date=datetime(2019, 1, 3),
+                is_current=False,
+                order=1
             )
         ]
         db.session.add_all(sample_education)
+        db.session.commit()
+    if LifeEvent.query.count() == 0:
+        sample_life_events = [
+            LifeEvent(
+                title="Moved to Taipei",
+                description="Relocated to Taipei to pursue new opportunities and personal growth.",
+                start_date=datetime(2024, 5, 28),
+                end_date=None,
+                is_current=True,
+                order=3
+            ),
+            LifeEvent(
+                title="PTPTN loan waived",
+                description="PTPTN loan waived for my degree as a first class honors student.",
+                start_date=datetime(2025, 8, 18),
+                end_date=None,
+                is_current=False,
+                order=4
+            ),
+             LifeEvent(
+                title="MUET exam (Malaysian University English Test)",
+                description="MUET exam passed with a band 3.",
+                start_date=datetime(2018, 12, 5),
+                end_date=None,
+                is_current=False,
+                order=5
+            )
+        ]
+        db.session.add_all(sample_life_events)
         db.session.commit()

@@ -41,3 +41,16 @@ class Study(db.Model):
     
     def __repr__(self):
         return f"Study('{self.title}', '{self.category}', '{self.status}')"
+
+# Personal life story events (non-work experience)
+class LifeEvent(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    title = db.Column(db.String(150), nullable=False)
+    description = db.Column(db.Text, nullable=True)
+    start_date = db.Column(db.DateTime, nullable=True)
+    end_date = db.Column(db.DateTime, nullable=True)
+    is_current = db.Column(db.Boolean, default=False)
+    order = db.Column(db.Integer, default=0)  # For manual ordering if needed
+
+    def __repr__(self):
+        return f"LifeEvent('{self.title}', current={self.is_current})"

@@ -1,5 +1,6 @@
-from models import db, Project, Skill, Study, Experience, Education, LifeEvent, ExperienceProject, Post
+from models import db, Project, Skill, Study, Experience, Education, LifeEvent, ExperienceProject, Post, Introduction
 from datetime import datetime
+import json
 
 def seed_sample_data():
     # Add sample data if respective tables are empty
@@ -214,6 +215,41 @@ def seed_sample_data():
             )
         ]
         db.session.add_all(sample_life_events)
+        db.session.commit()
+
+    # Seed introduction
+    if Introduction.query.count() == 0:
+        intro = Introduction(
+            languages_code=json.dumps(['ko', 'zh', 'en']),
+            role='TPM',
+            skill_passages=json.dumps({
+                'ko': {
+                    'Roadmapping': '비즈니스 목표와 사용자 가치를 기준으로 결과 중심 로드맵을 설계합니다. 분기별 우선순위를 명확히 하고 리스크·의존성을 조기에 드러냅니다.',
+                    'Stakeholder Management': '명확한 기대치 설정과 정례 커뮤니케이션으로 신뢰를 구축합니다. 갈등은 데이터와 근거로 조정하고, 의사결정 단서를 투명하게 공유합니다.',
+                    'Execution & Delivery': '주간 실행 리듬을 유지하고 장애물을 신속히 제거합니다. 데모/리뷰를 통해 자주 가치를 검증하며 일정·범위를 유연하게 조정합니다.',
+                    'Risk Management': '가설-영향 매트릭스로 리스크를 분류하고 조기 경보 지표를 설정합니다. 고위험 의존성은 분리·단계화하여 실패 반경을 최소화합니다.',
+                    'Metrics & OKRs': '선행 지표와 결과 지표를 분리해 관리하고, 분기별 OKR 점검으로 학습을 다음 주기에 반영합니다.',
+                    'Program Planning': '상위 목표를 이정표와 작업 패키지로 분해하고, 크리티컬 패스를 관리해 납기 예측 가능성을 높입니다.'
+                },
+                'zh': {
+                    'Roadmapping': '以业务目标与用户价值为导向制定结果型路线图，按季度明确优先级，并及早暴露风险与依赖。',
+                    'Stakeholder Management': '通过清晰的预期管理与例行沟通建立信任；遇到分歧以数据与事实达成一致，并透明化决策依据。',
+                    'Execution & Delivery': '保持每周执行节奏，快速清除阻碍；通过频繁演示与评审验证价值，并灵活调整范围与计划。',
+                    'Risk Management': '用“假设-影响”矩阵分级风险，设置早期预警指标；对高风险依赖进行解耦与分阶段落地，降低失败半径。',
+                    'Metrics & OKRs': '区分前导指标与结果指标；按季度复盘OKR，将学习沉淀至下一周期的优先级与方案。',
+                    'Program Planning': '将上层目标分解为里程碑与工作包，管理关键路径并最大化并行度，提高交付可预测性。'
+                },
+                'en': {
+                    'Roadmapping': 'Outcome-driven roadmaps aligned to business goals and user value; surface risks/dependencies early with quarterly priorities.',
+                    'Stakeholder Management': 'Set clear expectations and communicate routinely; resolve conflicts with data and transparent decision criteria.',
+                    'Execution & Delivery': 'Maintain a weekly cadence, unblock fast, and validate value with frequent demos; adjust scope/time as needed.',
+                    'Risk Management': 'Classify risks via hypothesis–impact matrix, define early warning indicators, and stage high-risk dependencies.',
+                    'Metrics & OKRs': 'Separate leading and lagging metrics; quarterly OKR reviews convert learning into next-cycle priorities.',
+                    'Program Planning': 'Decompose objectives into milestones/work packages, manage the critical path, and maximize parallelization for predictability.'
+                }
+            })
+        )
+        db.session.add(intro)
         db.session.commit()
 
     # Seed blog posts

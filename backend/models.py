@@ -126,6 +126,15 @@ class LifeEvent(db.Model):
     def __repr__(self):
         return f"LifeEvent('{self.title}', current={self.is_current})"
 
+class Introduction(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    languages_code = db.Column(db.Text, nullable=True)       # JSON string for languages list (e.g., ["ko","zh","en"])
+    skill_passages = db.Column(db.Text, nullable=True)  # JSON string for PM/TPM passages per language { ko: {topic: text}, zh: {...}, en: {...} }
+    role = db.Column(db.Text, nullable=True)  # JSON string for PM/TPM passages per language { ko: {topic: text}, zh: {...}, en: {...} }
+
+    def __repr__(self):
+        return f"Introduction()"
+
 class Post(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     title = db.Column(db.String(200), nullable=False)

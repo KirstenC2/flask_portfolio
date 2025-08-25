@@ -1,6 +1,7 @@
 import os
 from flask import Blueprint, jsonify, request
-from models import Project, Skill, Study, Experience, Education, LifeEvent
+from models import Project, Skill, Study, Experience, Education, LifeEvent, Introduction
+import json
 from datetime import datetime
 
 home_bp = Blueprint('home', __name__)
@@ -92,6 +93,55 @@ def about():
         'year': format_date_range(ev.start_date, ev.end_date, ev.is_current)
     } for ev in life_events]
     return jsonify({**about_info, 'experiences': experience_data, 'education': education_data, 'life_events': life_events_data})
+
+@home_bp.route('/api/introduction', methods=['GET'])
+def introduction():
+    intro = Introduction.query.first()
+    # Minimal about info aligned with current model
+    about_info = {
+        'role': getattr(intro, 'role', None) or 'TPM'
+    }
+    # Parse JSON fields safely
+    def parse_json_field(value, default):
+        if not value:
+            return default
+        try:
+            return json.loads(value)
+        except Exception:
+            return default
+
+    # New field names on Introduction model
+    languages = parse_json_field(getattr(intro, 'languages_code', None), ['ko','zh','en'])
+    skill_passages = parse_json_field(getattr(intro, 'skill_passages', None), {})
+    experiences = Experience.query.order_by(Experience.order.desc()).all()
+    experience_data = [{
+        'id': exp.id,
+        'title': exp.title,
+        'company': exp.company,
+        'description': exp.description,
+        'start_date': exp.start_date.isoformat() if exp.start_date else None,
+        'end_date': exp.end_date.isoformat() if exp.end_date else None,
+        'is_current': exp.is_current,
+        'year': format_date_range(exp.start_date, exp.end_date, exp.is_current),
+    } for exp in experiences]
+    education = Education.query.order_by(Education.order.desc()).all()
+    education_data = [{
+        'id': edu.id,
+        'degree': edu.degree,
+        'school': edu.school,
+        'description': edu.description,
+        'start_date': edu.start_date.isoformat() if edu.start_date else None,
+        'end_date': edu.end_date.isoformat() if edu.end_date else None,
+        'is_current': edu.is_current,
+        'year': format_date_range(edu.start_date, edu.end_date, edu.is_current)
+    } for edu in education]
+    return jsonify({
+        **about_info,
+        'experiences': experience_data,
+        'education': education_data,
+        'languages': languages,
+        'skill_passages': skill_passages,
+    })
 
 @home_bp.route('/api/experience', methods=['GET'])
 def experience():

@@ -6,7 +6,7 @@ import './Blog.css';
 export default function BlogList({ selectedSlug }) {
   const [posts, setPosts] = useState([]);
   const [loading, setLoading] = useState(true);
-  const api = useMemo(() => axios.create({ baseURL: 'http://localhost:5001' }), []);
+  const api = useMemo(() => axios.create({ baseURL: 'http://localhost:5001', withCredentials: true }), []);
   const [activeTag, setActiveTag] = useState('All');
   const [query, setQuery] = useState('');
 

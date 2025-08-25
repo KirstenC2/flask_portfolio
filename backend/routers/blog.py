@@ -1,6 +1,7 @@
+import os
 import re
-from flask import Blueprint, request, jsonify
-from models import db, Post
+from flask import Blueprint, request, jsonify, session
+from models import db, Post, Admin
 from routers.admin import token_required
 from datetime import datetime
 
@@ -39,24 +40,42 @@ def render_markdown_safe(text: str) -> str:
     return html
 
 
-def post_to_dict(p: Post):
-    return {
+def is_protected(p: Post) -> bool:
+    tags = [t.strip().lower() for t in (p.tags.split(',') if p.tags else [])]
+    return 'hidden' in tags
+
+
+def is_unlocked(slug: str) -> bool:
+    unlocked = session.get('unlocked_posts') or []
+    return slug in unlocked
+
+
+def post_to_dict(p: Post, redact: bool = False):
+    data = {
         'id': p.id,
         'title': p.title,
         'slug': p.slug,
-        'content_md': p.content_md,
-        'content_html': p.content_html,
         'tags': p.tags.split(',') if p.tags else [],
         'created_at': p.created_at.isoformat() if p.created_at else None,
         'updated_at': p.updated_at.isoformat() if p.updated_at else None,
+        'protected': is_protected(p),
     }
+    if redact:
+        data.update({'content_md': None, 'content_html': None})
+    else:
+        data.update({'content_md': p.content_md, 'content_html': p.content_html})
+    return data
 
 
 # Public endpoints
 @blog_bp.route('/api/posts', methods=['GET'])
 def list_posts():
     q = Post.query.order_by(Post.created_at.desc()).all()
-    return jsonify([post_to_dict(p) for p in q])
+    items = []
+    for p in q:
+        redact = is_protected(p) and not is_unlocked(p.slug)
+        items.append(post_to_dict(p, redact=redact))
+    return jsonify(items)
 
 
 @blog_bp.route('/api/posts/<path:slug_or_id>', methods=['GET'])
@@ -68,7 +87,37 @@ def get_post(slug_or_id):
         post = Post.query.filter_by(slug=slug_or_id).first()
     if not post:
         return jsonify({'message': 'Post not found'}), 404
-    return jsonify(post_to_dict(post))
+    redact = is_protected(post) and not is_unlocked(post.slug)
+    return jsonify(post_to_dict(post, redact=redact))
+
+
+@blog_bp.route('/api/posts/<path:slug_or_id>/unlock', methods=['POST'])
+def unlock_post(slug_or_id):
+    """Unlock a protected post if password matches BLOG_PROTECT_PASSWORD.
+    Stores unlocked slug in cookie session.
+    """
+    post = None
+    if str(slug_or_id).isdigit():
+        post = Post.query.get(int(slug_or_id))
+    if not post:
+        post = Post.query.filter_by(slug=slug_or_id).first()
+    if not post:
+        return jsonify({'message': 'Post not found'}), 404
+
+    if not is_protected(post):
+        return jsonify({'message': 'Post is not protected', 'unlocked': True})
+
+    data = request.get_json(silent=True) or {}
+    password = (data.get('password') or '').strip()
+    # Validate against admin user's password
+    admin = Admin.query.first()
+    if admin and admin.check_password(password):
+        unlocked = session.get('unlocked_posts') or []
+        if post.slug not in unlocked:
+            unlocked.append(post.slug)
+        session['unlocked_posts'] = unlocked
+        return jsonify({'unlocked': True})
+    return jsonify({'unlocked': False, 'message': 'Invalid password'}), 401
 
 
 # Admin endpoints

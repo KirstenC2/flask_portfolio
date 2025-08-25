@@ -1,4 +1,4 @@
-from models import db, Project, Skill, Study, Experience, Education, LifeEvent, ExperienceProject
+from models import db, Project, Skill, Study, Experience, Education, LifeEvent, ExperienceProject, Post
 from datetime import datetime
 
 def seed_sample_data():
@@ -214,4 +214,39 @@ def seed_sample_data():
             )
         ]
         db.session.add_all(sample_life_events)
+        db.session.commit()
+
+    # Seed blog posts
+    if Post.query.count() == 0:
+        sample_posts = [
+            Post(
+                title='Welcome to My Blog',
+                slug='welcome-to-my-blog',
+                content_md='''# Welcome\n\nThis is the first post on my new blog. Written in **Markdown**!''',
+                content_html=None,
+                tags='intro,personal'
+            ),
+            Post(
+                title='Technical Notes: Flask + React',
+                slug='flask-react-notes',
+                content_md='''## Flask + React\n\nSome quick notes on wiring a Flask API to a React SPA.''',
+                content_html=None,
+                tags='flask,react,notes'
+            )
+        ]
+        # Render HTML if markdown lib available at seed time
+        try:
+            import markdown as md
+            import bleach
+            def _render(text):
+                html = md.markdown(text, extensions=['extra', 'toc', 'sane_lists'])
+                allowed_tags = bleach.sanitizer.ALLOWED_TAGS.union({'p','pre','code','blockquote','hr','br','h1','h2','h3','h4','h5','h6','ul','ol','li','strong','em','a'})
+                allowed_attrs = {**bleach.sanitizer.ALLOWED_ATTRIBUTES}
+                allowed_attrs.update({'a': ['href', 'title', 'name', 'target', 'rel']})
+                return bleach.linkify(bleach.clean(html, tags=allowed_tags, attributes=allowed_attrs))
+            for p in sample_posts:
+                p.content_html = _render(p.content_md)
+        except Exception:
+            pass
+        db.session.add_all(sample_posts)
         db.session.commit()

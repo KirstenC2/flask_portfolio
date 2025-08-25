@@ -125,3 +125,16 @@ class LifeEvent(db.Model):
 
     def __repr__(self):
         return f"LifeEvent('{self.title}', current={self.is_current})"
+
+class Post(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    title = db.Column(db.String(200), nullable=False)
+    slug = db.Column(db.String(200), unique=True, nullable=False)
+    content_md = db.Column(db.Text, nullable=False)
+    content_html = db.Column(db.Text, nullable=True)
+    tags = db.Column(db.String(250), nullable=True)  # comma-separated
+    created_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    def __repr__(self):
+        return f"Post('{self.slug}', '{self.title}')"

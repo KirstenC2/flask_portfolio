@@ -15,6 +15,10 @@ import ProjectsPage from './components/projects/ProjectsPage';
 import AboutPage from './components/about/AboutPage';
 import ContactPage from './components/contact/ContactPage';
 import ExperiencePage from './components/experience/ExperiencePage';
+import BlogList from './components/blog/BlogList';
+import BlogPost from './components/blog/BlogPost';
+import BlogSplitView from './components/blog/BlogSplitView';
+import BlogEditor from './components/blog/BlogEditor';
 
 // Admin Components
 import LoginPage from './components/admin/auth/LoginPage';
@@ -56,6 +60,14 @@ function App() {
             </PrivateRoute>
           } 
         />
+        <Route 
+          path="/admin/blog/new" 
+          element={
+            <PrivateRoute>
+              <BlogEditor />
+            </PrivateRoute>
+          }
+        />
         
         {/* Main Site Routes - With Navbar/Footer */}
         <Route path="/*" element={
@@ -71,6 +83,7 @@ function App() {
               <Route path="/about" element={<AboutPage />} />
               <Route path="/contact" element={<ContactPage />} />
               <Route path="/experience" element={<ExperiencePage />} />
+              <Route path="/blog/*" element={<BlogSplitView />} />
             </Routes>
             <Footer />
           </div>

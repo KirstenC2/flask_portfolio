@@ -1,0 +1,48 @@
+.blog-split {
+  /* Viewport-fixed split to prevent page/body scroll */
+  --nav-height: 64px; /* tweak if your Navbar height differs */
+  --footer-height: 0px; /* set if you want space for footer */
+  position: fixed;
+  top: var(--nav-height);
+  left: 0;
+  right: 0;
+  bottom: var(--footer-height);
+  display: grid;
+  grid-template-columns: 360px 1fr;
+  gap: 0;
+  overflow: hidden; /* panes handle their own scroll */
+  background: #fff;
+}
+
+.split-left {
+  border-right: 1px solid #e5e7eb;
+  height: 100%;
+  overflow-y: auto;
+  background: #fff;
+}
+
+.split-right {
+  height: 100%;
+  overflow-y: auto;
+}
+
+.placeholder {
+  padding: 2rem;
+  color: #6b7280;
+}
+
+/* Tweak BlogList container padding for split view */
+.split-left .container {
+  padding: 1rem;
+}
+
+@media (max-width: 900px) {
+  .blog-split {
+    grid-template-columns: 1fr;
+  }
+  .split-left {
+    position: static;
+    height: auto;
+    border-right: none;
+  }
+}

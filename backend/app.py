@@ -5,6 +5,7 @@ from models import db, Project, Skill, Study, Experience, Education, Message, Ad
 from routers.home import home_bp
 from routers.contact import contact_bp
 from routers.admin import admin_bp
+from routers.blog import blog_bp
 from datetime import datetime
 from seed_data import seed_sample_data
 from dotenv import load_dotenv
@@ -13,7 +14,14 @@ from dotenv import load_dotenv
 load_dotenv()
 
 app = Flask(__name__)
-CORS(app)
+# Explicit CORS config to support Authorization header from React dev server
+CORS(
+    app,
+    resources={r"/api/*": {"origins": ["http://localhost:3000", "http://127.0.0.1:3000", "*"]}},
+    methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allow_headers=["Content-Type", "Authorization"],
+    expose_headers=["Content-Type"],
+)
 app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'dev-key-for-testing')
 app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get('SQLALCHEMY_DATABASE_URI', 'sqlite:///portfolio.db')
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
@@ -30,6 +38,7 @@ with app.app_context():
 app.register_blueprint(home_bp)
 app.register_blueprint(contact_bp)
 app.register_blueprint(admin_bp)
+app.register_blueprint(blog_bp)
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5001, debug=True)

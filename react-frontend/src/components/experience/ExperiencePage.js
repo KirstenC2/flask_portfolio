@@ -20,6 +20,12 @@ const ExperiencePage = () => {
       try {
         const response = await axios.get('http://localhost:5001/api/experience');
         setexperienceData(response.data);
+        if (process.env.NODE_ENV !== 'production') {
+          console.log('[ExperiencePage] fetched keys:', Object.keys(response.data || {}));
+          console.log('[ExperiencePage] life_events count:', (response.data.life_events || []).length);
+          console.log('[ExperiencePage] experiences count:', (response.data.experiences || []).length);
+          console.log('[ExperiencePage] education count:', (response.data.education || []).length);
+        }
         setLoading(false);
       } catch (error) {
         console.error('Error fetching experience data:', error);
@@ -60,8 +66,18 @@ const ExperiencePage = () => {
       displayTitle: e.title,
       displaySubtitle: null,
     }));
+    if (process.env.NODE_ENV !== 'production') {
+      console.log('[ExperiencePage] merged counts:', {
+        exp: expItems.length,
+        edu: eduItems.length,
+        life: lifeItems.length,
+      });
+    }
     const sorted = [...expItems, ...eduItems, ...lifeItems]
       .sort((a, b) => new Date(b.sortDate || 0) - new Date(a.sortDate || 0));
+    if (process.env.NODE_ENV !== 'production') {
+      console.log('[ExperiencePage] first 5 sorted types:', sorted.slice(0, 5).map(i => i.type));
+    }
     // Compute grouping info: if consecutive items share the same year, add flags and labels
     return sorted.map((item, idx, arr) => {
       const currentYear = item.year;
@@ -84,84 +100,130 @@ const ExperiencePage = () => {
     <main className="experience-page">
       <section className="experience-section">
         <h2 className="section-title">My Lifetime Timeline</h2>
+        {
+          /* Group by year to render a big year node with smaller nodes beneath */
+        }
         <div className="timeline">
-          {combinedTimeline.length > 0 ? (
-            combinedTimeline.map((item, index) => (
-              <React.Fragment key={item.id || `${item.type}-${index}`}>
-                {item.firstOfYear && (
-                  <div className="timeline-year">{item.year}</div>
-                )}
-                <div className={`timeline-item${item.isCurrent ? ' current' : ''}`}>
-                  <div className="timeline-dot">
-                    <FontAwesomeIcon icon={item.type === 'education' ? faUserGraduate : (item.type === 'life' ? faStar : faBriefcase)} />
-                  </div>
-                  <div className="timeline-date">{item.dateLabel}</div>
-                  <div className="timeline-content">
-                    <h3>{item.displayTitle}</h3>
-                    
-                    {item.displaySubtitle && <h4>{item.displaySubtitle}</h4>}
-                    {item.description && <p>{item.description}</p>}
+          {(() => {
+            if (combinedTimeline.length === 0) return <p className="no-data">No timeline data available</p>;
+            // De-duplicate items (in case API returns overlaps)
+            const seen = new Set();
+            const unique = [];
+            for (const it of combinedTimeline) {
+              const k = it.id != null
+                ? `${it.type}:${it.id}`
+                : `${it.type}|${it.displayTitle}|${it.start_date}|${it.end_date}`;
+              if (seen.has(k)) continue;
+              seen.add(k);
+              unique.push(it);
+            }
 
-                   
-                    {item.type === 'experience' && Array.isArray(item.projects) && item.projects.length > 0 && (
-                     <React.Fragment>
-                     <h5 className="projects-title">Projects</h5>
-                    <div className="experience-projects">
-                        
-                        <ul className="projects-list">
-                          {item.projects.map((p) => (
-                            <li key={p.id} className="project-item">
-                              {/* Title at top */}
-                              <div className="project-title-column">
-                                <span className="project-name">{p.title}</span>
-                              </div>
-                              {/* Details in the middle (row-based on wide screens) */}
-                              {(p.description || p.github_url || p.project_url) && (
-                                <div className="project-body">
-                                  {p.description && <p className="project-desc">{p.description}</p>}
-                                  {(p.github_url || p.project_url) && (
-                                    <div className="project-links">
-                                      {p.project_url && (
-                                        <a href={p.project_url} target="_blank" rel="noreferrer" className="project-link">
-                                          <FontAwesomeIcon icon={faExternalLinkAlt} />
-                                          <span>Live</span>
-                                        </a>
-                                      )}
-                                      {p.github_url && (
-                                        <a href={p.github_url} target="_blank" rel="noreferrer" className="project-link">
-                                          <FontAwesomeIcon icon={faGithub} />
-                                          <span>GitHub</span>
-                                        </a>
+            // Build groups: year -> items[]
+            const groupsMap = new Map();
+            const getYearFromItem = (item) => {
+              if (item.start_date) return new Date(item.start_date).getFullYear();
+              if (item.end_date) return new Date(item.end_date).getFullYear();
+              if (item.sortDate) return new Date(item.sortDate).getFullYear();
+              if (item.date) return new Date(item.date).getFullYear();
+              if (typeof item.year === 'string') {
+                const m = item.year.match(/\b(\d{4})\b/);
+                if (m) return Number(m[1]);
+              }
+              if (typeof item.year === 'number') return item.year;
+              return null;
+            };
+            for (const item of unique) {
+              const y = getYearFromItem(item);
+              const key = y ?? 'Unknown';
+              if (!groupsMap.has(key)) groupsMap.set(key, []);
+              groupsMap.get(key).push(item);
+            }
+            const yearsDesc = Array.from(groupsMap.keys()).sort((a, b) => {
+              const na = a === 'Unknown' ? -Infinity : a;
+              const nb = b === 'Unknown' ? -Infinity : b;
+              return nb - na;
+            });
+            return yearsDesc.map((year, gi) => {
+              const group = { year, items: groupsMap.get(year) };
+              return (
+              <div className="timeline-year-block" key={`yblk-${group.year}-${gi}`}>
+                <div className="timeline-year-node">
+                  <div className="year-dot" />
+                  <div className="year-text">{group.year}</div>
+                </div>
+
+                {group.items.map((item, index) => (
+                  <div className={`timeline-item${item.isCurrent ? ' current' : ''}`} key={item.id || `${item.type}-${gi}-${index}`}>
+                    <div className="timeline-dot">
+                      <FontAwesomeIcon icon={item.type === 'education' ? faUserGraduate : (item.type === 'life' ? faStar : faBriefcase)} />
+                    </div>
+                    <div className="timeline-date">
+                      {(() => {
+                        const ts = item.start_date || item.end_date || item.sortDate || item.date;
+                        if (!ts) return '';
+                        return new Date(ts).toLocaleString('en-US', { month: 'short' });
+                      })()}
+                    </div>
+                    <div className="timeline-content">
+                      <h3>{item.displayTitle}</h3>
+                      {item.displaySubtitle && <h4>{item.displaySubtitle}</h4>}
+                      {item.description && <p>{item.description}</p>}
+
+                      {item.type === 'experience' && Array.isArray(item.projects) && item.projects.length > 0 && (
+                        <React.Fragment>
+                          <h5 className="projects-title">Projects</h5>
+                          <div className="experience-projects">
+                            <ul className="projects-list">
+                              {item.projects.map((p) => (
+                                <li key={p.id} className="project-item">
+                                  <div className="project-title-column">
+                                    <span className="project-name">{p.title}</span>
+                                  </div>
+                                  {(p.description || p.github_url || p.project_url) && (
+                                    <div className="project-body">
+                                      {p.description && <p className="project-desc">{p.description}</p>}
+                                      {(p.github_url || p.project_url) && (
+                                        <div className="project-links">
+                                          {p.project_url && (
+                                            <a href={p.project_url} target="_blank" rel="noreferrer" className="project-link">
+                                              <FontAwesomeIcon icon={faExternalLinkAlt} />
+                                              <span>Live</span>
+                                            </a>
+                                          )}
+                                          {p.github_url && (
+                                            <a href={p.github_url} target="_blank" rel="noreferrer" className="project-link">
+                                              <FontAwesomeIcon icon={faGithub} />
+                                              <span>GitHub</span>
+                                            </a>
+                                          )}
+                                        </div>
                                       )}
                                     </div>
                                   )}
-                                </div>
-                              )}
-                              {/* Tech tags last */}
-                              {p.technologies && (
-                                <div className="project-techs">
-                                  {p.technologies.split(',').map((t, idx) => {
-                                    const label = t.trim();
-                                    if (!label) return null;
-                                    return (
-                                      <span key={`${p.id}-tech-${idx}`} className="project-tech">{label}</span>
-                                    );
-                                  })}
-                                </div>
-                              )}
-                            </li>
-                          ))}
-                        </ul>
-                      </div>
-                      </React.Fragment>
-                    )}
+                                  {p.technologies && (
+                                    <div className="project-techs">
+                                      {p.technologies.split(',').map((t, idx) => {
+                                        const label = t.trim();
+                                        if (!label) return null;
+                                        return (
+                                          <span key={`${p.id}-tech-${idx}`} className="project-tech">{label}</span>
+                                        );
+                                      })}
+                                    </div>
+                                  )}
+                                </li>
+                              ))}
+                            </ul>
+                          </div>
+                        </React.Fragment>
+                      )}
+                    </div>
                   </div>
-                </div>
-              </React.Fragment>
-            ))
-          ) : (
-            <p className="no-data">No timeline data available</p>
-          )}
+                ))}
+              </div>
+              );
+            });
+          })()}
         </div>
       </section>
     </main>

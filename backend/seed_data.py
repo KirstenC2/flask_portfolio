@@ -222,6 +222,11 @@ def seed_sample_data():
         intro = Introduction(
             languages_code=json.dumps(['ko', 'zh', 'en']),
             role='TPM',
+            bio=json.dumps({
+                'ko': '안녕하세요! 저는 테크놀로지에 대한 열정이 넘치는 개발자입니다. 현재는 테크놀로지에 대한 열정이 넘치는 개발자입니다.',
+                'zh': 'Hello! I am a developer who is passionate about technology. Currently, I am a developer who is passionate about technology.',
+                'en': 'Hello! I am a developer who is passionate about technology. Currently, I am a developer who is passionate about technology.'
+            }),
             skill_passages=json.dumps({
                 'ko': {
                     'Roadmapping': '비즈니스 목표와 사용자 가치를 기준으로 결과 중심 로드맵을 설계합니다. 분기별 우선순위를 명확히 하고 리스크·의존성을 조기에 드러냅니다.',
@@ -250,6 +255,80 @@ def seed_sample_data():
             })
         )
         db.session.add(intro)
+        db.session.commit()
+
+    # Ensure a System Architect role exists as well
+    if not Introduction.query.filter_by(role='System Architect').first():
+        sa = Introduction(
+            languages_code=json.dumps(['ko', 'zh', 'en']),
+            role='System Architect',
+            bio=json.dumps({
+                'ko': '안녕하세요! 저는 테크놀로지에 대한 열정이 넘치는 개발자입니다. 현재는 테크놀로지에 대한 열정이 넘치는 개발자입니다.',
+                'zh': 'Hello! I am a developer who is passionate about technology. Currently, I am a developer who is passionate about technology.',
+                'en': 'Hello! I am a developer who is passionate about technology. Currently, I am a developer who is passionate about technology.'
+            }),
+            skill_passages=json.dumps({
+                'en': {
+                    'Architecture Vision': 'Translate business strategy into a sustainable technical vision with clear principles and guardrails.',
+                    'System Design': 'Decompose domains, define bounded contexts, and select fit-for-purpose patterns (event-driven, CQRS, etc.).',
+                    'Scalability & Reliability': 'Plan capacity with SLOs and error budgets; design for graceful degradation and failure isolation.',
+                    'Security & Compliance': 'Embed security-by-design, least privilege, and data protection throughout the architecture lifecycle.',
+                    'Tech Roadmap': 'Sequence platform capabilities by ROI and risk; reduce tech debt with measurable milestones.',
+                    'Governance': 'Use ADRs and review checkpoints to keep teams aligned and decisions transparent.',
+                    'Execution': 'Land designs pragmatically via RFCs, POCs, and phased rollout with observability baked in.'
+                },
+                'ko': {
+                    'Architecture Vision': '비즈니스 전략을 지속 가능한 기술 비전으로 번역하고, 원칙과 가드레일을 명확히 합니다.',
+                    'System Design': '도메인을 분해하고 경계 컨텍스트를 정의하며, 목적에 맞는 패턴을 선정합니다 (이벤트 기반, CQRS 등).',
+                    'Scalability & Reliability': 'SLO와 오류 예산으로 용량을 계획하고, 점진적 성능 저하와 실패 격리를 설계합니다.',
+                    'Security & Compliance': '설계 단계부터 보안 내재화, 최소 권한, 데이터 보호를 적용합니다.',
+                    'Tech Roadmap': 'ROI와 리스크 기준으로 플랫폼 역량을 순차 도입하고, 기술 부채를 측정 가능한 마일스톤으로 감소시킵니다.',
+                    'Governance': 'ADR와 검토 체크포인트로 팀 정렬을 유지하고 의사결정을 투명화합니다.',
+                    'Execution': 'RFC, POC, 점진적 롤아웃으로 실용적으로 설계를 안착시키고, 가시성을 내장합니다.'
+                },
+                'zh': {
+                    'Architecture Vision': '将业务战略转化为可持续的技术愿景，并明确原则与护栏。',
+                    'System Design': '进行领域拆分并定义边界上下文，选择合适的架构模式（事件驱动、CQRS 等）。',
+                    'Scalability & Reliability': '以 SLO 与错误预算规划容量，设计可降级与故障隔离能力。',
+                    'Security & Compliance': '在架构生命周期内嵌入安全设计、最小权限与数据保护。',
+                    'Tech Roadmap': '按 ROI 与风险排序平台能力，设置可衡量的里程碑以减少技术债。',
+                    'Governance': '通过 ADR 与评审机制保持团队一致并透明化决策。',
+                    'Execution': '通过 RFC、POC 与分阶段发布务实落地方案，并内置可观测性。'
+                }
+            })
+        )
+        db.session.add(sa)
+        db.session.commit()
+
+    # Ensure a Backend Engineer role exists as well
+    if not Introduction.query.filter_by(role='Backend Engineer').first():
+        sa = Introduction(
+            languages_code=json.dumps(['ko', 'zh', 'en']),
+            role='Backend Engineer',
+            bio=json.dumps({
+                'ko': '안녕하세요! 저는 테크놀로지에 대한 열정이 넘치는 개발자입니다. 현재는 테크놀로지에 대한 열정이 넘치는 개발자입니다.',
+                'zh': '作為一個後端工程師，我對自己開發的產品非常有熱情，因此我會不斷學習和提升自己的技術，以期能夠開發出更好的產品。',
+                'en': 'As a backend engineer, I am passionate about developing and designing excellent software products. I hope to have a sense of achievement with the products I develop, so I will continue to learn and improve my skills to develop better products.'
+            }),
+            skill_passages=json.dumps({
+                'en': {
+                    'Robust Backend Architecture Design': 'Transform business requirements into a stable, scalable technical architecture. A good architecture ensures long-term maintainability and adaptability to future needs.',
+                    'System Design and Problem Decomposition': 'Break down complex problems into manageable subsystems and select appropriate technologies and patterns.',
+                    'Scalability and Reliability': 'The system must scale smoothly and maintain high availability. A reliable system minimizes downtime and enhances user experience.'
+                },
+                'ko': {
+                    '견고한 백엔드 아키텍처 설계 능력': '비즈니스 요구사항을 안정적이고 확장 가능한 기술 아키텍처로 변환합니다. 좋은 아키텍처는 장기적인 유지보수성과 미래 요구사항에 대한 적응성을 보장합니다.',
+                    '시스템 설계 및 문제 분해': '복잡한 문제를 관리 가능한 하위 시스템으로 나누고 적절한 기술과 패턴을 선택합니다.',
+                    '확장성 및 신뢰성': '시스템은 원활하게 확장 가능해야 하며 높은 가용성을 유지해야 합니다. 신뢰할 수 있는 시스템은 다운타임을 최소화하고 사용자 경험을 향상시킵니다.'
+                },
+                'zh': {
+                    '堅實的後端架構設計能力': '將業務需求轉化為穩定、可擴展的技術架構。好的架構能確保系統長期可維護且適應未來需求。',
+                    '系統設計與問題分解': '將複雜問題分解為可管理的子系統，並選擇合適的技術和模式。',
+                    '可擴展性與可靠性': '系統必須能平滑擴展並保持高可用性。可靠的系統能減少宕機並提升用戶體驗。',
+                }
+            })
+        )
+        db.session.add(sa)
         db.session.commit()
 
     # Seed blog posts

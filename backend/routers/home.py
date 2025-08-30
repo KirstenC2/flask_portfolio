@@ -1,6 +1,6 @@
 import os
 from flask import Blueprint, jsonify, request
-from models import Project, Skill, Study, Experience, Education, LifeEvent, Introduction
+from models import db, Project, Skill, Study, Experience, Education, LifeEvent, Introduction
 import json
 from datetime import datetime
 
@@ -96,10 +96,24 @@ def about():
 
 @home_bp.route('/api/introduction', methods=['GET'])
 def introduction():
-    intro = Introduction.query.first()
+    # Optional role filter: /api/introduction?role=TPM
+    requested_role = request.args.get('role')
+    if requested_role:
+        intro = Introduction.query.filter_by(role=requested_role).first()
+        if not intro:
+            intro = Introduction.query.first()
+    else:
+        intro = Introduction.query.first()
+    # Gather all distinct roles for client-side switching
+    try:
+        available_roles = [r[0] for r in db.session.query(Introduction.role).distinct().all() if r[0]]
+    except Exception:
+        available_roles = []
     # Minimal about info aligned with current model
     about_info = {
-        'role': getattr(intro, 'role', None) or 'TPM'
+        'role': getattr(intro, 'role', None) or 'TPM',
+        'available_roles': available_roles,
+        'bio': getattr(intro, 'bio', None),
     }
     # Parse JSON fields safely
     def parse_json_field(value, default):
@@ -140,6 +154,7 @@ def introduction():
         'experiences': experience_data,
         'education': education_data,
         'languages': languages,
+        'bio': intro.bio,
         'skill_passages': skill_passages,
     })
 

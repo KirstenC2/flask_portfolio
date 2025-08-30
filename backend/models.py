@@ -129,6 +129,7 @@ class LifeEvent(db.Model):
 class Introduction(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     languages_code = db.Column(db.Text, nullable=True)       # JSON string for languages list (e.g., ["ko","zh","en"])
+    bio = db.Column(db.Text, nullable=True)  # JSON string for PM/TPM passages per language { ko: {topic: text}, zh: {...}, en: {...} }
     skill_passages = db.Column(db.Text, nullable=True)  # JSON string for PM/TPM passages per language { ko: {topic: text}, zh: {...}, en: {...} }
     role = db.Column(db.Text, nullable=True)  # JSON string for PM/TPM passages per language { ko: {topic: text}, zh: {...}, en: {...} }
 

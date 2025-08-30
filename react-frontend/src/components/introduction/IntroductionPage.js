@@ -5,9 +5,11 @@ import './IntroductionPage.css';
 const IntroductionPage = () => {
   const [aboutData, setAboutData] = useState(null);
   const [selectedLang, setSelectedLang] = useState('en');
+  const [selectedRole, setSelectedRole] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
+  // Initial load: get default intro (and available_roles)
   useEffect(() => {
     const fetchAboutData = async () => {
       try {
@@ -26,6 +28,8 @@ const IntroductionPage = () => {
           }
         }
         setAboutData(data);
+        // Initialize selected role from API
+        if (data && data.role) setSelectedRole(data.role);
         // Initialize language selection if languages provided
         const langs = (data && (data.languages || [])) || [];
         const lower = langs.map(l => (typeof l === 'string' ? l.toLowerCase() : l));
@@ -43,6 +47,30 @@ const IntroductionPage = () => {
     fetchAboutData();
   }, []);
 
+  // Refetch when role changes
+  useEffect(() => {
+    const fetchByRole = async (role) => {
+      if (!role) return;
+      try {
+        const response = await axios.get(`http://localhost:5001/api/introduction`, { params: { role } });
+        const data = response.data;
+        console.log(data);
+        setAboutData(data);
+        // Preserve existing selectedLang if available; otherwise re-init
+        const langs = (data && (data.languages || [])) || [];
+        if (!langs.includes(selectedLang)) {
+          const lower = langs.map(l => (typeof l === 'string' ? l.toLowerCase() : l));
+          if (lower.includes('korean') || lower.includes('ko')) setSelectedLang('ko');
+          else if (lower.includes('chinese') || lower.includes('zh')) setSelectedLang('zh');
+          else setSelectedLang('en');
+        }
+      } catch (e) {
+        // keep existing data
+      }
+    };
+    fetchByRole(selectedRole);
+  }, [selectedRole]);
+
   // Use data from the API response
 
   if (loading) return <div className="loading">Loading about information...</div>;
@@ -50,24 +78,41 @@ const IntroductionPage = () => {
 
   return (
     <main className="introduction-page">
-        {/* Languages */}
-        {(() => {
-          const languages = (aboutData && aboutData.languages) || ['Korean', 'Chinese', 'English'];
-          return (
-            <section className="languages-section">
-              <h2 className="section-title">Languages</h2>
-              <ul className="languages-list">
-                {languages.map((lang, i) => (
-                  <li key={i}>{lang}</li>
+        {/* Role Switcher */}
+        {aboutData?.available_roles && aboutData.available_roles.length > 0 && (
+          <section className="role-switcher">
+            <div className="section-header">
+              <h2 className="section-title">Role</h2>
+              <div className="role-buttons">
+                {aboutData.available_roles.map((role) => (
+                  <button
+                    key={role}
+                    type="button"
+                    className={`role-chip ${selectedRole === role ? 'active' : ''}`}
+                    onClick={() => setSelectedRole(role)}
+                  >
+                    {role}
+                  </button>
                 ))}
-              </ul>
-            </section>
-          );
-        })()}
+              </div>
+            </div>
+          </section>
+        )}
+        {/* Bio */}
+        <section className="bio-section">
+          <div className="section-header">
+            <h2 className="section-title">Bio</h2>
+          </div>
+          <div>
+            <p>{aboutData?.bio}</p>
+          </div>
+        </section>
+
+        
 
         <section className="skill-passages-section">
           <div className="section-header">
-            <h2 className="section-title">From TPM's view</h2>
+            <h2 className="section-title">As a {(aboutData && aboutData.role) ? aboutData.role : 'TPM'} ...</h2>
             <div className="lang-switcher">
               {['ko','zh','en'].map(code => (
                 <button

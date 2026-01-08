@@ -111,6 +111,15 @@ class Admin(db.Model):
     
     def __repr__(self):
         return f"Admin('{self.username}', '{self.email}')"
+
+class Diary(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    date = db.Column(db.DateTime, nullable=False)
+    weather = db.Column(db.String(20), nullable=False)
+    content = db.Column(db.Text, nullable=True)
+    
+    def __repr__(self):
+        return f"Diary('{self.date}', '{self.weather}', '{self.content}')"
         
 
 # Personal life story events (non-work experience)

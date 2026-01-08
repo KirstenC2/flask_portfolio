@@ -77,86 +77,72 @@ const IntroductionPage = () => {
   if (error) return <div className="error">{error}</div>;
 
   return (
+
     <main className="introduction-page">
-        {/* Role Switcher */}
-        {aboutData?.available_roles && aboutData.available_roles.length > 0 && (
-          <section className="role-switcher">
-            <div className="section-header">
-              <h2 className="section-title">Role</h2>
-              <div className="role-buttons">
-                {aboutData.available_roles.map((role) => (
-                  <button
-                    key={role}
-                    type="button"
-                    className={`role-chip ${selectedRole === role ? 'active' : ''}`}
-                    onClick={() => setSelectedRole(role)}
-                  >
-                    {role}
-                  </button>
-                ))}
-              </div>
-            </div>
-          </section>
-        )}
-        {/* Bio */}
-        <section className="bio-section">
-          <div className="section-header">
-            <h2 className="section-title">Bio</h2>
-          </div>
-          <div>
-            <p>{aboutData?.bio}</p>
-          </div>
-        </section>
+      <div className="hero">
+        <div className="container">
+          {/* <h2 className="section-title">Role</h2> */}
+          <h1>Introduction</h1>
+          <p>
+            This is not an introduction about my personal background, but an introduction about my viewpoint as a team player.
+          </p>
+        </div>
 
-        
-
-        <section className="skill-passages-section">
-          <div className="section-header">
-            <h2 className="section-title">As a {(aboutData && aboutData.role) ? aboutData.role : 'TPM'} ...</h2>
-            <div className="lang-switcher">
-              {['ko','zh','en'].map(code => (
-                <button
-                  key={code}
-                  type="button"
-                  className={`lang-chip ${selectedLang === code ? 'active' : ''}`}
-                  onClick={() => setSelectedLang(code)}
-                >
-                  {code === 'ko' ? 'Korean' : code === 'zh' ? 'Chinese' : 'English'}
-                </button>
-              ))}
-            </div>
-          </div>
-          <div className="skill-passages-grid">
-            {(() => {
-              const passages = (aboutData && aboutData.skill_passages && aboutData.skill_passages[selectedLang]) || {};
-              const topics = Object.keys(passages || {});
-              if (topics.length === 0) {
-                return (
-                  <div className="empty-hint">Provide your {selectedLang === 'ko' ? 'Korean' : selectedLang === 'zh' ? 'Chinese' : 'English'} PM/TPM passages to populate this section.</div>
-                );
-              }
-              return topics.map(name => (
-                <article key={name} className="skill-passage-card">
-                  <h3 className="skill-name">{name}</h3>
-                  <p className="skill-text">{passages[name]}</p>
-                </article>
-              ));
-            })()}
+      </div>
+      {/* Role Switcher */}
+      {aboutData?.available_roles && aboutData.available_roles.length > 0 && (
+        <div className='featured-projects'>
+        <div className="container">
+        <section className="role-switcher">
+          <div className="role-buttons">
+            {aboutData.available_roles.map((role) => (
+              <button
+                key={role}
+                type="button"
+                className={`role-chip ${selectedRole === role ? 'active' : ''}`}
+                onClick={() => setSelectedRole(role)}
+              >
+                {role}
+              </button>
+            ))}
           </div>
         </section>
+        </div>
+      </div>)}
+      {/* Bio */}
+      <section className="skill-section">
+        <div className="section-header">
+          <h2 className="section-title">Bio</h2>
+        </div>
+        <div>
+          <p>{aboutData?.bio || 'No bio available'}</p>
+        </div>
+      </section>
 
-        {aboutData?.soft_skills && aboutData.soft_skills.length > 0 && (
-          <section className="soft-skills-section">
-            <h2 className="section-title">Soft Skills</h2>
-            <ul className="soft-skills-list">
-              {aboutData.soft_skills.map((s, i) => (
-                <li key={i}>{s}</li>
-              ))}
-            </ul>
-          </section>
-        )}
 
-      
+
+      <section className="skill-section">
+        <div className="section-header">
+          <h2 className="section-title">As a {(aboutData && aboutData.role) ? aboutData.role : 'TPM'} ...</h2>
+
+        </div>
+        <div className="skill-passages-grid">
+            {aboutData?.skill_passages}
+        </div>
+      </section>
+
+      {aboutData?.soft_skills && aboutData.soft_skills.length > 0 && (
+        <section className="soft-skills-section">
+          <h2 className="section-title">Soft Skills</h2>
+          <ul className="soft-skills-list">
+            {aboutData.soft_skills.map((s, i) => (
+              <li key={i}>{s}</li>
+            ))}
+          </ul>
+        </section>
+      )}
+
+
     </main>
   );
 };

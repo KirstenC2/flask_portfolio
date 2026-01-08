@@ -8,7 +8,7 @@
 /* ================= Introduction Page ================= */
 .introduction-page {
   min-height: 100vh;
-  padding: 4rem 1.5rem;
+  /* padding: 4rem 1.5rem; */
   background-color: #f9fafb;
 }
 
@@ -108,7 +108,7 @@
 }
 
 /* PM/TPM Skill Passages */
-.skill-passages-section {
+.skill-section {
   background-color: #ffffff;
   border-radius: 10px;
   box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);

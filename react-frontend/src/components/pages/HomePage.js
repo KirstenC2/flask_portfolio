@@ -36,8 +36,8 @@ const HomePage = () => {
       <section className="hero">
         <div className="container">
           <h1>Hi, I'm Kirsten Choo</h1>
-          <h2>Fullstack Developer</h2>
-          <p>Building elegant, user-friendly applications with clean code</p>
+          <h2>Technology Maniac</h2>
+          <p>A professional, passionate, and dedicated developer who loves to take on new challenges and create innovative solutions.</p>
           <div className="hero-btns">
             <Link to="/projects" className="btn btn-primary">View My Work</Link>
             <Link to="/contact" className="btn btn-secondary">Get In Touch</Link>

@@ -84,6 +84,7 @@ function App() {
               <Route path="/contact" element={<ContactPage />} />
               <Route path="/experience" element={<ExperiencePage />} />
               <Route path="/blog/*" element={<BlogSplitView />} />
+              <Route path="/admin/*" element={<LoginPage />} />
             </Routes>
             <Footer />
           </div>

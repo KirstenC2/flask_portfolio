@@ -288,4 +288,18 @@ const renderProficiencyStars = (level) => {
   return stars;
 };
 
+const deleteSkill = async (skillId) => {
+  const response = await fetch(`/api/admin/skills/${skillId}`, {
+    method: 'DELETE',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+  });
+
+  if (!response.ok) {
+    throw new Error('Failed to delete skill');
+  }
+}
+
+
 export default SkillsPage;

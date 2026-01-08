@@ -6,6 +6,7 @@ from routers.home import home_bp
 from routers.contact import contact_bp
 from routers.admin import admin_bp
 from routers.blog import blog_bp
+from routers.diary import diary_bp
 from datetime import datetime
 from seed_data import seed_sample_data
 from dotenv import load_dotenv
@@ -45,6 +46,7 @@ app.register_blueprint(home_bp)
 app.register_blueprint(contact_bp)
 app.register_blueprint(admin_bp)
 app.register_blueprint(blog_bp)
+app.register_blueprint(diary_bp)
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5001, debug=True)

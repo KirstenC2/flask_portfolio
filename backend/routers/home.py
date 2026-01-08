@@ -126,7 +126,7 @@ def introduction():
 
     # New field names on Introduction model
     languages = parse_json_field(getattr(intro, 'languages_code', None), ['ko','zh','en'])
-    skill_passages = parse_json_field(getattr(intro, 'skill_passages', None), {})
+    skill_passages = intro.skill_passages
     experiences = Experience.query.order_by(Experience.order.desc()).all()
     experience_data = [{
         'id': exp.id,

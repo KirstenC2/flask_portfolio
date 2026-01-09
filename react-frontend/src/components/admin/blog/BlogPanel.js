@@ -1,14 +1,15 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import axios from 'axios';
+import './BlogPanel.css'; // Import the CSS file below
 
 const api = axios.create({ baseURL: 'http://localhost:5001' });
 
 function TagsPills({ tags }) {
   if (!tags || tags.length === 0) return null;
   return (
-    <div style={{ marginTop: '0.25rem' }}>
+    <div className="tags-container">
       {tags.map((t, i) => (
-        <span key={i} style={{ marginRight: 6, background: '#eef2f7', padding: '2px 8px', borderRadius: 12, fontSize: 12 }}>{t}</span>
+        <span key={i} className="tag-pill">{t}</span>
       ))}
     </div>
   );
@@ -18,6 +19,7 @@ export default function BlogPanel() {
   const [posts, setPosts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [showForm, setShowForm] = useState(false);
 
   const emptyForm = useMemo(() => ({ id: null, title: '', slug: '', tags: '', content_md: '' }), []);
   const [form, setForm] = useState(emptyForm);
@@ -26,7 +28,7 @@ export default function BlogPanel() {
   const authHeader = () => {
     const token = localStorage.getItem('adminToken');
     return token ? { Authorization: `Bearer ${token}` } : {};
-    };
+  };
 
   const loadPosts = async () => {
     setLoading(true); setError('');
@@ -34,7 +36,6 @@ export default function BlogPanel() {
       const res = await api.get('/api/posts');
       setPosts(res.data || []);
     } catch (e) {
-      console.error(e);
       setError('Failed to load posts');
     } finally {
       setLoading(false);
@@ -44,28 +45,26 @@ export default function BlogPanel() {
   useEffect(() => { loadPosts(); }, []);
 
   const onSubmit = async (e) => {
-    e.preventDefault(); setError('');
+    e.preventDefault(); 
+    setError('');
+    const payload = {
+      title: form.title,
+      slug: form.slug || undefined,
+      tags: form.tags.split(',').map(s => s.trim()).filter(Boolean),
+      content_md: form.content_md,
+    };
+
     try {
       if (editingId) {
-        await api.put(`/api/admin/posts/${editingId}`, {
-          title: form.title,
-          slug: form.slug || undefined,
-          tags: form.tags.split(',').map(s => s.trim()).filter(Boolean),
-          content_md: form.content_md,
-        }, { headers: authHeader() });
+        await api.put(`/api/admin/posts/${editingId}`, payload, { headers: authHeader() });
       } else {
-        await api.post('/api/admin/posts', {
-          title: form.title,
-          slug: form.slug || undefined,
-          tags: form.tags.split(',').map(s => s.trim()).filter(Boolean),
-          content_md: form.content_md,
-        }, { headers: authHeader() });
+        await api.post('/api/admin/posts', payload, { headers: authHeader() });
       }
       setForm(emptyForm);
       setEditingId(null);
+      setShowForm(false);
       await loadPosts();
     } catch (e) {
-      console.error(e);
       setError('Save failed');
     }
   };
@@ -79,7 +78,7 @@ export default function BlogPanel() {
       tags: (p.tags || []).join(', '),
       content_md: p.content_md || '',
     });
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    setShowForm(true);
   };
 
   const onDelete = async (id) => {
@@ -88,7 +87,6 @@ export default function BlogPanel() {
       await api.delete(`/api/admin/posts/${id}`, { headers: authHeader() });
       await loadPosts();
     } catch (e) {
-      console.error(e);
       setError('Delete failed');
     }
   };
@@ -99,85 +97,104 @@ export default function BlogPanel() {
       const text = await file.text();
       setForm(f => ({ ...f, content_md: text }));
     } catch (e) {
-      console.error(e);
       setError('Failed to read file');
     }
   };
 
   return (
-    <div>
-      <div style={{ marginBottom: 24 }}>
-        <h2 style={{ marginBottom: 8 }}>{editingId ? 'Edit Post' : 'New Post'}</h2>
-        {error && <div style={{ color: 'crimson', marginBottom: 8 }}>{error}</div>}
-        <form onSubmit={onSubmit}>
-          <div className="form-row" style={{ marginBottom: 12 }}>
-            <label>Title</label>
-            <input className="form-control" value={form.title} onChange={e => setForm(f => ({ ...f, title: e.target.value }))} required />
-          </div>
-          <div className="form-row" style={{ marginBottom: 12 }}>
-            <label>Slug (optional)</label>
-            <input className="form-control" value={form.slug} onChange={e => setForm(f => ({ ...f, slug: e.target.value }))} />
-          </div>
-          <div className="form-row" style={{ marginBottom: 12 }}>
-            <label>Tags (comma separated)</label>
-            <input className="form-control" value={form.tags} onChange={e => setForm(f => ({ ...f, tags: e.target.value }))} />
-          </div>
-          <div className="form-row" style={{ marginBottom: 12 }}>
-            <label>Content (Markdown)</label>
-            <textarea className="form-control" rows={10} value={form.content_md} onChange={e => setForm(f => ({ ...f, content_md: e.target.value }))} />
-          </div>
-          <div>
-            <button type="submit" className="btn btn-primary">{editingId ? 'Update' : 'Create'}</button>
-            <label className="btn" style={{ marginLeft: 8 }}>
-              Import .md
-              <input type="file" accept=".md,text/markdown,text/plain" style={{ display: 'none' }} onChange={e => onImportMd(e.target.files && e.target.files[0])} />
-            </label>
-            <a className="btn" style={{ marginLeft: 8 }} href="/admin/blog/new">Open advanced editor</a>
-            {editingId && (
-              <button type="button" className="btn" style={{ marginLeft: 8 }} onClick={() => { setEditingId(null); setForm(emptyForm); }}>Cancel</button>
-            )}
-          </div>
-        </form>
-      </div>
+    <div className="admin-container">
+      {/* LEFT SIDE: POST LIST */}
+      <div className={`list-section ${showForm ? 'shrink' : ''}`}>
+        <div className="section-header">
+          <h1>Blog Management</h1>
+          {!showForm && (
+            <button className="btn btn-primary" onClick={() => { setForm(emptyForm); setEditingId(null); setShowForm(true); }}>
+              + Create New Post
+            </button>
+          )}
+        </div>
 
-      <div>
-        <h2>All Posts</h2>
+        {error && <div className="error-banner">{error}</div>}
+
         {loading ? (
-          <p>Loading...</p>
+          <div className="loading-state">Loading posts...</div>
         ) : (
-          <table className="table" style={{ width: '100%', borderCollapse: 'collapse' }}>
-            <thead>
-              <tr>
-                <th style={{ textAlign: 'left' }}>Title</th>
-                <th>Slug</th>
-                <th>Created</th>
-                <th>Updated</th>
-                <th>Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {posts.map(p => (
-                <tr key={p.id} style={{ borderTop: '1px solid #eee' }}>
-                  <td style={{ padding: '8px 4px' }}>
-                    <div style={{ fontWeight: 600 }}>{p.title}</div>
-                    <TagsPills tags={p.tags} />
-                  </td>
-                  <td style={{ textAlign: 'center' }}>{p.slug}</td>
-                  <td style={{ textAlign: 'center' }}>{p.created_at ? new Date(p.created_at).toLocaleString() : ''}</td>
-                  <td style={{ textAlign: 'center' }}>{p.updated_at ? new Date(p.updated_at).toLocaleString() : ''}</td>
-                  <td style={{ textAlign: 'center' }}>
-                    <button className="btn" onClick={() => onEdit(p)}>Edit</button>
-                    <button className="btn btn-danger" style={{ marginLeft: 6 }} onClick={() => onDelete(p.id)}>Delete</button>
-                  </td>
+          <div className="table-wrapper">
+            <table className="table">
+              <thead>
+                <tr>
+                  <th>Content</th>
+                  {!showForm && <th>Slug</th>}
+                  {!showForm && <th>Dates</th>}
+                  <th style={{ textAlign: 'right' }}>Actions</th>
                 </tr>
-              ))}
-              {posts.length === 0 && (
-                <tr><td colSpan={5} style={{ textAlign: 'center', padding: 16 }}>No posts yet.</td></tr>
-              )}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {posts.map(p => (
+                  <tr key={p.id}>
+                    <td>
+                      <div className="post-title-cell">{p.title}</div>
+                      <TagsPills tags={p.tags} />
+                    </td>
+                    {!showForm && <td><code className="slug-text">/{p.slug}</code></td>}
+                    {!showForm && (
+                      <td className="date-text">
+                        Updated: {p.updated_at ? new Date(p.updated_at).toLocaleDateString() : 'N/A'}
+                      </td>
+                    )}
+                    <td style={{ textAlign: 'right' }}>
+                      <button className="btn btn-sm" onClick={() => onEdit(p)}>Edit</button>
+                      <button className="btn btn-sm btn-danger" onClick={() => onDelete(p.id)}>Delete</button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         )}
       </div>
+
+      {/* RIGHT SIDE: EDITOR PANEL */}
+      {showForm && (
+        <div className="editor-sidepanel">
+          <div className="sidepanel-header">
+            <h2>{editingId ? 'Edit Post' : 'Create Post'}</h2>
+            <button className="btn-close" onClick={() => setShowForm(false)}>✕</button>
+          </div>
+          
+          <form onSubmit={onSubmit} className="form">
+            <div className="form-row">
+              <label>Title</label>
+              <input className="form-control" value={form.title} onChange={e => setForm(f => ({ ...f, title: e.target.value }))} required placeholder="Post title..." />
+            </div>
+            
+            <div className="form-row-group">
+              <div className="form-row">
+                <label>Slug</label>
+                <input className="form-control" value={form.slug} onChange={e => setForm(f => ({ ...f, slug: e.target.value }))} placeholder="url-friendly-slug" />
+              </div>
+              <div className="form-row">
+                <label>Tags</label>
+                <input className="form-control" value={form.tags} onChange={e => setForm(f => ({ ...f, tags: e.target.value }))} placeholder="react, tutorial..." />
+              </div>
+            </div>
+
+            <div className="form-row">
+              <label>Content (Markdown)</label>
+              <textarea className="form-control markdown-editor" rows={15} value={form.content_md} onChange={e => setForm(f => ({ ...f, content_md: e.target.value }))} placeholder="Write your content here..." />
+            </div>
+
+            <div className="form-actions">
+              <button type="submit" className="btn btn-primary">{editingId ? 'Save Changes' : 'Publish Post'}</button>
+              <label className="btn">
+                Import .md
+                <input type="file" accept=".md" style={{ display: 'none' }} onChange={e => onImportMd(e.target.files?.[0])} />
+              </label>
+              {editingId && <button type="button" className="btn btn-secondary" onClick={() => { setEditingId(null); setForm(emptyForm); setShowForm(false); }}>Cancel</button>}
+            </div>
+          </form>
+        </div>
+      )}
     </div>
   );
 }

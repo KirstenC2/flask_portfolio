@@ -1,21 +1,4 @@
-.education-panel {
-  display: flex;
-  flex-direction: column;
-  height: 100%;
-}
 
-.education-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 1.5rem;
-}
-
-.education-header h2 {
-  margin: 0;
-  color: #333;
-  font-size: 1.4rem;
-}
 
 .new-education-btn {
   background-color: #27ae60;

@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
-  faBook, faPlus, faEdit, faTrash, faSave, faTimes, faSpinner,
-  faCloudSun, faCloudRain, faSun, faCloud
+  faPlus, faEdit, faTrash, faSave, faTimes,
+  faSun, faCloud, faCloudRain, faCloudSun, faCalendarDay, faQuoteLeft
 } from '@fortawesome/free-solid-svg-icons';
-import './DiaryPanel.css';
-
+import './DiaryPanel.css'; // Standardized admin styles
+import '../../../common/global.css';
 const getStatusColor = (status) => {
   const colors = { sunny: '#FFD700', cloudy: '#A9A9A9', rainy: '#1E90FF', default: '#6c757d' };
   return colors[status?.toLowerCase()] || colors.default;
@@ -15,20 +15,19 @@ const getWeatherIcon = (weather) => {
   const icons = { sunny: faSun, cloudy: faCloud, rainy: faCloudRain, default: faCloudSun };
   return icons[weather?.toLowerCase()] || icons.default;
 };
-// Add this function at the top of your component file, outside the component
+
 const formatDateForInput = (dateString) => {
   if (!dateString) return '';
   const date = new Date(dateString);
   return date.toISOString().split('T')[0];
 };
+
 const Diary = () => {
   const [diaries, setDiaries] = useState([]);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState(null);
   const [editMode, setEditMode] = useState(false);
-
-  // currentDiary MUST hold the object with the .id property
   const [currentDiary, setCurrentDiary] = useState(null);
 
   const [formData, setFormData] = useState({
@@ -39,9 +38,7 @@ const Diary = () => {
 
   const weatherOptions = ['sunny', 'cloudy', 'rainy'];
 
-  useEffect(() => {
-    fetchDiaries();
-  }, []);
+  useEffect(() => { fetchDiaries(); }, []);
 
   const fetchDiaries = async () => {
     setLoading(true);
@@ -50,74 +47,73 @@ const Diary = () => {
       if (!response.ok) throw new Error('Failed to fetch diaries');
       const result = await response.json();
       setDiaries(result.data || []);
-      return result.data || [];
+    } catch (err) {
+      setError(err.message);
     } finally {
       setLoading(false);
     }
   };
 
   const handleDelete = async (id) => {
+    if (!window.confirm("Are you sure you want to delete this entry?")) return;
     try {
       const token = localStorage.getItem('adminToken');
       const response = await fetch(`http://localhost:5001/api/diary/${id}`, { 
         method: 'DELETE',
         headers: { Authorization: `Bearer ${token}` },
-       });
-      if (!response.ok) throw new Error('Failed to delete diary');
+      });
+      if (!response.ok) throw new Error('Failed to delete');
+      setCurrentDiary(null);
       await fetchDiaries();
-      console.log("Deleted diary with id:", id);
     } catch (err) {
-      console.error('Error deleting diary:', err);
       setError(err.message);
     }
+  };
+
+  const handleSelectDiary = (diary) => {
+    setCurrentDiary(diary);
+    setEditMode(false);
+  };
+
+  const handleOpenCreate = () => {
+    setCurrentDiary(null);
+    setFormData({
+      weather: 'sunny',
+      date: new Date().toISOString().split('T')[0],
+      content: ''
+    });
+    setEditMode(true);
+  };
+
+  const handleOpenEdit = () => {
+    setFormData({
+      weather: currentDiary.weather,
+      date: formatDateForInput(currentDiary.date),
+      content: currentDiary.content
+    });
+    setEditMode(true);
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setSubmitting(true);
-    console.log("Submitting form with:", { currentDiary, formData });
-
     try {
       const isUpdating = currentDiary && currentDiary.id;
-      const method = isUpdating ? 'PUT' : 'POST';
       const url = isUpdating
         ? `http://localhost:5001/api/diary/${currentDiary.id}`
         : 'http://localhost:5001/api/diary';
 
-      console.log('Submitting:', { method, url, isUpdating, formData });
-
       const response = await fetch(url, {
-        method,
+        method: isUpdating ? 'PUT' : 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(formData)
       });
 
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || 'Save failed');
-      }
-
-      // Refresh the data
+      if (!response.ok) throw new Error('Save failed');
+      
+      setEditMode(false);
       await fetchDiaries();
-
-      // Reset form and state
-      setFormData({
-        weather: 'sunny',
-        date: new Date().toISOString().split('T')[0],
-        content: ''
-      });
-
-      if (isUpdating) {
-        // If updating, keep the current diary but exit edit mode
-        setEditMode(false);
-      } else {
-        // If creating new, reset everything
-        setCurrentDiary(null);
-        setEditMode(false);
-      }
-      console.log("Form submitted successfully");
     } catch (err) {
-      console.error('Error saving diary:', err);
       setError(err.message);
     } finally {
       setSubmitting(false);
@@ -125,98 +121,126 @@ const Diary = () => {
   };
 
   return (
-    <div className="diaries-container">
-      <div className="diaries-header">
-        <h2>My Diary</h2>
-        <button onClick={() => {
-          setCurrentDiary(null); // IMPORTANT: Reset ID for new entries
-          setFormData({ weather: 'sunny', date: new Date().toISOString().split('T')[0], content: '' });
-          setEditMode(true);
-        }} className="new-diaries-btn">
-          <FontAwesomeIcon icon={faPlus} /> Add Entry
-        </button>
-      </div>
+    <div className="admin-container">
+      {/* LEFT SIDE: DIARY LIST */}
+      <div className={`list-section ${editMode || currentDiary ? 'shrink' : ''}`}>
+        <div className="section-header">
+          <h1>Diary Entries</h1>
+          <button className="btn btn-primary" onClick={handleOpenCreate}>
+            <FontAwesomeIcon icon={faPlus} /> New Entry
+          </button>
+        </div>
 
-      <div className="diaries-content">
-        <div className="diaries-list">
+        {error && <div className="error-banner">{error}</div>}
+
+        <div className="experience-items-list">
           {diaries.map(diary => (
             <div
               key={diary.id}
-              className={`diaries-item ${currentDiary?.id === diary.id ? 'active' : ''}`}
-              onClick={() => {
-                setCurrentDiary(diary);
-                setEditMode(false);
-              }}
+              className={`experience-card-item ${currentDiary?.id === diary.id ? 'active' : ''}`}
+              onClick={() => handleSelectDiary(diary)}
             >
-              <FontAwesomeIcon icon={getWeatherIcon(diary.weather)} style={{ color: getStatusColor(diary.weather) }} />
-              <span>{new Date(diary.date).toLocaleDateString()}</span>
+              <div className="card-main">
+                <div className="card-icon">
+                  <FontAwesomeIcon 
+                    icon={getWeatherIcon(diary.weather)} 
+                    style={{ color: getStatusColor(diary.weather) }} 
+                  />
+                </div>
+                <div className="card-info">
+                  <div className="post-title-cell">{new Date(diary.date).toLocaleDateString(undefined, { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</div>
+                  <div className="date-text line-clamp">{diary.content.substring(0, 60)}...</div>
+                </div>
+              </div>
             </div>
           ))}
         </div>
+      </div>
 
-        <div className="diaries-detail">
+      {/* RIGHT SIDE: EDITOR / DETAILS */}
+      {(editMode || currentDiary) && (
+        <div className="editor-sidepanel">
+          <div className="sidepanel-header">
+            <h2>{editMode ? (currentDiary ? 'Edit Entry' : 'New Entry') : 'Entry Details'}</h2>
+            <button className="btn-close" onClick={() => { setEditMode(false); setCurrentDiary(null); }}>✕</button>
+          </div>
+
           {editMode ? (
-            
-            <form className="diaries-form-container" onSubmit={handleSubmit}>
-
-              <h3>{currentDiary?.id ? 'Edit Entry' : 'New Entry'}</h3>
-              <div className="form-group">
-                <label htmlFor="date">Date*</label>
-              
-              <input
-                type="date"
-                value={formData.date}
-                onChange={e => setFormData({ ...formData, date: e.target.value })}
-              />
-              <select
-                value={formData.weather}
-                onChange={e => setFormData({ ...formData, weather: e.target.value })}
-              >
-                {weatherOptions.map(o => <option key={o} value={o}>{o}</option>)}
-              </select>
-              <textarea
-                value={formData.content}
-                onChange={e => setFormData({ ...formData, content: e.target.value })}
-              />
-              <div className="form-buttons">
-                <button type="submit" disabled={submitting} className="save-btn">
-                  {submitting ? 'Saving...' : 'Save'}
-                </button>
-                <button type="button" className="cancel-btn" onClick={() => setEditMode(false)}>Cancel</button>
-              </div>
-              </div>
-            </form>
-          ) : currentDiary ? (
-            <div>
-              
-              <div className="diaries-header">
-                <h3>{new Date(currentDiary.date).toLocaleDateString()}</h3>
-                <div className='form-buttons'>
-                <button onClick={() => {
-                  if (currentDiary) {
-                    setFormData({
-                      weather: currentDiary.weather,
-                      date: formatDateForInput(currentDiary.date),
-                      content: currentDiary.content
-                    });
-                    setEditMode(true);
-                  }
-                }} className="edit-btn">
-                  <FontAwesomeIcon icon={faEdit} /> Edit
-                </button>
-                <button className='edit-btn' onClick={() => handleDelete(currentDiary.id)} > Delete
-                </button>
+            <form onSubmit={handleSubmit} className="form">
+              <div className="form-row-group">
+                <div className="form-row">
+                  <label>Date</label>
+                  <input
+                    type="date"
+                    className="form-control"
+                    value={formData.date}
+                    onChange={e => setFormData({ ...formData, date: e.target.value })}
+                    required
+                  />
+                </div>
+                <div className="form-row">
+                  <label>Weather</label>
+                  <select
+                    className="form-control"
+                    value={formData.weather}
+                    onChange={e => setFormData({ ...formData, weather: e.target.value })}
+                  >
+                    {weatherOptions.map(o => <option key={o} value={o}>{o.charAt(0).toUpperCase() + o.slice(1)}</option>)}
+                  </select>
                 </div>
               </div>
-              <div className="diaries-content">
-                <p>{currentDiary.content}</p>
+
+              <div className="form-row">
+                <label>Content</label>
+                <textarea
+                  className="form-control markdown-editor"
+                  rows={15}
+                  value={formData.content}
+                  onChange={e => setFormData({ ...formData, content: e.target.value })}
+                  placeholder="Write your thoughts here..."
+                  required
+                />
+              </div>
+
+              <div className="form-actions">
+                <button type="submit" className="btn btn-primary" disabled={submitting}>
+                  <FontAwesomeIcon icon={faSave} /> {submitting ? 'Saving...' : 'Save Entry'}
+                </button>
+                <button type="button" className="btn" onClick={() => setEditMode(false)}>Cancel</button>
+              </div>
+            </form>
+          ) : (
+            <div className="experience-view">
+              <div className="view-header">
+                <h3>{new Date(currentDiary.date).toLocaleDateString(undefined, { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</h3>
+                <p className="company-subtitle">
+                  <FontAwesomeIcon 
+                    icon={getWeatherIcon(currentDiary.weather)} 
+                    style={{ color: getStatusColor(currentDiary.weather), marginRight: '8px' }} 
+                  />
+                  Status: {currentDiary.weather.charAt(0).toUpperCase() + currentDiary.weather.slice(1)}
+                </p>
+              </div>
+
+              <div className="view-content">
+                <label><FontAwesomeIcon icon={faQuoteLeft} /> My Thoughts</label>
+                <p className="description-text" style={{ whiteSpace: 'pre-wrap', lineHeight: '1.8' }}>
+                  {currentDiary.content}
+                </p>
+              </div>
+
+              <div className="form-actions">
+                <button className="btn btn-primary" onClick={handleOpenEdit}>
+                  <FontAwesomeIcon icon={faEdit} /> Edit Entry
+                </button>
+                <button className="btn btn-danger" onClick={() => handleDelete(currentDiary.id)}>
+                  <FontAwesomeIcon icon={faTrash} /> Delete
+                </button>
               </div>
             </div>
-          ) : (
-            <p>Select an entry</p>
           )}
         </div>
-      </div>
+      )}
     </div>
   );
 };

@@ -97,14 +97,14 @@ export default function BlogList({ selectedSlug }) {
             <div className="meta">
               {p.created_at && <span className="date-badge">{new Date(p.created_at).toLocaleDateString()}</span>}
             </div>
-            {/* Excerpt */}
+            {/* Excerpt
             {(
               p.excerpt || (p.content_md ? p.content_md.replace(/[#>*_`\-\[\]]/g, '').slice(0, 160) + (p.content_md.length > 160 ? '…' : '') : '')
             ) && (
-              <p style={{ margin: '6px 0 0 0', color: '#374151' }}>
-                {p.excerpt || (p.content_md ? p.content_md.replace(/[#>*_`\-\[\]]/g, '').slice(0, 160) + (p.content_md.length > 160 ? '…' : '') : '')}
-              </p>
-            )}
+              // <p style={{ margin: '6px 0 0 0', color: '#374151' }}>
+              //   {p.excerpt || (p.content_md ? p.content_md.replace(/[#>*_`\-\[\]]/g, '').slice(0, 160) + (p.content_md.length > 160 ? '…' : '') : '')}
+              // </p>
+            )} */}
             {p.tags && p.tags.length > 0 && (
               <div className="tags">
                 {p.tags.map((t, idx) => (

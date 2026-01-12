@@ -3,9 +3,16 @@ import jwt
 from functools import wraps
 from datetime import datetime, timedelta
 from flask import Blueprint, request, jsonify
-from models import db, Project, Skill, Study, Experience, Education, Message, Admin, LifeEvent
+from models import db, Project, Skill, Study, Experience, ExperienceProject, Education, Message, Admin, LifeEvent
+from flask_cors import CORS
 
+# This allows your React frontend to send headers like Authorizatio
 admin_bp = Blueprint('admin', __name__)
+CORS(admin_bp, 
+     resources={"/api/admin/*": {"origins": "http://localhost:3000"}},
+     supports_credentials=True,
+     allow_headers=["Content-Type", "Authorization"],
+     methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"])
 APP_SECRET_KEY = os.environ.get('APP_SECRET_KEY', 'dev-secret-key-change-in-production')
 
 def token_required(f):
@@ -87,6 +94,81 @@ def get_messages(current_admin):
         'date_received': msg.date_received.isoformat()
     } for msg in messages]
     return jsonify(message_list)
+
+# ----------------------
+# Experience-projects CRUD (Admin)
+# ----------------------
+def _experience_project_to_dict(p: ExperienceProject):
+    return {
+        'id': p.id,
+        'title': p.title,
+        'description': p.description,
+        'technologies': p.technologies,
+        'project_url': p.project_url,
+        'github_url': p.github_url
+    }
+
+@admin_bp.route('/api/admin/experience-projects', methods=['GET', 'OPTIONS'])
+@token_required
+def get_admin_experience_projects(current_admin):
+    experience_projects = ExperienceProject.query.all()
+    return jsonify([_experience_project_to_dict(p) for p in experience_projects])
+
+@admin_bp.route('/api/admin/experience-projects/<int:experience_project_id>', methods=['GET', 'OPTIONS'])
+@token_required
+def get_admin_experience_project(current_admin, experience_project_id):
+    experience_project = ExperienceProject.query.get_or_404(experience_project_id)
+    return jsonify(_experience_project_to_dict(experience_project))
+
+@admin_bp.route('/api/admin/experience/<int:experience_id>/projects', methods=['GET', 'OPTIONS'])
+@token_required
+def get_projects_by_experience_id(current_admin, experience_id):
+    projects = ExperienceProject.query.filter_by(experience_id=experience_id).all()
+    return jsonify([_experience_project_to_dict(p) for p in projects])
+
+@admin_bp.route('/api/admin/experience-projects', methods=['POST', 'OPTIONS'])
+@token_required
+def create_admin_experience_project(current_admin):
+    data = request.get_json(force=True) or {}
+    p = ExperienceProject(
+        title=(data.get('title') or '').strip(),
+        description=data.get('description'),
+        experience_id=data.get('experience_id'),
+        technologies=data.get('technologies'),
+        project_url=data.get('project_url'),
+        github_url=data.get('github_url'),
+    )
+    db.session.add(p)
+    db.session.commit()
+    return jsonify(_experience_project_to_dict(p)), 201
+
+@admin_bp.route('/api/admin/experience-projects/<int:experience_project_id>', methods=['PUT', 'OPTIONS'])
+@token_required
+def update_admin_experience_project(current_admin, experience_project_id):
+    p = ExperienceProject.query.get_or_404(experience_project_id)
+    data = request.get_json(force=True) or {}
+    if 'title' in data:
+        p.title = (data.get('title') or '').strip()
+    if 'description' in data:
+        p.description = data.get('description')
+    if 'experience_id' in data:
+        p.experience_id = data.get('experience_id')
+    if 'technologies' in data:
+        p.technologies = data.get('technologies')
+    if 'project_url' in data:
+        p.project_url = data.get('project_url')
+    if 'github_url' in data:
+        p.github_url = data.get('github_url')
+    db.session.commit()
+    return jsonify(_experience_project_to_dict(p))
+
+@admin_bp.route('/api/admin/experience-projects/<int:experience_project_id>', methods=['DELETE', 'OPTIONS'])
+@token_required
+def delete_admin_experience_project(current_admin, experience_project_id):
+    p = ExperienceProject.query.get_or_404(experience_project_id)
+    db.session.delete(p)
+    db.session.commit()
+    return '', 204
 
 # ----------------------
 # Projects CRUD (Admin)

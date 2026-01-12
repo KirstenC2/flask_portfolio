@@ -1,4 +1,12 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import {
+  faStar, faPlus, faEdit, faTrash, faCalendarAlt, 
+  faHistory, faTimes, faSave
+} from '@fortawesome/free-solid-svg-icons';
+import '../../../common/global.css';
+// Assuming you are reusing the same CSS file or similar styles
+import '../../../common/global.css'; 
 
 const LifeEventsPanel = () => {
   const [events, setEvents] = useState([]);
@@ -7,31 +15,21 @@ const LifeEventsPanel = () => {
   const [editMode, setEditMode] = useState(false);
   const [current, setCurrent] = useState(null);
   const [form, setForm] = useState({
-    title: '',
-    description: '',
-    start_date: '',
-    end_date: '',
-    is_current: false,
-    order: 0,
+    title: '', description: '', start_date: '', end_date: '', is_current: false, order: 0,
   });
 
-  useEffect(() => {
-    fetchEvents();
-  }, []);
+  useEffect(() => { fetchEvents(); }, []);
 
   const fetchEvents = async () => {
     setLoading(true);
-    setError(null);
     try {
       const token = localStorage.getItem('adminToken');
       const res = await fetch('http://localhost:5001/api/admin/life-events', {
         headers: { Authorization: `Bearer ${token}` },
       });
-      if (!res.ok) throw new Error('Failed to fetch life events');
       const data = await res.json();
       setEvents(data);
     } catch (e) {
-      console.error('Error fetching life events:', e);
       setError('Failed to load life events.');
     } finally {
       setLoading(false);
@@ -62,40 +60,25 @@ const LifeEventsPanel = () => {
     setEditMode(true);
   };
 
-  const onCancel = () => {
-    if (current) onSelect(current);
-    else setForm({ title: '', description: '', start_date: '', end_date: '', is_current: false, order: 0 });
-    setEditMode(false);
-  };
-
   const onSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
-    setError(null);
     try {
       const token = localStorage.getItem('adminToken');
       const method = current ? 'PUT' : 'POST';
       const url = current
         ? `http://localhost:5001/api/admin/life-events/${current.id}`
         : 'http://localhost:5001/api/admin/life-events';
-      const body = {
-        ...form,
-        // send empty strings as null for dates
-        start_date: form.start_date || null,
-        end_date: form.end_date || null,
-        order: Number(form.order) || 0,
-      };
-      const res = await fetch(url, {
+      
+      await fetch(url, {
         method,
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-        body: JSON.stringify(body),
+        body: JSON.stringify({ ...form, order: Number(form.order) }),
       });
-      if (!res.ok) throw new Error('Failed to save life event');
-      await fetchEvents();
+      
       setEditMode(false);
-      if (!current) setCurrent(null);
+      fetchEvents();
     } catch (e) {
-      console.error('Error saving life event:', e);
       setError('Failed to save life event.');
     } finally {
       setLoading(false);
@@ -103,109 +86,158 @@ const LifeEventsPanel = () => {
   };
 
   const onDelete = async () => {
-    if (!current) return;
-    if (!window.confirm(`Delete life event: "${current.title}"?`)) return;
-    setLoading(true);
-    setError(null);
+    if (!current || !window.confirm(`Delete: "${current.title}"?`)) return;
     try {
       const token = localStorage.getItem('adminToken');
-      const res = await fetch(`http://localhost:5001/api/admin/life-events/${current.id}`, {
+      await fetch(`http://localhost:5001/api/admin/life-events/${current.id}`, {
         method: 'DELETE',
         headers: { Authorization: `Bearer ${token}` },
       });
-      if (!res.ok) throw new Error('Failed to delete life event');
-      await fetchEvents();
       setCurrent(null);
+      fetchEvents();
     } catch (e) {
-      console.error('Error deleting life event:', e);
-      setError('Failed to delete life event.');
-    } finally {
-      setLoading(false);
+      setError('Delete failed.');
     }
   };
 
+  const formatDate = (dateString) => {
+    if (!dateString) return '';
+    return new Date(dateString).toLocaleDateString('en-US', { year: 'numeric', month: 'short' });
+  };
+
   return (
-    <div className="life-events-panel">
-      <div className="panel-header">
-        <button className="btn" onClick={onCreateNew}>New Life Event</button>
-      </div>
-      {error && <div className="error">{error}</div>}
-      <div className="panel-body" style={{ display: 'flex', gap: 24 }}>
-        <div style={{ flex: 1 }}>
-          <h3>Life Events</h3>
-          {loading && !events.length ? (
-            <p>Loading...</p>
-          ) : events.length === 0 ? (
-            <div>
-              <p>No life events found.</p>
-              <button onClick={onCreateNew}>Create your first life event</button>
-            </div>
-          ) : (
-            <ul style={{ listStyle: 'none', padding: 0 }}>
-              {events.map((ev) => (
-                <li key={ev.id}
-                    onClick={() => onSelect(ev)}
-                    style={{ padding: '8px 12px', border: '1px solid #eee', marginBottom: 8, cursor: 'pointer', background: current && current.id === ev.id ? '#f5f7ff' : '#fff' }}>
-                  <div style={{ fontWeight: 600 }}>{ev.title}</div>
-                  <div style={{ fontSize: 12, color: '#666' }}>{ev.start_date?.slice(0,10)}{ev.end_date ? ` - ${ev.end_date.slice(0,10)}` : (ev.is_current ? ' - Present' : '')}</div>
-                </li>
-              ))}
-            </ul>
-          )}
+    <div className="admin-container">
+      {/* LEFT SIDE: LIST */}
+      <div className={`list-section ${editMode || current ? 'shrink' : ''}`}>
+        <div className="section-header">
+          <h1>Life Events</h1>
+          <button className="btn btn-primary" onClick={onCreateNew}>
+            <FontAwesomeIcon icon={faPlus} /> New Event
+          </button>
         </div>
-        <div style={{ flex: 2 }}>
-          {!editMode && !current ? (
-            <div>Select an event or create a new one</div>
-          ) : editMode ? (
-            <form onSubmit={onSubmit}>
-              <div style={{ display: 'grid', gap: 12 }}>
-                <label>
-                  Title*
-                  <input name="title" value={form.title} onChange={onChange} required />
-                </label>
-                <label>
-                  Description
-                  <textarea name="description" value={form.description} onChange={onChange} rows={4} />
-                </label>
-                <div style={{ display: 'flex', gap: 12 }}>
-                  <label style={{ flex: 1 }}>
-                    Start Date
-                    <input type="date" name="start_date" value={form.start_date} onChange={onChange} />
-                  </label>
-                  <label style={{ flex: 1 }}>
-                    End Date
-                    <input type="date" name="end_date" value={form.end_date} onChange={onChange} disabled={form.is_current} />
-                  </label>
+
+        {error && <div className="error-banner">{error}</div>}
+
+        <div className="experience-items-list">
+          {[...events].sort((a,b) => b.order - a.order).map((ev) => (
+            <div
+              key={ev.id}
+              className={`experience-card-item ${current?.id === ev.id ? 'active' : ''}`}
+              onClick={() => onSelect(ev)}
+            >
+              <div className="card-main">
+                <div className="card-icon"><FontAwesomeIcon icon={faStar} /></div>
+                <div className="card-info">
+                  <div className="post-title-cell">{ev.title}</div>
+                  <div className="date-text">{formatDate(ev.start_date)}</div>
                 </div>
-                <label>
-                  <input type="checkbox" name="is_current" checked={form.is_current} onChange={onChange} /> Currently ongoing
-                </label>
-                <label>
-                  Order
-                  <input type="number" name="order" value={form.order} onChange={onChange} />
-                </label>
-                <div style={{ display: 'flex', gap: 12 }}>
-                  <button type="submit" disabled={loading}>{loading ? 'Saving...' : 'Save'}</button>
-                  <button type="button" onClick={onCancel}>Cancel</button>
+                {ev.is_current && <span className="tag-pill">Ongoing</span>}
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* RIGHT SIDE: SIDEBAR EDITOR */}
+      {(editMode || current) && (
+        <div className="editor-sidepanel">
+          <div className="sidepanel-header">
+            <h2>{editMode ? (current ? 'Edit Event' : 'New Event') : 'Event Details'}</h2>
+            <button className="btn-close" onClick={() => { setEditMode(false); setCurrent(null); }}>✕</button>
+          </div>
+
+          {editMode ? (
+            <form onSubmit={onSubmit} className="form">
+              <div className="form-row">
+                <label>Title</label>
+                <input 
+                  className="form-control" 
+                  name="title" 
+                  value={form.title} 
+                  onChange={onChange} 
+                  required 
+                />
+              </div>
+
+              <div className="form-row-group">
+                <div className="form-row">
+                  <label>Start Date</label>
+                  <input 
+                    type="date" 
+                    className="form-control" 
+                    name="start_date" 
+                    value={form.start_date} 
+                    onChange={onChange} 
+                  />
                 </div>
+                <div className="form-row">
+                  <label>End Date</label>
+                  <input 
+                    type="date" 
+                    className="form-control" 
+                    name="end_date" 
+                    value={form.end_date} 
+                    onChange={onChange} 
+                    disabled={form.is_current} 
+                  />
+                </div>
+              </div>
+
+              <div className="form-check-row">
+                <input 
+                  type="checkbox" 
+                  id="is_current" 
+                  name="is_current" 
+                  checked={form.is_current} 
+                  onChange={onChange} 
+                />
+                <label htmlFor="is_current">Currently ongoing</label>
+              </div>
+
+              <div className="form-row">
+                <label>Description</label>
+                <textarea 
+                  className="form-control markdown-editor" 
+                  name="description" 
+                  rows={8} 
+                  value={form.description} 
+                  onChange={onChange} 
+                />
+              </div>
+
+              <div className="form-actions">
+                <button type="submit" className="btn btn-primary">
+                  <FontAwesomeIcon icon={faSave} /> Save Event
+                </button>
+                <button type="button" className="btn" onClick={() => setEditMode(false)}>Cancel</button>
               </div>
             </form>
           ) : (
-            <div>
-              <h3>{current?.title}</h3>
-              <p style={{ whiteSpace: 'pre-wrap' }}>{current?.description}</p>
-              <p>
-                {current?.start_date?.slice(0,10)}
-                {current?.end_date ? ` - ${current.end_date.slice(0,10)}` : (current?.is_current ? ' - Present' : '')}
-              </p>
-              <div style={{ display: 'flex', gap: 12 }}>
-                <button onClick={() => setEditMode(true)}>Edit</button>
-                <button onClick={onDelete}>Delete</button>
+            <div className="experience-view">
+              <div className="view-header">
+                <h3>{current.title}</h3>
+                <p className="date-display">
+                  <FontAwesomeIcon icon={faCalendarAlt} /> {formatDate(current.start_date)} — {current.is_current ? 'Present' : formatDate(current.end_date)}
+                </p>
+              </div>
+
+              <div className="view-content">
+                <label>Description</label>
+                <p className="description-text" style={{ whiteSpace: 'pre-wrap' }}>{current.description}</p>
+              </div>
+
+              <div className="form-actions">
+                <button className="btn btn-primary" onClick={() => setEditMode(true)}>
+                  <FontAwesomeIcon icon={faEdit} /> Edit Event
+                </button>
+                <button className="btn btn-danger" onClick={onDelete}>
+                  <FontAwesomeIcon icon={faTrash} /> Delete
+                </button>
               </div>
             </div>
           )}
         </div>
-      </div>
+      )}
     </div>
   );
 };

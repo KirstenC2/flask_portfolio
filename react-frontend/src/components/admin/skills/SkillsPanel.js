@@ -1,18 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { 
-  faCode, 
-  faPlus, 
-  faEdit, 
-  faTrash, 
-  faSave, 
-  faTimes,
-  faSpinner,
-  faSort,
-  faFilter
+  faCode, faPlus, faEdit, faTrash, faSave, faTimes,
+  faSpinner, faFilter, faLayerGroup, faSignal
 } from '@fortawesome/free-solid-svg-icons';
-import './SkillsPanel.css';
-
+import './SkillsPanel.css'; // Standardized admin styles
+import '../../../common/global.css'
 const SkillsPanel = () => {
   const [skills, setSkills] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -26,43 +19,26 @@ const SkillsPanel = () => {
     category: '',
     proficiency: 3
   });
-  
-  // Fetch skills on component mount
-  useEffect(() => {
-    fetchSkills();
-  }, []);
-  
+
+  useEffect(() => { fetchSkills(); }, []);
+
   const fetchSkills = async () => {
     setLoading(true);
-    setError(null);
-    
     try {
       const token = localStorage.getItem('adminToken');
       const response = await fetch('http://localhost:5001/api/admin/skills', {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
+        headers: { 'Authorization': `Bearer ${token}` }
       });
-      
-      if (!response.ok) {
-        throw new Error('Failed to fetch skills');
-      }
-      
       const data = await response.json();
       setSkills(data);
-      
-      // Extract unique categories
-      const uniqueCategories = [...new Set(data.map(skill => skill.category))];
-      setCategories(uniqueCategories);
-      
+      setCategories([...new Set(data.map(skill => skill.category))]);
     } catch (err) {
-      console.error('Error fetching skills:', err);
-      setError('Failed to load skills. Please try again.');
+      setError('Failed to load skills.');
     } finally {
       setLoading(false);
     }
   };
-  
+
   const handleSelectSkill = (skill) => {
     setCurrentSkill(skill);
     setFormData({
@@ -72,53 +48,16 @@ const SkillsPanel = () => {
     });
     setEditMode(false);
   };
-  
+
   const handleCreateNew = () => {
     setCurrentSkill(null);
-    setFormData({
-      name: '',
-      category: categories[0] || '',
-      proficiency: 3
-    });
+    setFormData({ name: '', category: categories[0] || '', proficiency: 3 });
     setEditMode(true);
   };
-  
-  const handleEditSkill = () => {
-    setEditMode(true);
-  };
-  
-  const handleCancelEdit = () => {
-    if (currentSkill) {
-      // Reset form to current skill data
-      setFormData({
-        name: currentSkill.name,
-        category: currentSkill.category,
-        proficiency: currentSkill.proficiency
-      });
-    } else {
-      // Clear form
-      setFormData({
-        name: '',
-        category: categories[0] || '',
-        proficiency: 3
-      });
-    }
-    
-    setEditMode(false);
-  };
-  
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    setFormData({
-      ...formData,
-      [name]: name === 'proficiency' ? parseInt(value, 10) : value
-    });
-  };
-  
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
-    
     try {
       const token = localStorage.getItem('adminToken');
       const method = currentSkill ? 'PUT' : 'POST';
@@ -126,289 +65,186 @@ const SkillsPanel = () => {
         ? `http://localhost:5001/api/admin/skills/${currentSkill.id}`
         : 'http://localhost:5001/api/admin/skills';
       
-      const response = await fetch(url, {
+      await fetch(url, {
         method,
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
         body: JSON.stringify(formData)
       });
       
-      if (!response.ok) {
-        throw new Error(`Failed to ${currentSkill ? 'update' : 'create'} skill`);
-      }
-      
-      // Refresh skills list
-      fetchSkills();
-      
-      // Exit edit mode
       setEditMode(false);
-      
-      // If creating new, clear current skill
-      if (!currentSkill) {
-        setCurrentSkill(null);
-      }
-      
+      fetchSkills();
     } catch (err) {
-      console.error(`Error ${currentSkill ? 'updating' : 'creating'} skill:`, err);
-      setError(`Failed to ${currentSkill ? 'update' : 'create'} skill. Please try again.`);
+      setError('Save failed.');
     } finally {
       setLoading(false);
     }
   };
-  
-  const handleDeleteSkill = async () => {
-    if (!currentSkill) return;
-    
-    if (!window.confirm(`Are you sure you want to delete "${currentSkill.name}"?`)) {
-      return;
-    }
-    
-    setLoading(true);
-    
+
+  const handleDelete = async () => {
+    if (!currentSkill || !window.confirm(`Delete skill: ${currentSkill.name}?`)) return;
     try {
       const token = localStorage.getItem('adminToken');
-      const response = await fetch(`http://localhost:5001/api/admin/skills/${currentSkill.id}`, {
+      await fetch(`http://localhost:5001/api/admin/skills/${currentSkill.id}`, {
         method: 'DELETE',
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
+        headers: { 'Authorization': `Bearer ${token}` }
       });
-      
-      if (!response.ok) {
-        throw new Error('Failed to delete skill');
-      }
-      
-      // Refresh skills list
-      fetchSkills();
-      
-      // Clear current skill
       setCurrentSkill(null);
-      
+      fetchSkills();
     } catch (err) {
-      console.error('Error deleting skill:', err);
-      setError('Failed to delete skill. Please try again.');
-    } finally {
-      setLoading(false);
+      setError('Delete failed.');
     }
   };
-  
-  // Filter skills by category
+
   const filteredSkills = filterCategory === 'all' 
     ? skills 
     : skills.filter(skill => skill.category === filterCategory);
-  
-  // Sort skills by name
+
   const sortedSkills = [...filteredSkills].sort((a, b) => a.name.localeCompare(b.name));
-  
+
   return (
-    <div className="skills-panel">
-      <div className="skills-header">
-        <div className="filter-section">
-          <FontAwesomeIcon icon={faFilter} />
-          <select 
-            value={filterCategory} 
-            onChange={(e) => setFilterCategory(e.target.value)}
-            className="category-filter"
-          >
-            <option value="all">All Categories</option>
-            {categories.map(category => (
-              <option key={category} value={category}>{category}</option>
-            ))}
-          </select>
-        </div>
-        
-        <button className="new-skill-btn" onClick={handleCreateNew}>
-          <FontAwesomeIcon icon={faPlus} /> New Skill
-        </button>
-      </div>
-      
-      {error && <div className="error-message">{error}</div>}
-      
-      <div className="skills-content">
-        <div className="skills-list">
-          <div className="list-header">
-            <h3>Your Skills</h3>
-            <span className="skill-count">{filteredSkills.length} skills</span>
-          </div>
-          
-          {loading && !skills.length ? (
-            <div className="loading-state">
-              <FontAwesomeIcon icon={faSpinner} className="spinner" />
-              <p>Loading skills...</p>
-            </div>
-          ) : skills.length === 0 ? (
-            <div className="empty-state">
-              <FontAwesomeIcon icon={faCode} />
-              <p>No skills found</p>
-              <button onClick={handleCreateNew}>Add your first skill</button>
-            </div>
-          ) : filteredSkills.length === 0 ? (
-            <div className="empty-state">
-              <FontAwesomeIcon icon={faFilter} />
-              <p>No skills in this category</p>
-              <button onClick={() => setFilterCategory('all')}>Show all skills</button>
-            </div>
-          ) : (
-            <ul className="skill-items">
-              {sortedSkills.map(skill => (
-                <li 
-                  key={skill.id} 
-                  className={`skill-item ${currentSkill && currentSkill.id === skill.id ? 'active' : ''}`}
-                  onClick={() => handleSelectSkill(skill)}
+    <div className="admin-container">
+      {/* LEFT SIDE: SKILLS LIST */}
+      <div className={`list-section ${editMode || currentSkill ? 'shrink' : ''}`}>
+        <div className="section-header">
+          <h1>Skills</h1>
+          <div className="header-actions">
+             <div className="filter-wrapper">
+                <FontAwesomeIcon icon={faFilter} className="filter-icon" />
+                <select 
+                    value={filterCategory} 
+                    onChange={(e) => setFilterCategory(e.target.value)}
+                    className="category-select-mini"
                 >
-                  <div className="skill-details">
-                    <h4>{skill.name}</h4>
-                    <span className="skill-category">{skill.category}</span>
-                  </div>
-                  <div className="skill-proficiency">
-                    <div className="proficiency-bar">
-                      <div 
-                        className="proficiency-fill" 
-                        style={{ width: `${(skill.proficiency / 5) * 100}%` }}
-                      ></div>
-                    </div>
-                    <span className="proficiency-level">{skill.proficiency}/5</span>
-                  </div>
-                </li>
-              ))}
-            </ul>
-          )}
+                    <option value="all">All</option>
+                    {categories.map(cat => <option key={cat} value={cat}>{cat}</option>)}
+                </select>
+             </div>
+            <button className="btn btn-primary" onClick={handleCreateNew}>
+                <FontAwesomeIcon icon={faPlus} /> New Skill
+            </button>
+          </div>
         </div>
-        
-        <div className="skill-details-panel">
-          {loading && currentSkill ? (
-            <div className="loading-state">
-              <FontAwesomeIcon icon={faSpinner} className="spinner" />
-              <p>Loading skill details...</p>
-            </div>
-          ) : !currentSkill && !editMode ? (
-            <div className="no-selection">
-              <FontAwesomeIcon icon={faCode} />
-              <p>Select a skill or create a new one</p>
-            </div>
-          ) : (
-            <div className="skill-form-container">
-              <div className="form-header">
-                <h3>{editMode ? (currentSkill ? 'Edit Skill' : 'Create New Skill') : 'Skill Details'}</h3>
-                
-                {!editMode && currentSkill && (
-                  <div className="form-actions">
-                    <button className="edit-btn" onClick={handleEditSkill}>
-                      <FontAwesomeIcon icon={faEdit} /> Edit
-                    </button>
-                    <button className="delete-btn" onClick={handleDeleteSkill}>
-                      <FontAwesomeIcon icon={faTrash} /> Delete
-                    </button>
-                  </div>
-                )}
-              </div>
-              
-              {editMode ? (
-                <form className="skill-form" onSubmit={handleSubmit}>
-                  <div className="form-group">
-                    <label htmlFor="name">Skill Name*</label>
-                    <input
-                      type="text"
-                      id="name"
-                      name="name"
-                      value={formData.name}
-                      onChange={handleChange}
-                      required
-                    />
-                  </div>
-                  
-                  <div className="form-group">
-                    <label htmlFor="category">Category*</label>
-                    <div className="category-input">
-                      <input
-                        type="text"
-                        id="category"
-                        name="category"
-                        value={formData.category}
-                        onChange={handleChange}
-                        required
-                        placeholder="e.g., Programming, Design, Soft Skills"
-                        list="category-suggestions"
-                      />
-                      <datalist id="category-suggestions">
-                        {categories.map(category => (
-                          <option key={category} value={category} />
-                        ))}
-                      </datalist>
-                    </div>
-                    <small className="helper-text">
-                      You can use existing categories or create a new one
-                    </small>
-                  </div>
-                  
-                  <div className="form-group">
-                    <label htmlFor="proficiency">
-                      Proficiency Level* ({formData.proficiency}/5)
-                    </label>
-                    <input
-                      type="range"
-                      id="proficiency"
-                      name="proficiency"
-                      value={formData.proficiency}
-                      onChange={handleChange}
-                      min="1"
-                      max="5"
-                      step="1"
-                      className="proficiency-slider"
-                    />
-                    <div className="proficiency-labels">
-                      <span>Beginner</span>
-                      <span>Intermediate</span>
-                      <span>Expert</span>
-                    </div>
-                  </div>
-                  
-                  <div className="form-buttons">
-                    <button type="submit" className="save-btn" disabled={loading}>
-                      {loading ? <FontAwesomeIcon icon={faSpinner} className="spinner" /> : <FontAwesomeIcon icon={faSave} />}
-                      {loading ? 'Saving...' : 'Save Skill'}
-                    </button>
-                    <button type="button" className="cancel-btn" onClick={handleCancelEdit}>
-                      <FontAwesomeIcon icon={faTimes} /> Cancel
-                    </button>
-                  </div>
-                </form>
-              ) : currentSkill && (
-                <div className="skill-view">
-                  <div className="skill-info">
-                    <h2>{currentSkill.name}</h2>
-                    <div className="skill-meta">
-                      <div className="skill-category-badge">
-                        <span>{currentSkill.category}</span>
-                      </div>
-                    </div>
-                    
-                    <div className="skill-proficiency-display">
-                      <h3>Proficiency Level</h3>
-                      <div className="proficiency-bar-large">
-                        <div 
-                          className="proficiency-fill" 
-                          style={{ width: `${(currentSkill.proficiency / 5) * 100}%` }}
-                        ></div>
-                      </div>
-                      <div className="proficiency-scale">
-                        <span>Beginner</span>
-                        <span>Intermediate</span>
-                        <span>Expert</span>
-                      </div>
-                      <div className="proficiency-value">
-                        {currentSkill.proficiency}/5
-                      </div>
-                    </div>
-                  </div>
+
+        {error && <div className="error-banner">{error}</div>}
+
+        <div className="experience-items-list">
+          {sortedSkills.map((skill) => (
+            <div
+              key={skill.id}
+              className={`experience-card-item ${currentSkill?.id === skill.id ? 'active' : ''}`}
+              onClick={() => handleSelectSkill(skill)}
+            >
+              <div className="card-main">
+                <div className="card-icon"><FontAwesomeIcon icon={faCode} /></div>
+                <div className="card-info">
+                  <div className="post-title-cell">{skill.name}</div>
+                  <div className="date-text">{skill.category}</div>
                 </div>
-              )}
+                <div className="skill-indicator">
+                    <div className="mini-bar">
+                        <div className="mini-fill" style={{ width: `${(skill.proficiency / 5) * 100}%` }}></div>
+                    </div>
+                </div>
+              </div>
             </div>
-          )}
+          ))}
         </div>
       </div>
+
+      {/* RIGHT SIDE: EDITOR / DETAILS */}
+      {(editMode || currentSkill) && (
+        <div className="editor-sidepanel">
+          <div className="sidepanel-header">
+            <h2>{editMode ? (currentSkill ? 'Edit Skill' : 'New Skill') : 'Skill Details'}</h2>
+            <button className="btn-close" onClick={() => { setEditMode(false); setCurrentSkill(null); }}>✕</button>
+          </div>
+
+          {editMode ? (
+            <form onSubmit={handleSubmit} className="form">
+              <div className="form-row">
+                <label>Skill Name</label>
+                <input 
+                    className="form-control" 
+                    value={formData.name} 
+                    onChange={e => setFormData({...formData, name: e.target.value})} 
+                    required 
+                />
+              </div>
+
+              <div className="form-row">
+                <label>Category</label>
+                <input 
+                    className="form-control" 
+                    value={formData.category} 
+                    onChange={e => setFormData({...formData, category: e.target.value})} 
+                    list="category-suggestions"
+                    required 
+                />
+                <datalist id="category-suggestions">
+                    {categories.map(cat => <option key={cat} value={cat} />)}
+                </datalist>
+              </div>
+
+              <div className="form-row">
+                <label>Proficiency Level ({formData.proficiency}/5)</label>
+                <div className="range-container">
+                    <input 
+                        type="range" 
+                        className="proficiency-slider" 
+                        min="1" max="5" 
+                        value={formData.proficiency} 
+                        onChange={e => setFormData({...formData, proficiency: parseInt(e.target.value)})} 
+                    />
+                    <div className="range-labels">
+                        <span>Beginner</span>
+                        <span>Expert</span>
+                    </div>
+                </div>
+              </div>
+
+              <div className="form-actions">
+                <button type="submit" className="btn btn-primary">
+                  <FontAwesomeIcon icon={faSave} /> Save Skill
+                </button>
+                <button type="button" className="btn" onClick={() => setEditMode(false)}>Cancel</button>
+              </div>
+            </form>
+          ) : (
+            <div className="experience-view">
+              <div className="view-header">
+                <h3>{currentSkill.name}</h3>
+                <p className="company-subtitle">
+                    <FontAwesomeIcon icon={faLayerGroup} /> {currentSkill.category}
+                </p>
+              </div>
+
+              <div className="view-content">
+                <label><FontAwesomeIcon icon={faSignal} /> Mastery</label>
+                <div className="proficiency-display-large">
+                    <div className="proficiency-bar-bg">
+                        <div 
+                            className="proficiency-bar-fill" 
+                            style={{ width: `${(currentSkill.proficiency / 5) * 100}%` }}
+                        ></div>
+                    </div>
+                    <div className="proficiency-text">
+                        Level {currentSkill.proficiency} of 5
+                    </div>
+                </div>
+              </div>
+
+              <div className="form-actions">
+                <button className="btn btn-primary" onClick={() => setEditMode(true)}>
+                  <FontAwesomeIcon icon={faEdit} /> Edit Skill
+                </button>
+                <button className="btn btn-danger" onClick={handleDelete}>
+                  <FontAwesomeIcon icon={faTrash} /> Delete
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 };

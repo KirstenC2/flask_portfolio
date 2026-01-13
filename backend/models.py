@@ -22,9 +22,9 @@ class Skill(db.Model):
     name = db.Column(db.String(50), nullable=False)
     category = db.Column(db.String(50), nullable=False)  # e.g., 'Programming', 'Design', 'Soft Skills'
     proficiency = db.Column(db.Integer, nullable=False)  # 1-5 scale
-    
+    description = db.Column(db.Text, nullable=True)
     def __repr__(self):
-        return f"Skill('{self.name}', '{self.category}', {self.proficiency})"
+        return f"Skill('{self.name}', '{self.category}', {self.proficiency}, '{self.description}')"
         
 class Study(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -117,7 +117,7 @@ class Diary(db.Model):
     date = db.Column(db.DateTime, nullable=False)
     weather = db.Column(db.String(20), nullable=False)
     content = db.Column(db.Text, nullable=True)
-    
+    emotion = db.Column(db.String(20), nullable=True)
     def __repr__(self):
         return f"Diary('{self.date}', '{self.weather}', '{self.content}')"
         

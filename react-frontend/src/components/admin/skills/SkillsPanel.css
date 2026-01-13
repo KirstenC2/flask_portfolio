@@ -27,6 +27,19 @@
   cursor: pointer;
 }
 
+.description-label {
+  font-size: 1rem;
+  padding-top: 1rem;
+  padding-bottom: 1rem;
+  color: #a9a5a5;
+  border-bottom: 1px solid #eee;
+}
+
+.description-text {
+  font-size: 0.9rem;
+  color: #666;
+}
+
 .new-skill-btn {
   background-color: #27ae60;
   color: white;

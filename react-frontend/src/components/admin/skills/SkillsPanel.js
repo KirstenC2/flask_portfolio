@@ -44,7 +44,8 @@ const SkillsPanel = () => {
     setFormData({
       name: skill.name,
       category: skill.category,
-      proficiency: skill.proficiency
+      proficiency: skill.proficiency,
+      description: skill.description
     });
     setEditMode(false);
   };
@@ -139,6 +140,7 @@ const SkillsPanel = () => {
                 <div className="card-info">
                   <div className="post-title-cell">{skill.name}</div>
                   <div className="date-text">{skill.category}</div>
+                  <div className="date-text">{skill.description}</div>
                 </div>
                 <div className="skill-indicator">
                     <div className="mini-bar">
@@ -202,6 +204,16 @@ const SkillsPanel = () => {
                 </div>
               </div>
 
+              <div className="form-row">
+                <label>Description</label>
+                <textarea 
+                    className="form-control" 
+                    value={formData.description} 
+                    onChange={e => setFormData({...formData, description: e.target.value})} 
+                    required 
+                />
+              </div>
+
               <div className="form-actions">
                 <button type="submit" className="btn btn-primary">
                   <FontAwesomeIcon icon={faSave} /> Save Skill
@@ -230,6 +242,13 @@ const SkillsPanel = () => {
                     <div className="proficiency-text">
                         Level {currentSkill.proficiency} of 5
                     </div>
+                </div>
+              </div>
+
+              <div className="form-row">
+                <div className='view-content'>
+                  <label className='description-label'>Description</label>
+                  <p className='description-text'>{currentSkill.description}</p>
                 </div>
               </div>
 

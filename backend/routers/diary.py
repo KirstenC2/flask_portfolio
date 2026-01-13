@@ -12,6 +12,7 @@ def diary():
         new_diary = Diary(
             date=diary_data.get("date", ""),
             weather=diary_data.get("weather", ""),
+            emotion=diary_data.get("emotion", ""),
             content=diary_data.get("content", ""),
         )
         db.session.add(new_diary)
@@ -28,6 +29,7 @@ def diary():
                         "id": diary.id,
                         "date": diary.date,
                         "weather": diary.weather,
+                        "emotion": diary.emotion,
                         "content": diary.content,
                     }
                     for diary in diaries
@@ -42,6 +44,7 @@ def update_diary(id):
 
     d.date = diary_data.get("date", d.date)
     d.weather = diary_data.get("weather", d.weather)
+    d.emotion = diary_data.get("emotion", d.emotion)
     d.content = diary_data.get("content", d.content)
 
     db.session.commit()

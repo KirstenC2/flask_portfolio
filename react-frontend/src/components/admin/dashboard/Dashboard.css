@@ -18,10 +18,49 @@
   border-bottom: 1px solid rgba(255, 255, 255, 0.1);
 }
 
+.sidebar-subheader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  cursor: pointer;
+  padding: 10px 15px;
+  user-select: none;
+}
+
+.sidebar-subheader:hover {
+  background: rgba(0, 0, 0, 0.05); /* Subtle hover for the header */
+}
+
+.chevron {
+  font-size: 0.8rem;
+  transition: transform 0.3s ease;
+  color: #94a3b8;
+}
+
+.chevron.open {
+  transform: rotate(180deg);
+}
+
+/* Optional: Add a subtle animation for the group appearance */
+.collapsible-group {
+  animation: slideDown 0.2s ease-out;
+  overflow: hidden;
+}
+
+@keyframes slideDown {
+  from { opacity: 0; transform: translateY(-10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
 .sidebar-header h2 {
   margin: 0;
   font-size: 1.4rem;
   color: #fff;
+}
+
+.sidebar-subheader h3 {
+  font-size: 1rem;
+  margin: 0;
+  color: #f5f6f7;
 }
 
 .admin-info {

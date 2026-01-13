@@ -246,6 +246,7 @@ def _skill_to_dict(s: Skill):
         'name': s.name,
         'category': s.category,
         'proficiency': s.proficiency,
+        'description': s.description,
     }
 
 @admin_bp.route('/api/admin/skills', methods=['GET', 'OPTIONS'])
@@ -262,6 +263,7 @@ def create_admin_skill(current_admin):
         name=(data.get('name') or '').strip(),
         category=data.get('category') or '',
         proficiency=int(data.get('proficiency') or 0),
+        description=data.get('description') or '',
     )
     db.session.add(s)
     db.session.commit()
@@ -281,6 +283,8 @@ def update_admin_skill(current_admin, skill_id):
             s.proficiency = int(data.get('proficiency') or 0)
         except Exception:
             pass
+    if 'description' in data:
+        s.description = data.get('description') or ''
     db.session.commit()
     return jsonify(_skill_to_dict(s))
 
@@ -524,30 +528,55 @@ def create_experience(current_admin):
     db.session.commit()
     return jsonify(_exp_to_dict(exp)), 201
 
-@admin_bp.route('/api/admin/experience/<int:exp_id>', methods=['PUT', 'OPTIONS'])
+@admin_bp.route('/api/admin/experience/<int:id>', methods=['PUT', 'OPTIONS'])
 @token_required
-def update_experience(current_admin, exp_id):
-    exp = Experience.query.get_or_404(exp_id)
-    data = request.get_json(force=True) or {}
-    if 'title' in data:
-        exp.title = (data.get('title') or '').strip()
-    if 'company' in data:
-        exp.company = (data.get('company') or '').strip()
-    if 'description' in data:
-        exp.description = data.get('description') or ''
-    if 'start_date' in data:
-        exp.start_date = _parse_dt(data.get('start_date'))
-    if 'end_date' in data:
-        exp.end_date = _parse_dt(data.get('end_date'))
-    if 'is_current' in data:
-        exp.is_current = bool(data.get('is_current'))
-    if 'order' in data:
-        try:
-            exp.order = int(data.get('order') or 0)
-        except Exception:
-            pass
-    db.session.commit()
-    return jsonify(_exp_to_dict(exp))
+def update_experience(current_admin, id):
+    exp = Experience.query.get_or_404(id)
+    data = request.json
+    
+    # 1. Update basic fields
+    exp.title = data.get('title', exp.title)
+    exp.company = data.get('company', exp.company)
+    
+    # 2. Handle the Relationship (Skills)
+    if 'skill_ids' in data:
+        # Fetch the Skill objects based on the IDs sent from React
+        new_skills = Skill.query.filter(Skill.id.in_(data['skill_ids'])).all()
+        
+        # Replace the current list with the new list
+        # SQLAlchemy handles the junction table (skill_experience) automatically!
+        exp.skills = new_skills
+    
+    try:
+        db.session.commit()
+        return jsonify({"message": "Updated successfully"}), 200
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"error": str(e)}), 500
+# @admin_bp.route('/api/admin/experience/<int:exp_id>', methods=['PUT', 'OPTIONS'])
+# @token_required
+# def update_experience(current_admin, exp_id):
+#     exp = Experience.query.get_or_404(exp_id)
+#     data = request.get_json(force=True) or {}
+#     if 'title' in data:
+#         exp.title = (data.get('title') or '').strip()
+#     if 'company' in data:
+#         exp.company = (data.get('company') or '').strip()
+#     if 'description' in data:
+#         exp.description = data.get('description') or ''
+#     if 'start_date' in data:
+#         exp.start_date = _parse_dt(data.get('start_date'))
+#     if 'end_date' in data:
+#         exp.end_date = _parse_dt(data.get('end_date'))
+#     if 'is_current' in data:
+#         exp.is_current = bool(data.get('is_current'))
+#     if 'order' in data:
+#         try:
+#             exp.order = int(data.get('order') or 0)
+#         except Exception:
+#             pass
+#     db.session.commit()
+#     return jsonify(_exp_to_dict(exp))
 
 @admin_bp.route('/api/admin/experience/<int:exp_id>', methods=['DELETE', 'OPTIONS'])
 @token_required

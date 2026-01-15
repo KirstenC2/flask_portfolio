@@ -659,3 +659,19 @@ def delete_education(current_admin, edu_id):
     db.session.delete(edu)
     db.session.commit()
     return jsonify({'message': 'Education deleted'})
+
+# @admin_bp.route('/api/admin/resumes/<int:id>/activate', methods=['PUT', 'OPTIONS'])
+# @token_required
+# def activate_resume(current_admin, id):
+#     resume = Resume.query.get_or_404(id)
+#     resume.is_active = True
+#     db.session.commit()
+#     return jsonify({'message': 'Resume activated'})
+
+# @admin_bp.route('/api/admin/resumes/<int:id>/deactivate', methods=['PUT', 'OPTIONS'])
+# @token_required
+# def deactivate_resume(current_admin, id):
+#     resume = Resume.query.get_or_404(id)
+#     resume.is_active = False
+#     db.session.commit()
+#     return jsonify({'message': 'Resume deactivated'})

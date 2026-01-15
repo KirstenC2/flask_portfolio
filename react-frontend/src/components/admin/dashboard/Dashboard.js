@@ -28,6 +28,7 @@ import StudiesPanel from '../studies/StudiesPanel';
 import LifeEventsPanel from '../life/LifeEventsPanel';
 import BlogPanel from '../blog/BlogPanel';
 import DiaryPanel from '../diary/DiaryPanel';
+import ResumePanel from '../resume/ResumePanel';
 
 const Dashboard = () => {
   const navigate = useNavigate();
@@ -105,6 +106,8 @@ const Dashboard = () => {
         return <BlogPanel />;
       case 'diary':
         return <DiaryPanel />;
+      case 'resume':
+        return <ResumePanel />;
       case 'overview':
       default:
         return (
@@ -122,7 +125,6 @@ const Dashboard = () => {
                   <p>{unreadMessages} unread</p>
                 </div>
               </div>
-
               {/* Add more stat cards as needed */}
             </div>
 
@@ -165,6 +167,11 @@ const Dashboard = () => {
 
         <nav className="sidebar-nav">
           <ul>
+            <li className={activeSection === 'resume' ? 'active' : ''}>
+              <button onClick={() => setActiveSection('resume')}>
+                <FontAwesomeIcon icon={faGraduationCap} /> Resume
+              </button>
+            </li>
             <li className={activeSection === 'overview' ? 'active' : ''}>
               <button onClick={() => setActiveSection('overview')}>
                 <FontAwesomeIcon icon={faTachometerAlt} /> Dashboard

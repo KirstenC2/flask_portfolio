@@ -1,0 +1,123 @@
+/* Resume 專屬容器擴充 */
+.active-border {
+  border-left: 6px solid #10b981 !important; /* 顯眼的綠色邊框 */
+  background-color: #f0fdf4 !important; /* 極淺綠色背景 */
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.1) !important;
+}
+
+/* 履歷標題樣式 */
+.post-title-cell {
+  font-weight: 600;
+  color: #1e293b;
+  font-size: 1.05rem;
+  margin-bottom: 4px;
+}
+
+.section-header, .sidepanel-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+}
+
+.resume-container {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.resume-card-item {
+  display: flex;
+  padding: 24px;
+  flex-direction: column;
+  background-color: #edf0f6;
+  gap: 16px;
+}
+
+.resume-items-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+/* 動作按鈕組 */
+.actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.btn-icon {
+  background: white;
+  border: 1px solid #e2e8f0;
+  width: 38px;
+  height: 38px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+}
+
+.btn-icon:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0,0,0,0.08);
+}
+
+/* 不同功能的按鈕顏色 */
+.text-success {
+  color: #10b981;
+  border-color: #bbf7d0;
+}
+
+.text-success:hover {
+  background-color: #10b981;
+  color: white;
+}
+
+.text-gray {
+  color: #94a3b8;
+}
+
+.text-gray:hover {
+  border-color: #6366f1;
+  color: #6366f1;
+}
+
+.text-danger {
+  color: #ef4444;
+}
+
+.text-danger:hover {
+  background-color: #ef4444;
+  color: white;
+  border-color: #ef4444;
+}
+
+/* 上傳按鈕的小動畫 */
+.btn-primary.clickable {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 20px;
+  cursor: pointer;
+}
+
+.btn-primary.clickable:active {
+  transform: scale(0.96);
+}
+
+/* 響應式優化 */
+@media (max-width: 640px) {
+  .card-main {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+  }
+  
+  .actions {
+    width: 100%;
+    justify-content: flex-end;
+  }
+}

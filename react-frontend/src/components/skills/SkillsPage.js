@@ -1,14 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { 
-  faCode, 
-  faDatabase, 
-  faServer, 
-  faTools, 
-  faTasks, 
-  faUsers, 
-  faLanguage, 
+import {
+  faCode,
+  faDatabase,
+  faServer,
+  faTools,
+  faTasks,
+  faUsers,
+  faLanguage,
   faLaptopCode,
   faChevronDown,
   faChevronUp,
@@ -49,7 +49,7 @@ const SkillsPage = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [organizedSkills, setOrganizedSkills] = useState({});
-  
+
   // Track expanded/collapsed state of domains and categories
   const [expandedDomains, setExpandedDomains] = useState({});
   const [expandedCategories, setExpandedCategories] = useState({});
@@ -59,31 +59,31 @@ const SkillsPage = () => {
       try {
         const response = await axios.get('http://localhost:5001/api/skills');
         setSkillCategories(response.data);
-        
+
         // Organize skills by domains
         organizeSkillsByDomains(response.data);
-        
+
         // Initialize all domains as expanded, categories as collapsed
         const domains = {};
         const categories = {};
-        
+
         Object.keys(SKILL_DOMAINS).forEach(domain => {
           // Set domains expanded initially
           domains[domain] = true;
-          
+
           // Set all categories collapsed initially
           SKILL_DOMAINS[domain].categories.forEach(category => {
             const categoryKey = `${domain}-${category}`;
             categories[categoryKey] = false;
           });
         });
-        
+
         // Also handle "Other" category
         domains['Other'] = true;
-        
+
         setExpandedDomains(domains);
         setExpandedCategories(categories);
-        
+
         setLoading(false);
       } catch (error) {
         console.error('Error fetching skills:', error);
@@ -94,11 +94,11 @@ const SkillsPage = () => {
 
     fetchSkills();
   }, []);
-  
+
   // Organize skills into domains and their categories
   const organizeSkillsByDomains = (data) => {
     const organized = {};
-    
+
     // Initialize domains with empty categories
     Object.keys(SKILL_DOMAINS).forEach(domain => {
       organized[domain] = {};
@@ -106,17 +106,17 @@ const SkillsPage = () => {
         organized[domain][category] = [];
       });
     });
-    
+
     // Add "Other" domain for any categories not explicitly mapped
     organized['Other'] = {};
-    
+
     // Distribute skills from API to the organized structure
     Object.keys(data).forEach(category => {
       // Find which domain this category belongs to
-      let foundDomain = Object.keys(SKILL_DOMAINS).find(domain => 
+      let foundDomain = Object.keys(SKILL_DOMAINS).find(domain =>
         SKILL_DOMAINS[domain].categories.includes(category)
       );
-      
+
       // If no domain mapping exists, put it in "Other"
       if (!foundDomain) {
         organized['Other'][category] = data[category];
@@ -125,7 +125,7 @@ const SkillsPage = () => {
         organized[foundDomain][category] = data[category];
       }
     });
-    
+
     // Clean up empty domains and categories
     Object.keys(organized).forEach(domain => {
       if (domain === 'Other') {
@@ -139,20 +139,20 @@ const SkillsPage = () => {
             delete organized[domain][category];
           }
         });
-        
+
         // Remove domain if all categories are empty
         if (Object.keys(organized[domain]).length === 0) {
           delete organized[domain];
         }
       }
     });
-    
+
     setOrganizedSkills(organized);
   };
 
   if (loading) return <div className="loading">Loading skills...</div>;
   if (error) return <div className="error">{error}</div>;
-  
+
   // If no domains have skills
   const noSkills = Object.keys(organizedSkills).length === 0;
 
@@ -162,11 +162,11 @@ const SkillsPage = () => {
       ...prev,
       [domain]: !prev[domain]
     }));
-    
+
     // If collapsing a domain, also collapse all its categories
     if (expandedDomains[domain]) {
-      const updatedCategories = {...expandedCategories};
-      
+      const updatedCategories = { ...expandedCategories };
+
       // Only if domain exists in SKILL_DOMAINS
       if (SKILL_DOMAINS[domain]) {
         SKILL_DOMAINS[domain].categories.forEach(category => {
@@ -176,7 +176,7 @@ const SkillsPage = () => {
       }
     }
   };
-  
+
   // Toggle category expansion
   const toggleCategory = (domain, category) => {
     const categoryKey = `${domain}-${category}`;
@@ -185,87 +185,80 @@ const SkillsPage = () => {
       [categoryKey]: !prev[categoryKey]
     }));
   };
-  
+
   return (
     <main className="skills-page">
       <div className="container">
-        <h1 className="page-title">My Skills</h1>
-        <p className="page-subtitle">
-          A comprehensive overview of my professional skills and proficiency levels
-        </p>
-        
+        <header className="page-header">
+          <h1 className="page-title">Professional Skills</h1>
+          <p className="page-subtitle">A visualization of my technical expertise and proficiency levels.</p>
+        </header>
+
         {noSkills ? (
           <p className="no-skills">No skills found in database.</p>
         ) : (
-          Object.keys(organizedSkills).map(domain => (
-            <div key={domain} className="skill-domain">
-              <div 
-                className="domain-header clickable" 
-                onClick={() => toggleDomain(domain)}
-              >
-                {SKILL_DOMAINS[domain] && (
-                  <FontAwesomeIcon 
-                    icon={SKILL_DOMAINS[domain]?.icon || faCode} 
-                    className="domain-icon" 
-                  />
-                )}
-                <h2 className="domain-title">{domain}</h2>
-                <FontAwesomeIcon 
-                  icon={expandedDomains[domain] ? faChevronUp : faChevronDown} 
-                  className="toggle-icon"
-                />
-              </div>
-              
-              {expandedDomains[domain] && (
-                <div className="domain-content">
+          <div className="domains-grid">
+            {Object.keys(organizedSkills).map(domain => (
+              <div key={domain} className="domain-card">
+                <div className="domain-card-header">
+                  <div className="domain-icon-wrapper">
+                    <FontAwesomeIcon icon={SKILL_DOMAINS[domain]?.icon || faCode} />
+                  </div>
+                  <h2 className="domain-title">{domain}</h2>
+                </div>
+
+                <div className="domain-card-body">
                   {Object.keys(organizedSkills[domain]).map(category => {
                     const categoryKey = `${domain}-${category}`;
+                    const isExpanded = expandedCategories[categoryKey];
+
                     return (
-                      <section key={categoryKey} className="skills-section">
-                        <div 
-                          className="category-header clickable"
+                      <div key={category} className={`category-group ${isExpanded ? 'expanded' : ''}`}>
+                        <div
+                          className="category-header-row"
                           onClick={() => toggleCategory(domain, category)}
                         >
-                          {CATEGORY_ICONS[category] && (
-                            <FontAwesomeIcon 
-                              icon={CATEGORY_ICONS[category]} 
-                              className="category-icon" 
-                            />
-                          )}
-                          <h3 className="section-title">{category}</h3>
-                          <FontAwesomeIcon 
-                            icon={expandedCategories[categoryKey] ? faChevronUp : faChevronDown} 
-                            className="toggle-icon"
+                          <h3 className="category-label">
+                            {CATEGORY_ICONS[category] && (
+                              <FontAwesomeIcon icon={CATEGORY_ICONS[category]} className="mgr-8" />
+                            )}
+                            {category}
+                            <span className="skill-count">{organizedSkills[domain][category].length} items</span>
+                          </h3>
+                          <FontAwesomeIcon
+                            icon={isExpanded ? faChevronUp : faChevronDown}
+                            className={`toggle-arrow ${isExpanded ? 'active' : ''}`}
                           />
                         </div>
-                        
-                        {expandedCategories[categoryKey] && (
-                          <div className="skills-grid">
+
+                        {/* 只有在展開時才渲染或顯示內容 */}
+                        <div className={`skills-collapsible-content ${isExpanded ? 'show' : ''}`}>
+                          <div className="skills-tag-container">
                             {organizedSkills[domain][category].map(skill => (
-                              <div key={skill.id} className="skill-card">
-                                <h3>{skill.name}</h3>
-                                <div className="skill-bar-container">
-                                  <div className="skill-bar">
-                                    <div 
-                                      className="skill-bar-fill"
-                                      style={{ width: `${(skill.proficiency / 5) * 100}%` }}
-                                    ></div>
-                                  </div>
-                                  <div className="skill-level">
+                              <div key={skill.id} className="skill-tag-item">
+                                <div className="skill-tag-info">
+                                  <span className="skill-name">{skill.name}</span>
+                                  <span className="skill-dots">
                                     {renderProficiencyStars(skill.proficiency)}
-                                  </div>
+                                  </span>
+                                </div>
+                                <div className="skill-mini-bar">
+                                  <div
+                                    className="skill-mini-fill"
+                                    style={{ width: `${(skill.proficiency / 5) * 100}%` }}
+                                  ></div>
                                 </div>
                               </div>
                             ))}
                           </div>
-                        )}
-                      </section>
+                        </div>
+                      </div>
                     );
                   })}
                 </div>
-              )}
-            </div>
-          ))
+              </div>
+            ))}
+          </div>
         )}
       </div>
     </main>
@@ -276,7 +269,7 @@ const SkillsPage = () => {
 const renderProficiencyStars = (level) => {
   const stars = [];
   const maxStars = 5;
-  
+
   for (let i = 1; i <= maxStars; i++) {
     if (i <= level) {
       stars.push(<span key={i} className="star filled">★</span>);
@@ -284,7 +277,7 @@ const renderProficiencyStars = (level) => {
       stars.push(<span key={i} className="star">☆</span>);
     }
   }
-  
+
   return stars;
 };
 

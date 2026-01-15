@@ -35,6 +35,7 @@ const HomePage = () => {
       {/* Hero Section */}
       <section className="hero">
         <div className="container">
+          <img src="cute_profile.png" alt="Kirsten Choo" className="profile-img" />
           <h1>Hi, I'm Kirsten Choo</h1>
           <h2>Technology Maniac</h2>
           <p>A professional, passionate, and dedicated developer who loves to take on new challenges and create innovative solutions.</p>
@@ -98,18 +99,6 @@ const HomePage = () => {
           <div className="section-cta">
             <Link to="/skills" className="btn btn-primary">View All Skills</Link>
           </div>
-        </div>
-      </section>
-
-      {/* About Section */}
-      <section className="about-preview">
-        <div className="container">
-          <h2 className="section-title">About Me</h2>
-          <p>
-            I'm a passionate fullstack developer with expertise in building modern web applications.
-            My focus is on creating seamless user experiences with clean, efficient code.
-          </p>
-          <Link to="/about" className="btn btn-primary">Learn More</Link>
         </div>
       </section>
     </main>

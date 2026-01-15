@@ -489,6 +489,7 @@ def _exp_to_dict(exp: Experience):
         'description': exp.description,
         'start_date': exp.start_date.isoformat() if exp.start_date else None,
         'end_date': exp.end_date.isoformat() if exp.end_date else None,
+        'leaving_reason': exp.leaving_reason,
         'is_current': exp.is_current,
         'order': exp.order,
     }
@@ -521,6 +522,7 @@ def create_experience(current_admin):
         description=data.get('description') or '',
         start_date=_parse_dt(data.get('start_date')),
         end_date=_parse_dt(data.get('end_date')),
+        leaving_reason=data.get('leaving_reason') or '',
         is_current=bool(data.get('is_current', False)),
         order=int(data.get('order') or 0) if str(data.get('order') or '').lstrip('-').isdigit() else 0,
     )

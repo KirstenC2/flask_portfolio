@@ -52,6 +52,7 @@ class Experience(db.Model):
     end_date = db.Column(db.DateTime, nullable=True)  # End date (null if current job)
     is_current = db.Column(db.Boolean, default=False)  # Whether this is the current job
     order = db.Column(db.Integer, default=0)  # Order for display (higher = more recent)
+    leaving_reason = db.Column(db.Text, nullable=True)  # Reason for leaving (if applicable)
     # Relationship to projects completed during this experience
     projects = db.relationship('ExperienceProject', backref='experience', lazy=True, cascade='all, delete-orphan')
     

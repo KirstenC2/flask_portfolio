@@ -4,9 +4,13 @@ import {
   faCode, faPlus, faEdit, faTrash, faSave, faTimes,
   faSpinner, faFilter, faLayerGroup, faSignal
 } from '@fortawesome/free-solid-svg-icons';
-import './SkillsPanel.css'; // Standardized admin styles
+import './SkillsPanel.css'; 
 import '../../../common/global.css'
+
 const SkillsPanel = () => {
+  // 1. 定義哪些類別屬於 Technical
+  const TECHNICAL_CATEGORIES = ['Programming', 'Frameworks', 'Databases', 'DevOps', 'API'];
+
   const [skills, setSkills] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -17,7 +21,8 @@ const SkillsPanel = () => {
   const [formData, setFormData] = useState({
     name: '',
     category: '',
-    proficiency: 3
+    proficiency: 3,
+    description: ''
   });
 
   useEffect(() => { fetchSkills(); }, []);
@@ -45,14 +50,14 @@ const SkillsPanel = () => {
       name: skill.name,
       category: skill.category,
       proficiency: skill.proficiency,
-      description: skill.description
+      description: skill.description || ''
     });
     setEditMode(false);
   };
 
   const handleCreateNew = () => {
     setCurrentSkill(null);
-    setFormData({ name: '', category: categories[0] || '', proficiency: 3 });
+    setFormData({ name: '', category: categories[0] || '', proficiency: 3, description: '' });
     setEditMode(true);
   };
 
@@ -96,15 +101,41 @@ const SkillsPanel = () => {
     }
   };
 
+  // --- 在這裡計算衍生數據，確保變量順序正確 ---
+  
   const filteredSkills = filterCategory === 'all' 
     ? skills 
     : skills.filter(skill => skill.category === filterCategory);
 
   const sortedSkills = [...filteredSkills].sort((a, b) => a.name.localeCompare(b.name));
 
+  const technicalSkills = sortedSkills.filter(s => TECHNICAL_CATEGORIES.includes(s.category));
+  const otherSkills = sortedSkills.filter(s => !TECHNICAL_CATEGORIES.includes(s.category));
+
+  // 渲染單個卡片的內部函數
+  const renderSkillCard = (skill) => (
+    <div
+      key={skill.id}
+      className={`experience-card-item ${currentSkill?.id === skill.id ? 'active' : ''}`}
+      onClick={() => handleSelectSkill(skill)}
+    >
+      <div className="card-main">
+        <div className="card-icon"><FontAwesomeIcon icon={faCode} /></div>
+        <div className="card-info">
+          <div className="post-title-cell">{skill.name}</div>
+          <div className="date-text">{skill.category}</div>
+        </div>
+        <div className="skill-indicator">
+            <div className="mini-bar">
+                <div className="mini-fill" style={{ width: `${(skill.proficiency / 5) * 100}%` }}></div>
+            </div>
+        </div>
+      </div>
+    </div>
+  );
+
   return (
     <div className="admin-container">
-      {/* LEFT SIDE: SKILLS LIST */}
       <div className={`list-section ${editMode || currentSkill ? 'shrink' : ''}`}>
         <div className="section-header">
           <h1>Skills</h1>
@@ -129,31 +160,27 @@ const SkillsPanel = () => {
         {error && <div className="error-banner">{error}</div>}
 
         <div className="experience-items-list">
-          {sortedSkills.map((skill) => (
-            <div
-              key={skill.id}
-              className={`experience-card-item ${currentSkill?.id === skill.id ? 'active' : ''}`}
-              onClick={() => handleSelectSkill(skill)}
-            >
-              <div className="card-main">
-                <div className="card-icon"><FontAwesomeIcon icon={faCode} /></div>
-                <div className="card-info">
-                  <div className="post-title-cell">{skill.name}</div>
-                  <div className="date-text">{skill.category}</div>
-                  <div className="date-text">{skill.description}</div>
-                </div>
-                <div className="skill-indicator">
-                    <div className="mini-bar">
-                        <div className="mini-fill" style={{ width: `${(skill.proficiency / 5) * 100}%` }}></div>
-                    </div>
-                </div>
-              </div>
+          {/* 技術類別組 */}
+          {technicalSkills.length > 0 && (
+            <div className="skill-admin-group">
+              <h3 className="admin-subgroup-title">Technical Expertise</h3>
+              {technicalSkills.map(skill => renderSkillCard(skill))}
             </div>
-          ))}
+          )}
+
+          {/* 其他類別組 */}
+          {otherSkills.length > 0 && (
+            <div className="skill-admin-group">
+              <h3 className="admin-subgroup-title">Other Skills</h3>
+              {otherSkills.map(skill => renderSkillCard(skill))}
+            </div>
+          )}
+
+          {sortedSkills.length === 0 && !loading && <div className="empty-state">No skills found.</div>}
         </div>
       </div>
 
-      {/* RIGHT SIDE: EDITOR / DETAILS */}
+      {/* 右側編輯面板 */}
       {(editMode || currentSkill) && (
         <div className="editor-sidepanel">
           <div className="sidepanel-header">
@@ -208,9 +235,10 @@ const SkillsPanel = () => {
                 <label>Description</label>
                 <textarea 
                     className="form-control" 
+                    rows={4}
                     value={formData.description} 
                     onChange={e => setFormData({...formData, description: e.target.value})} 
-                    required 
+                    placeholder="Briefly describe your experience with this skill..."
                 />
               </div>
 
@@ -239,17 +267,15 @@ const SkillsPanel = () => {
                             style={{ width: `${(currentSkill.proficiency / 5) * 100}%` }}
                         ></div>
                     </div>
-                    <div className="proficiency-text">
-                        Level {currentSkill.proficiency} of 5
-                    </div>
+                    <div className="proficiency-text">Level {currentSkill.proficiency} / 5</div>
                 </div>
               </div>
 
-              <div className="form-row">
-                <div className='view-content'>
-                  <label className='description-label'>Description</label>
-                  <p className='description-text'>{currentSkill.description}</p>
-                </div>
+              <div className="view-content">
+                <label>Description</label>
+                <p className='description-text' style={{ whiteSpace: 'pre-wrap' }}>
+                  {currentSkill.description || "No description provided."}
+                </p>
               </div>
 
               <div className="form-actions">

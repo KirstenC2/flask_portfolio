@@ -23,10 +23,47 @@
 
 /* Hero Section */
 .hero {
-  background-color: #1e1e1e;
+  position: relative; /* Necessary to contain the absolute pseudo-element */
   color: #f0f0f0;
   padding: 6rem 0;
   text-align: center;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  overflow: hidden; /* Clips the blurry edges of the background */
+}
+
+.hero::before {
+  content: "";
+  position: absolute;
+  top: 0; 
+  left: 0;
+  width: 100%; 
+  height: 100%;
+  
+  /* Background properties moved here */
+  background-image: url('/src/assets/hero-bg.png');
+  background-size: cover;
+  background-position: center;
+  
+  /* The Blur Effect */
+  filter: blur(8px);
+  
+  /* Scale slightly to hide the white/transparent edges caused by blurring */
+  transform: scale(1.1); 
+  
+  /* Ensure the background stays behind the text */
+  z-index: -1; 
+}
+
+/* Optional: Add a dark overlay to make white text pop more */
+.hero::after {
+  content: "";
+  position: absolute;
+  top: 0; left: 0; width: 100%; height: 100%;
+  background: rgba(0, 0, 0, 0.3); /* Darkens the image slightly */
+  z-index: -1;
 }
 
 .hero h1 {
@@ -38,7 +75,7 @@
 .hero h2 {
   font-size: 1.8rem;
   margin-bottom: 1rem;
-  color: #61dafb;
+  color: #38528e;
 }
 
 .hero p {
@@ -52,6 +89,17 @@
   display: flex;
   justify-content: center;
   gap: 1.5rem;
+}
+
+
+.profile-img {
+  width: 300px; /* Adjust size as needed */
+  height: 300px; /* Adjust size as needed */
+  border-radius: 50%;
+  object-fit: cover;
+  border: 4px solid #fff;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  margin-bottom: 1.5rem;
 }
 
 /* Section Styles */

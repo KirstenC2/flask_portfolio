@@ -27,6 +27,28 @@
   cursor: pointer;
 }
 
+.skill-group-wrapper {
+  margin-bottom: 24px;
+}
+
+.admin-subgroup-title {
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: #94a3b8; /* Soft blue-gray */
+  letter-spacing: 0.05em;
+  padding: 0 8px;
+  margin-bottom: 12px;
+  border-left: 3px solid #6366f1; /* Indigo accent */
+}
+
+/* Ensure the scrollable section handles multiple groups well */
+.experience-items-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px; /* Spacing between cards */
+}
+
 .description-label {
   font-size: 1rem;
   padding-top: 1rem;

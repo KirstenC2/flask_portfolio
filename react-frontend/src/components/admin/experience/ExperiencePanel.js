@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { 
-  faBriefcase, faPlus, faEdit, faTrash, faCalendarAlt, faBuilding 
+import {
+  faBriefcase, faPlus, faEdit, faSave, faCalendarAlt, faBuilding
 } from '@fortawesome/free-solid-svg-icons';
 import RelatedProjects from './ExperienceProjectsPanel';
 import './ExperiencePanel.css';
@@ -44,6 +44,7 @@ const ExperiencePanel = () => {
       start_date: exp.start_date ? exp.start_date.substring(0, 10) : '',
       end_date: exp.end_date ? exp.end_date.substring(0, 10) : '',
       is_current: exp.is_current,
+      leaving_reason: exp.leaving_reason || '',
       order: exp.order
     });
     setEditMode(false);
@@ -62,8 +63,8 @@ const ExperiencePanel = () => {
     try {
       const token = localStorage.getItem('adminToken');
       const method = currentExperience ? 'PUT' : 'POST';
-      const url = currentExperience 
-        ? `http://localhost:5001/api/admin/experience/${currentExperience.id}` 
+      const url = currentExperience
+        ? `http://localhost:5001/api/admin/experience/${currentExperience.id}`
         : 'http://localhost:5001/api/admin/experience';
 
       await fetch(url, {
@@ -95,7 +96,7 @@ const ExperiencePanel = () => {
           <button className="btn btn-primary" onClick={handleCreateNew}><FontAwesomeIcon icon={faPlus} /> Add Job</button>
         </div>
         <div className="experience-items-list">
-          {[...experience].sort((a,b) => b.order - a.order).map((exp) => (
+          {[...experience].sort((a, b) => b.order - a.order).map((exp) => (
             <div key={exp.id} className={`experience-card-item ${currentExperience?.id === exp.id ? 'active' : ''}`} onClick={() => handleSelectExperience(exp)}>
               <div className="card-main">
                 <div className="card-icon"><FontAwesomeIcon icon={faBriefcase} /></div>
@@ -119,14 +120,91 @@ const ExperiencePanel = () => {
 
           {editMode ? (
             <form onSubmit={handleSubmit} className="form">
-              {/* ... Form Inputs (Title, Company, Dates, Description) ... */}
               <div className="form-row">
-                <label>Title</label>
-                <input className="form-control" value={formData.title} onChange={e => setFormData({...formData, title: e.target.value})} required />
+                <label>Job Title</label>
+                <input
+                  className="form-control"
+                  value={formData.title}
+                  onChange={e => setFormData({ ...formData, title: e.target.value })}
+                  placeholder="e.g. Senior Product Manager"
+                  required
+                />
               </div>
+
+              <div className="form-row">
+                <label>Company</label>
+                <input
+                  className="form-control"
+                  value={formData.company}
+                  onChange={e => setFormData({ ...formData, company: e.target.value })}
+                  placeholder="e.g. Google"
+                  required
+                />
+              </div>
+
+              <div className="form-row-group">
+                <div className="form-row">
+                  <label>Start Date</label>
+                  <input
+                    type="date"
+                    className="form-control"
+                    value={formData.start_date}
+                    onChange={e => setFormData({ ...formData, start_date: e.target.value })}
+                    required
+                  />
+                </div>
+                <div className="form-row">
+                  <label>End Date</label>
+                  <input
+                    type="date"
+                    className="form-control"
+                    value={formData.end_date}
+                    onChange={e => setFormData({ ...formData, end_date: e.target.value })}
+                    disabled={formData.is_current}
+                    required={!formData.is_current}
+                  />
+                </div>
+              </div>
+
+              <div className="form-row checkbox-row">
+                <label className="checkbox-container">
+                  <input
+                    type="checkbox"
+                    checked={formData.is_current}
+                    onChange={e => setFormData({ ...formData, is_current: e.target.checked })}
+                  />
+                  <span className="checkbox-label">I currently work here</span>
+                </label>
+              </div>
+
+              <div className="form-row">
+                <label>Job Description</label>
+                <textarea
+                  className="form-control"
+                  rows={6}
+                  value={formData.description}
+                  onChange={e => setFormData({ ...formData, description: e.target.value })}
+                  placeholder="Describe your responsibilities and achievements..."
+                />
+              </div>
+
+              <div className="form-row">
+                <label>Reason for Leaving</label>
+                <input
+                  className="form-control"
+                  value={formData.leaving_reason}
+                  onChange={e => setFormData({ ...formData, leaving_reason: e.target.value })}
+                  placeholder="Optional..."
+                />
+              </div>
+
               <div className="form-actions">
-                <button type="submit" className="btn btn-primary">Save Job</button>
-                <button type="button" className="btn" onClick={() => setEditMode(false)}>Cancel</button>
+                <button type="submit" className="btn btn-primary">
+                  <FontAwesomeIcon icon={faSave} /> Save Job
+                </button>
+                <button type="button" className="btn" onClick={() => setEditMode(false)}>
+                  Cancel
+                </button>
               </div>
             </form>
           ) : (
@@ -138,17 +216,21 @@ const ExperiencePanel = () => {
               </div>
 
               <div className="view-content">
+                <label>Description</label>
                 <p className="description-text">{currentExperience.description}</p>
               </div>
-
+              <div className="view-content">
+                <label>Leaving Reason</label>
+                <p className="description-text">{currentExperience.leaving_reason}</p>
+              </div>
               <div className="form-actions" style={{ borderBottom: '1px solid #eee', paddingBottom: '20px', marginBottom: '20px' }}>
                 <button className="btn btn-primary" onClick={() => setEditMode(true)}><FontAwesomeIcon icon={faEdit} /> Edit</button>
               </div>
 
               {/* INTEGRATED SUB-COMPONENT */}
-              <RelatedProjects 
-                experienceId={currentExperience.id} 
-                companyName={currentExperience.company} 
+              <RelatedProjects
+                experienceId={currentExperience.id}
+                companyName={currentExperience.company}
               />
             </div>
           )}

@@ -5,9 +5,10 @@ import {
   faSun, faCloud, faCloudRain, faCloudSun, faCalendarDay, faQuoteLeft,
   faFaceSmileWink, faFaceFrown, faFaceAngry, faMeh
 } from '@fortawesome/free-solid-svg-icons';
-import './DiaryPanel.css'; // Standardized admin styles
+import './DiaryPanel.css';
 import '../../../common/global.css';
 import Calendar from 'react-calendar';
+
 const getStatusColor = (status) => {
   const colors = { sunny: '#FFD700', cloudy: '#A9A9A9', rainy: '#1E90FF', default: '#6c757d' };
   return colors[status?.toLowerCase()] || colors.default;
@@ -18,15 +19,18 @@ const getWeatherIcon = (weather) => {
   return icons[weather?.toLowerCase()] || icons.default;
 };
 
-const getEmotionIcon = (emotion) => {
-  const icons = {
-    happy: faFaceSmileWink,
-    sad: faFaceFrown,
-    angry: faFaceAngry,
-    neutral: faMeh  // Changed from faFaceNeutral to faMeh
+const getEmotionIconImage = (emotion) => {
+  const icons = { 
+    happy: 'happy.png',
+    sad: 'sad.png',
+    angry: 'angry.png',
+    neutral: 'neutral.png',
+    tired: 'tired.png',
+    helpless: 'helpless.png'
   };
   return icons[emotion?.toLowerCase()] || icons.neutral;
 };
+
 const formatDateForInput = (dateString) => {
   if (!dateString) return '';
   const date = new Date(dateString);
@@ -49,48 +53,49 @@ const Diary = () => {
   });
 
   const weatherOptions = ['sunny', 'cloudy', 'rainy'];
-  const emotionOptions = ['happy', 'sad', 'angry', 'neutral', 'tired'];
-  useEffect(() => { fetchDiaries(); }, []);
+  const emotionOptions = ['happy', 'sad', 'angry', 'neutral', 'tired','helpless'];
+
+  useEffect(() => {
+    fetchDiaries();
+  }, []);
+
   const hasDiaryOnDate = (date) => {
-  const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, '0');
-  const day = String(date.getDate()).padStart(2, '0');
-  const dateString = `${year}-${month}-${day}`;
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    const dateString = `${year}-${month}-${day}`;
 
-  return diaries.some(d => {
-    // Compare string to string, avoiding timezone shifts
-    const diaryDate = new Date(d.date).toLocaleDateString('en-CA');
-    return diaryDate === dateString;
-  });
-};
-
-  // 處理點擊日曆日期
-  const handleDateClick = (date) => {
-  // Use local time methods to get the year, month, and day
-  const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, '0');
-  const day = String(date.getDate()).padStart(2, '0');
-  const dateString = `${year}-${month}-${day}`;
-
-  const foundDiary = diaries.find(d => {
-    // Ensure the comparison is also done on the YYYY-MM-DD string
-    const diaryDate = new Date(d.date).toLocaleDateString('en-CA'); // 'en-CA' gives YYYY-MM-DD
-    return diaryDate === dateString;
-  });
-
-  if (foundDiary) {
-    setCurrentDiary(foundDiary);
-    setEditMode(false);
-  } else {
-    setCurrentDiary(null);
-    setFormData({
-      ...formData,
-      date: dateString, // This sets the form to exactly what you clicked
-      content: ''
+    return diaries.some(d => {
+      const diaryDate = new Date(d.date).toLocaleDateString('en-CA');
+      return diaryDate === dateString;
     });
-    setEditMode(true);
-  }
-};
+  };
+
+  const handleDateClick = (date) => {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    const dateString = `${year}-${month}-${day}`;
+
+    const foundDiary = diaries.find(d => {
+      const diaryDate = new Date(d.date).toLocaleDateString('en-CA');
+      return diaryDate === dateString;
+    });
+
+    if (foundDiary) {
+      setCurrentDiary(foundDiary);
+      setEditMode(false);
+    } else {
+      setCurrentDiary(null);
+      setFormData({
+        ...formData,
+        date: dateString,
+        content: ''
+      });
+      setEditMode(true);
+    }
+  };
+
   const fetchDiaries = async () => {
     setLoading(true);
     try {
@@ -119,11 +124,6 @@ const Diary = () => {
     } catch (err) {
       setError(err.message);
     }
-  };
-
-  const handleSelectDiary = (diary) => {
-    setCurrentDiary(diary);
-    setEditMode(false);
   };
 
   const handleOpenCreate = () => {
@@ -178,9 +178,9 @@ const Diary = () => {
       {/* LEFT SIDE: DIARY LIST */}
       <div className={`list-section ${editMode || currentDiary ? 'shrink' : ''}`}>
         <div className="section-header">
-          <button className="btn btn-primary" onClick={handleOpenCreate}>
+          {/* <button className="btn btn-primary" onClick={handleOpenCreate}>
             <FontAwesomeIcon icon={faPlus} /> New Entry
-          </button>
+          </button> */}
         </div>
 
         {error && <div className="error-banner">{error}</div>}
@@ -202,41 +202,27 @@ const Diary = () => {
             }}
           />
         </div>
-        {/* <div className="experience-items-list">
-          {diaries.map(diary => (
-            <div
-              key={diary.id}
-              className={`experience-card-item ${currentDiary?.id === diary.id ? 'active' : ''}`}
-              onClick={() => handleSelectDiary(diary)}
-            >
-              <div className="card-main">
-                <div className="card-icon">
-                  <FontAwesomeIcon
-                    icon={getWeatherIcon(diary.weather)}
-                    style={{ color: getStatusColor(diary.weather) }}
-                  />
-                </div>
-                <div className="card-info">
-                  <div className="post-title-cell">{new Date(diary.date).toLocaleDateString(undefined, { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</div>
-                  <div className="date-text line-clamp">{diary.content.substring(0, 60)}...</div>
-                </div>
-              </div>
-            </div>
-          ))}
-        </div> */}
       </div>
 
       {/* RIGHT SIDE: EDITOR / DETAILS */}
-      {(editMode || currentDiary) && (
-        <div className="editor-sidepanel">
-          <div className="sidepanel-header">
-            <h2>{editMode ? (currentDiary ? 'Edit Entry' : 'New Entry') : 'Entry Details'}</h2>
-            <button className="btn-close" onClick={() => { setEditMode(false); setCurrentDiary(null); }}>✕</button>
-          </div>
+      <div className="editor-sidepanel">
+        {editMode || currentDiary ? (
+          <>
+            <div className="sidepanel-header">
+              <h2>{editMode ? (currentDiary ? 'Edit Entry' : 'New Entry') : 'Entry Details'}</h2>
+              <button
+                className="btn-close"
+                onClick={() => {
+                  setEditMode(false);
+                  setCurrentDiary(null);
+                }}
+              >
+                ✕
+              </button>
+            </div>
 
-          {editMode ? (
-            <form onSubmit={handleSubmit} className="form">
-              <div className="form-row-group">
+            {editMode ? (
+              <form onSubmit={handleSubmit} className="form">
                 <div className="form-row">
                   <label>Date</label>
                   <input
@@ -247,82 +233,139 @@ const Diary = () => {
                     required
                   />
                 </div>
+
                 <div className="form-row">
                   <label>Weather</label>
                   <select
                     className="form-control"
                     value={formData.weather}
                     onChange={e => setFormData({ ...formData, weather: e.target.value })}
+                    required
                   >
-                    {weatherOptions.map(o => <option key={o} value={o}>{o.charAt(0).toUpperCase() + o.slice(1)}</option>)}
+                    {weatherOptions.map(option => (
+                      <option key={option} value={option}>
+                        {option.charAt(0).toUpperCase() + option.slice(1)}
+                      </option>
+                    ))}
                   </select>
                 </div>
 
-              </div>
-              <div className="form-row">
-                <label>Emotion</label>
-                <select
-                  className="form-control"
-                  value={formData.emotion}
-                  onChange={e => setFormData({ ...formData, emotion: e.target.value })}
-                >
-                  {emotionOptions.map(o => <option key={o} value={o}>{o.charAt(0).toUpperCase() + o.slice(1)}</option>)}
-                </select>
-              </div>
+                <div className="form-row">
+                  <label>Mood</label>
+                  <select
+                    className="form-control"
+                    value={formData.emotion}
+                    onChange={e => setFormData({ ...formData, emotion: e.target.value })}
+                    required
+                  >
+                    {emotionOptions.map(option => (
+                      <option key={option} value={option}>
+                        {option.charAt(0).toUpperCase() + option.slice(1)}
+                      </option>
+                    ))}
+                  </select>
+                </div>
 
-              <div className="form-row">
-                <label>Content</label>
-                <textarea
-                  className="form-control markdown-editor"
-                  rows={15}
-                  value={formData.content}
-                  onChange={e => setFormData({ ...formData, content: e.target.value })}
-                  placeholder="Write your thoughts here..."
-                  required
-                />
-              </div>
-
-              <div className="form-actions">
-                <button type="submit" className="btn btn-primary" disabled={submitting}>
-                  <FontAwesomeIcon icon={faSave} /> {submitting ? 'Saving...' : 'Save Entry'}
-                </button>
-                <button type="button" className="btn" onClick={() => setEditMode(false)}>Cancel</button>
-              </div>
-            </form>
-          ) : (
-            <div className="experience-view">
-              <div className="view-header">
-                <h3>{new Date(currentDiary.date).toLocaleDateString(undefined, { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</h3>
-                <p className="company-subtitle">
-                  <FontAwesomeIcon
-                    icon={getWeatherIcon(currentDiary.weather)}
-                    style={{ color: getStatusColor(currentDiary.weather), marginRight: '8px' }}
+                <div className="form-row">
+                  <label>Your Thoughts</label>
+                  <textarea
+                    className="form-control"
+                    value={formData.content}
+                    onChange={e => setFormData({ ...formData, content: e.target.value })}
+                    rows="8"
+                    required
                   />
-                  Status: {currentDiary.weather.charAt(0).toUpperCase() + currentDiary.weather.slice(1)}
-                </p>
-              </div>
+                </div>
 
+                <div className="form-actions">
+                  <button
+                    type="submit"
+                    className="btn btn-primary"
+                    disabled={submitting}
+                  >
+                    <FontAwesomeIcon icon={faSave} />
+                    {submitting ? 'Saving...' : 'Save Entry'}
+                  </button>
+                  <button
+                    type="button"
+                    className="btn btn-secondary"
+                    onClick={() => {
+                      setEditMode(false);
+                      if (!currentDiary) setCurrentDiary(null);
+                    }}
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </form>
+            ) : (
               <div className="view-content">
-                <label>Emotion:</label>
-                <FontAwesomeIcon icon={getEmotionIcon(currentDiary.emotion)} /> {currentDiary.emotion.charAt(0).toUpperCase() + currentDiary.emotion.slice(1)}
-                <label><FontAwesomeIcon icon={faQuoteLeft} /> My Thoughts</label>
-                <p className="description-text" style={{ whiteSpace: 'pre-wrap', lineHeight: '1.8' }}>
-                  {currentDiary.content}
-                </p>
-              </div>
+                <div className="diary-header">
+                  <h3>
+                    {new Date(currentDiary.date).toLocaleDateString(undefined, {
+                      weekday: 'long',
+                      year: 'numeric',
+                      month: 'long',
+                      day: 'numeric'
+                    })}
+                  </h3>
+                  <div className="diary-meta">
+                    <span className="mood-tag">
+                      <img
+                        src={`/emoticons/${getEmotionIconImage(currentDiary.emotion)}`}
+                        alt={currentDiary.emotion}
+                        className="emotion-icon"
+                      />
+                    </span>
+                  </div>
+                  <div className="diary-meta">
+                    <span className="weather-tag">
+                      <FontAwesomeIcon
+                        icon={getWeatherIcon(currentDiary.weather)}
+                        style={{ color: getStatusColor(currentDiary.weather) }}
+                      />{' '}
+                      {currentDiary.weather.charAt(0).toUpperCase() + currentDiary.weather.slice(1)}
+                    </span>
+                  </div>
+                </div>
 
-              <div className="form-actions">
-                <button className="btn btn-primary" onClick={handleOpenEdit}>
-                  <FontAwesomeIcon icon={faEdit} /> Edit Entry
-                </button>
-                <button className="btn btn-danger" onClick={() => handleDelete(currentDiary.id)}>
-                  <FontAwesomeIcon icon={faTrash} /> Delete
-                </button>
+                <div className="diary-content">
+                  <h4><FontAwesomeIcon icon={faQuoteLeft} /> My Thoughts</h4>
+                  <p>{currentDiary.content}</p>
+                </div>
+
+                <div className="diary-actions">
+                  <button
+                    className="btn btn-primary"
+                    onClick={handleOpenEdit}
+                  >
+                    <FontAwesomeIcon icon={faEdit} /> Edit
+                  </button>
+                  <button
+                    className="btn btn-danger"
+                    onClick={() => handleDelete(currentDiary.id)}
+                  >
+                    <FontAwesomeIcon icon={faTrash} /> Delete
+                  </button>
+                </div>
               </div>
+            )}
+          </>
+        ) : (
+          <div className="empty-state">
+            <div className="empty-icon">
+              <FontAwesomeIcon icon={faCalendarDay} size="3x" />
             </div>
-          )}
-        </div>
-      )}
+            <h3>How was your day?</h3>
+            <p>Select a date from the calendar to view your thoughts or create a new entry.</p>
+            <button
+              className="btn btn-primary"
+              onClick={handleOpenCreate}
+            > New Entry
+            </button>
+          </div>
+        )}
+      </div>
     </div>
   );
 };

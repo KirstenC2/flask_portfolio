@@ -17,7 +17,6 @@ import ContactPage from './components/contact/ContactPage';
 import ExperiencePage from './components/experience/ExperiencePage';
 import BlogSplitView from './components/blog/BlogSplitView';
 import BlogEditor from './components/blog/BlogEditor';
-import IntroductionPage from './components/introduction/IntroductionPage';
 
 // Admin Components
 import LoginPage from './components/admin/auth/LoginPage';
@@ -74,7 +73,6 @@ function App() {
             <Navbar />
             <Routes>
               <Route path="/" element={<HomePage />} />
-              <Route path="/introduction" element={<IntroductionPage />} />
               <Route path="/projects" element={<ProjectsPage />} />
               <Route path="/project/:id" element={<ProjectDetail />} />
               <Route path="/skills" element={<SkillsPage />} />

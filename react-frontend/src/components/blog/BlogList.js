@@ -60,7 +60,7 @@ export default function BlogList({ selectedSlug }) {
 
   return (
     <div className="container" style={{ padding: '5rem 1.5rem' }}>
-      <h1>Blog</h1>
+      <h1 className="page-title">Blog</h1>
       {/* Filter/Search Bar */}
       <div className="filter-bar" role="tablist" aria-label="Filter posts by tag">
         {allTags.map(tag => (

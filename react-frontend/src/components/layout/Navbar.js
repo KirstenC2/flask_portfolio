@@ -16,17 +16,18 @@ const Navbar = () => {
     document.addEventListener('mousedown', handler);
     return () => document.removeEventListener('mousedown', handler);
   }, []);
-  
+
   return (
     <nav className="navbar">
       <div className="container">
         <Link to="/" className="logo">Kirsten Choo</Link>
         <div className="nav-links">
           <Link to="/" className={location.pathname === '/' ? 'active' : ''}>Home</Link>
-          <Link to="/introduction" className={location.pathname === '/introduction' ? 'active' : ''} role="menuitem" onClick={() => setOpen(false)}>Introduction</Link>
-          <Link to="/projects" className={location.pathname === '/projects' ? 'active' : ''}>Projects</Link>
+      <Link to="/experience" className={location.pathname === '/experience' ? 'active' : ''} role="menuitem" onClick={() => setOpen(false)}>My Journey</Link>
           <Link to="/skills" className={location.pathname === '/skills' ? 'active' : ''}>Skills</Link>
-          <Link to="/studies" className={location.pathname === '/studies' ? 'active' : ''}>Studies</Link>
+          <Link to="/about" className={location.pathname === '/about' ? 'active' : ''} role="menuitem" onClick={() => setOpen(false)}>About</Link>
+          <Link to="/contact" className={location.pathname === '/contact' ? 'active' : ''} role="menuitem" onClick={() => setOpen(false)}>Contact</Link>
+          
           <div
             className={`nav-dropdown ${open ? 'open' : ''}`}
             ref={ddRef}
@@ -40,10 +41,8 @@ const Navbar = () => {
               More ▾
             </button>
             <div className="dropdown-menu" role="menu">
-              
-              <Link to="/about" className={location.pathname === '/about' ? 'active' : ''} role="menuitem" onClick={() => setOpen(false)}>About</Link>
-              <Link to="/contact" className={location.pathname === '/contact' ? 'active' : ''} role="menuitem" onClick={() => setOpen(false)}>Contact</Link>
-              <Link to="/experience" className={location.pathname === '/experience' ? 'active' : ''} role="menuitem" onClick={() => setOpen(false)}>Experience</Link>
+              <Link to="/studies" className={location.pathname === '/studies' ? 'active' : ''}>Studies</Link>
+              <Link to="/projects" className={location.pathname === '/projects' ? 'active' : ''}>Projects</Link>
               <Link to="/blog" className={location.pathname.startsWith('/blog') ? 'active' : ''} role="menuitem" onClick={() => setOpen(false)}>Blog</Link>
               <Link to="/admin/login" className={location.pathname === '/admin/login' ? 'active' : ''} role="menuitem" onClick={() => setOpen(false)}>Admin</Link>
             </div>

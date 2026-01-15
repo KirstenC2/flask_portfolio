@@ -7,13 +7,17 @@ from routers.contact import contact_bp
 from routers.admin import admin_bp
 from routers.blog import blog_bp
 from routers.diary import diary_bp
+from routers.minio import minio_bp
 from datetime import datetime
 from seed_data import seed_sample_data
 from dotenv import load_dotenv
+from utils.minio_utils import init_minio
 # 載入 .env 檔案
 load_dotenv()
 
 app = Flask(__name__)
+
+init_minio()
 # Explicit CORS config to support Authorization header from React dev server
 CORS(
     app,
@@ -31,7 +35,7 @@ CORS(
 app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'dev-key-for-testing')
 app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get('SQLALCHEMY_DATABASE_URI', 'sqlite:///portfolio.db')
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-
+app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024
 db.init_app(app)
 
 with app.app_context():
@@ -44,6 +48,7 @@ app.register_blueprint(contact_bp)
 app.register_blueprint(admin_bp)
 app.register_blueprint(blog_bp)
 app.register_blueprint(diary_bp)
+app.register_blueprint(minio_bp)
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=5001, debug=True)
+    app.run(host='0.0.0.0', port=5002, debug=True)

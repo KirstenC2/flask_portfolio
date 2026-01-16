@@ -1,0 +1,67 @@
+/* 讓 Builder 視圖佔滿容器 */
+.resume-builder-view {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    background: #fff;
+    animation: slideIn 0.3s ease-out;
+}
+
+@keyframes slideIn {
+    from { transform: translateX(50px); opacity: 0; }
+    to { transform: translateX(0); opacity: 1; }
+}
+
+.builder-header {
+    display: flex;
+    align-items: center;
+    padding: 1rem 2rem;
+    border-bottom: 1px solid #eee;
+    gap: 20px;
+}
+
+.title-input {
+    font-size: 1.2rem;
+    font-weight: bold;
+    border: none;
+    border-bottom: 2px solid transparent;
+    padding: 5px;
+    width: 400px;
+    outline: none;
+}
+
+.title-input:focus {
+    border-bottom-color: #3498db;
+}
+
+.editor-section {
+    padding: 2rem;
+    flex-grow: 1;
+    overflow-y: auto;
+}
+
+/* 調整 CKEditor 內容高度 */
+.ck-editor__editable {
+    min-height: 500px;
+}
+/* 移除所有表格的預設邊框 */
+.ck-content table, 
+.ck-content table td, 
+.ck-content table th {
+    border: none !important;
+}
+
+/* 強化字體清晰度 */
+.ck-content {
+    font-variant-ligatures: common-ligatures;
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
+}
+
+/* 強制讓 PDF 導出時顯示背景顏色 (例如技能區塊的淺灰色) */
+@media print {
+    .ck-content {
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+    }
+}

@@ -271,6 +271,7 @@ const Dashboard = () => {
             {activeSection === 'overview' && 'Dashboard Overview'}
             {activeSection === 'messages' && 'Messages'}
             {activeSection === 'projects' && 'Projects'}
+            {activeSection === 'resume' && 'Resume'}
             {activeSection === 'skills' && 'Skills'}
             {activeSection === 'studies' && 'Studies'}
             {activeSection === 'experience' && 'Experience'}

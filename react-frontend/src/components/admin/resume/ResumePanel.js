@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faFileUpload, faCheckCircle, faTrash, faEye } from '@fortawesome/free-solid-svg-icons';
+import { 
+  faFileUpload, faCheckCircle, faTrash, faEye, faTimes, faSpinner 
+} from '@fortawesome/free-solid-svg-icons';
 import axios from 'axios';
 import '../../../common/global.css';
 import './ResumePanel.css';
@@ -8,6 +10,10 @@ import './ResumePanel.css';
 const ResumePanel = () => {
     const [resumes, setResumes] = useState([]);
     const [isUploading, setIsUploading] = useState(false);
+    
+    // --- 預覽相關 State ---
+    const [showModal, setShowModal] = useState(false);
+    const [previewUrl, setPreviewUrl] = useState(null);
 
     const fetchResumes = async () => {
         try {
@@ -49,13 +55,23 @@ const ResumePanel = () => {
         fetchResumes();
     };
 
-    // --- 預覽功能實作 ---
+    const handleDelete = async (filename) => {
+        await fetch(`http://localhost:5001/api/attachments/remove/resume/${filename}`, {
+            method: 'DELETE',
+            headers: { 'Content-Type': 'application/json' }
+        });
+        fetchResumes();
+    };
+
+    // --- 觸發預覽 ---
     const handlePreview = async (filename) => {
         try {
-            // 向 Flask 請求一個 10 分鐘有效的臨時連結
-            const response = await axios.get(`http://localhost:5001/api/attachments/view/${filename}`);
+            const response = await axios.get(`http://localhost:5001/api/attachments/view/resume/${filename}`);
             if (response.data.url) {
-                window.open(response.data.url, '_blank');
+                // 將 Minio 容器內部地址替換為本地開發地址
+                const browserUrl = response.data.url.replace("minio:9000", "localhost:9000");
+                setPreviewUrl(browserUrl);
+                setShowModal(true);
             }
         } catch (error) {
             console.error('Preview error:', error);
@@ -63,12 +79,18 @@ const ResumePanel = () => {
         }
     };
 
+    const closePreview = () => {
+        setShowModal(false);
+        setPreviewUrl(null);
+    };
+
     return (
         <div className="resume-container">
             <div className="section-header">
                 <h1>Resume Management</h1>
                 <label className="btn btn-primary clickable">
-                    <FontAwesomeIcon icon={faFileUpload} /> {isUploading ? 'Uploading...' : 'Upload New Resume'}
+                    <FontAwesomeIcon icon={isUploading ? faSpinner : faFileUpload} spin={isUploading} /> 
+                    {isUploading ? ' Uploading...' : ' Upload New Resume'}
                     <input type="file" onChange={handleUpload} hidden disabled={isUploading} />
                 </label>
             </div>
@@ -83,11 +105,10 @@ const ResumePanel = () => {
                             </div>
 
                             <div className="actions">
-                                {/* 預覽按鈕 */}
                                 <button
                                     className="btn-icon text-info"
                                     onClick={() => handlePreview(resume.file_name)}
-                                    title="Preview PDF"
+                                    title="Quick Preview"
                                 >
                                     <FontAwesomeIcon icon={faEye} />
                                 </button>
@@ -100,7 +121,7 @@ const ResumePanel = () => {
                                     <FontAwesomeIcon icon={faCheckCircle} />
                                 </button>
                                 
-                                <button className="btn-icon text-danger" onClick={() => {/* 刪除邏輯 */ }}>
+                                <button className="btn-icon text-danger" onClick={() => handleDelete(resume.file_name)}>
                                     <FontAwesomeIcon icon={faTrash} />
                                 </button>
                             </div>
@@ -108,6 +129,36 @@ const ResumePanel = () => {
                     </div>
                 ))}
             </div>
+
+            {/* --- 內置 PDF 預覽彈窗 (Modal) --- */}
+            {showModal && (
+                <div className="preview-modal-overlay" onClick={closePreview}>
+                    <div className="preview-modal-content" onClick={e => e.stopPropagation()}>
+                        <div className="modal-header">
+                            <h3>Resume Preview</h3>
+                            <button className="close-x" onClick={closePreview}>
+                                <FontAwesomeIcon icon={faTimes} />
+                            </button>
+                        </div>
+                        <div className="modal-body">
+                            {previewUrl ? (
+                                <iframe 
+                                    src={previewUrl} 
+                                    title="PDF Preview"
+                                    width="100%"
+                                    height="100%"
+                                    style={{ border: 'none' }}
+                                />
+                            ) : (
+                                <div className="modal-loading">
+                                    <FontAwesomeIcon icon={faSpinner} spin size="2x" />
+                                    <p>Loading PDF...</p>
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };

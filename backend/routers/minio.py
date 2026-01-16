@@ -5,9 +5,10 @@ import uuid
 import os
 from flask_cors import CORS
 from models import Resume
-
+from urllib.parse import urlparse, urlunparse
 from datetime import timedelta
-
+from minio.error import S3Error
+from models import db
 minio_bp = Blueprint('minio', __name__)
 CORS(minio_bp)
 @minio_bp.route('/api/upload/resumes', methods=['GET'])
@@ -55,7 +56,6 @@ def upload_resume():  # Changed function name for clarity
         )
 
         # Save to Resume table
-        from models import Resume, db
         new_resume = Resume(
             title=file.filename,
             file_name=unique_filename,
@@ -76,13 +76,13 @@ def upload_resume():  # Changed function name for clarity
         return jsonify({"error": str(e)}), 500
 
 
-@minio_bp.route('/api/attachments/view/<filename>', methods=['GET'])
-def get_preview_url(filename):
+@minio_bp.route('/api/attachments/view/<bucket>/<filename>', methods=['GET'])
+def get_preview_url(bucket, filename):
     try:
         # 生成一個 10 分鐘內有效的臨時連結
         url = minio_client.get_presigned_url(
             "GET",
-            "attachments", # 你的 Bucket 名稱
+            bucket,
             filename,
             expires=timedelta(minutes=10),
             # 強制瀏覽器直接預覽而非下載
@@ -91,6 +91,41 @@ def get_preview_url(filename):
                 'response-content-type': 'application/pdf'
             }
         )
+        
         return jsonify({"url": url}), 200
     except Exception as e:
         return jsonify({"error": str(e)}), 500
+
+@minio_bp.route('/api/attachments/remove/<bucket>/<filename>', methods=['DELETE', 'OPTIONS'])
+def remove_attachment(bucket, filename):
+    # 處理 CORS 預檢
+    if request.method == 'OPTIONS':
+        return '', 204
+
+    try:
+        # 1. 先從 MinIO 刪除
+        # 注意：如果你的檔案在資料夾裡，filename 必須包含路徑，例如 "uploads/abc.png"
+        print(f"Attempting to remove {filename} from bucket {bucket}")
+        minio_client.remove_object(bucket, filename)
+        
+    except S3Error as err:
+        print(f"MinIO S3Error: {err}")
+        return jsonify({"error": f"MinIO 刪除失敗: {err}"}), 502
+    except Exception as err:
+        print(f"General Error: {err}")
+        return jsonify({"error": str(err)}), 500
+
+    try:
+        # 2. 再從資料庫刪除
+        resume = Resume.query.filter_by(file_name=filename).first()
+        if resume:
+            db.session.delete(resume)
+            db.session.commit()
+            return jsonify({"success": True, "removed_from_db": True}), 200
+        else:
+            # 即使資料庫沒資料，檔案刪除了也算部分成功
+            return jsonify({"success": True, "removed_from_db": False, "message": "File removed from MinIO but not found in DB"}), 200
+            
+    except Exception as err:
+        db.session.rollback()
+        return jsonify({"error": f"MinIO 檔案已刪除，但資料庫清理失敗: {err}"}), 500

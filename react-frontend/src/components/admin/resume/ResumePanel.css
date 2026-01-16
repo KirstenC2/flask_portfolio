@@ -1,44 +1,100 @@
-/* Resume 專屬容器擴充 */
-.active-border {
-  border-left: 6px solid #10b981 !important; /* 顯眼的綠色邊框 */
-  background-color: #f0fdf4 !important; /* 極淺綠色背景 */
-  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.1) !important;
-}
-
-/* 履歷標題樣式 */
-.post-title-cell {
-  font-weight: 600;
-  color: #1e293b;
-  font-size: 1.05rem;
-  margin-bottom: 4px;
-}
-
-.section-header, .sidepanel-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 24px;
-}
-
 .resume-container {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
+    padding: 2rem;
+    position: relative;
 }
 
+/* 列表樣式 */
 .resume-card-item {
-  display: flex;
-  padding: 24px;
-  flex-direction: column;
-  background-color: #edf0f6;
-  gap: 16px;
+    background: #fff;
+    border: 1px solid #eee;
+    border-radius: 8px;
+    padding: 1rem;
+    margin-bottom: 1rem;
+    transition: all 0.2s ease;
 }
 
-.resume-items-list {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
+.active-border {
+    border-left: 5px solid #2ecc71;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
 }
+
+/* 彈窗遮罩層 */
+.preview-modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(0, 0, 0, 0.8);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 9999; /* 確保在最上層 */
+    backdrop-filter: blur(4px);
+}
+
+/* 彈窗內容容器 */
+.preview-modal-content {
+    background: white;
+    width: 85%;
+    height: 90vh;
+    border-radius: 12px;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    position: relative;
+    animation: modalFadeIn 0.3s ease-out;
+}
+
+@keyframes modalFadeIn {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.modal-header {
+    padding: 1rem 1.5rem;
+    background: #f8f9fa;
+    border-bottom: 1px solid #dee2e6;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.modal-header h3 {
+    margin: 0;
+    font-size: 1.2rem;
+    color: #333;
+}
+
+.close-x {
+    background: none;
+    border: none;
+    font-size: 1.5rem;
+    color: #999;
+    cursor: pointer;
+    transition: color 0.2s;
+}
+
+.close-x:hover {
+    color: #e74c3c;
+}
+
+.modal-body {
+    flex: 1;
+    background: #525659; /* PDF 查看器的常見背景色 */
+}
+
+.modal-loading {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    color: white;
+}
+
+
+.text-info { color: #3498db; }
 /* 動作按鈕組 */
 .actions {
   display: flex;

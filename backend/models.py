@@ -55,9 +55,28 @@ class Experience(db.Model):
     leaving_reason = db.Column(db.Text, nullable=True)  # Reason for leaving (if applicable)
     # Relationship to projects completed during this experience
     projects = db.relationship('ExperienceProject', backref='experience', lazy=True, cascade='all, delete-orphan')
-    
+    descriptions = db.relationship('ExperienceDescription', backref='experience', cascade='all, delete-orphan')
     def __repr__(self):
         return f"Experience('{self.title}', '{self.company}')"
+
+class ExperienceDescription(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    experience_id = db.Column(db.Integer, db.ForeignKey('experience.id'), nullable=False)
+    
+    # 例如: 'Backend', 'DevOps', 'Management'
+    category = db.Column(db.String(50), nullable=False) 
+    
+    # 例如: 'Standard', 'Brief', 'Detailed'
+    version_name = db.Column(db.String(50), nullable=False) 
+    
+    # 實際的描述內容
+    content = db.Column(db.Text, nullable=False)
+    
+    # 標記這個面向下的這個版本是否為「目前選用」
+    is_active = db.Column(db.Boolean, default=False)
+
+    def __repr__(self):
+        return f"[{self.category}] {self.version_name}"
 
 # Per-experience projects
 class ExperienceProject(db.Model):

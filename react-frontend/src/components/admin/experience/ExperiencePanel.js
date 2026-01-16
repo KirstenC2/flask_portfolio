@@ -6,6 +6,7 @@ import {
 import RelatedProjects from './ExperienceProjectsPanel';
 import './ExperiencePanel.css';
 import '../../../common/global.css';
+import DescriptionManager from './DescriptionManager';
 
 const ExperiencePanel = () => {
   const [experience, setExperience] = useState([]);
@@ -14,7 +15,7 @@ const ExperiencePanel = () => {
   const [editMode, setEditMode] = useState(false);
   const [currentExperience, setCurrentExperience] = useState(null);
   const [formData, setFormData] = useState({
-    title: '', company: '', description: '', start_date: '', end_date: '', is_current: false, order: 0
+    title: '', company: '', description: '', start_date: '', end_date: '', is_current: false, order: 0, leaving_reason: ''
   });
 
   useEffect(() => { fetchExperience(); }, []);
@@ -28,6 +29,12 @@ const ExperiencePanel = () => {
       });
       const data = await response.json();
       setExperience(data);
+      
+      // 如果當前有選中的項目，同步更新它
+      if (currentExperience) {
+        const updated = data.find(exp => exp.id === currentExperience.id);
+        if (updated) setCurrentExperience(updated);
+      }
     } catch (err) {
       setError('Failed to load experience entries.');
     } finally {
@@ -53,7 +60,7 @@ const ExperiencePanel = () => {
   const handleCreateNew = () => {
     setCurrentExperience(null);
     const highestOrder = experience.length > 0 ? Math.max(...experience.map(exp => exp.order)) : 0;
-    setFormData({ title: '', company: '', description: '', start_date: '', end_date: '', is_current: false, order: highestOrder + 1 });
+    setFormData({ title: '', company: '', description: '', start_date: '', end_date: '', is_current: false, order: highestOrder + 1, leaving_reason: '' });
     setEditMode(true);
   };
 
@@ -119,94 +126,61 @@ const ExperiencePanel = () => {
           </div>
 
           {editMode ? (
-            <form onSubmit={handleSubmit} className="form">
-              <div className="form-row">
-                <label>Job Title</label>
-                <input
-                  className="form-control"
-                  value={formData.title}
-                  onChange={e => setFormData({ ...formData, title: e.target.value })}
-                  placeholder="e.g. Senior Product Manager"
-                  required
-                />
-              </div>
-
-              <div className="form-row">
-                <label>Company</label>
-                <input
-                  className="form-control"
-                  value={formData.company}
-                  onChange={e => setFormData({ ...formData, company: e.target.value })}
-                  placeholder="e.g. Google"
-                  required
-                />
-              </div>
-
-              <div className="form-row-group">
+            <div className="edit-scroll-container">
+              <form onSubmit={handleSubmit} className="form">
                 <div className="form-row">
-                  <label>Start Date</label>
-                  <input
-                    type="date"
-                    className="form-control"
-                    value={formData.start_date}
-                    onChange={e => setFormData({ ...formData, start_date: e.target.value })}
-                    required
-                  />
+                  <label>Job Title</label>
+                  <input className="form-control" value={formData.title} onChange={e => setFormData({ ...formData, title: e.target.value })} required />
                 </div>
+
                 <div className="form-row">
-                  <label>End Date</label>
-                  <input
-                    type="date"
-                    className="form-control"
-                    value={formData.end_date}
-                    onChange={e => setFormData({ ...formData, end_date: e.target.value })}
-                    disabled={formData.is_current}
-                    required={!formData.is_current}
-                  />
+                  <label>Company</label>
+                  <input className="form-control" value={formData.company} onChange={e => setFormData({ ...formData, company: e.target.value })} required />
                 </div>
-              </div>
 
-              <div className="form-row checkbox-row">
-                <label className="checkbox-container">
-                  <input
-                    type="checkbox"
-                    checked={formData.is_current}
-                    onChange={e => setFormData({ ...formData, is_current: e.target.checked })}
-                  />
-                  <span className="checkbox-label">I currently work here</span>
-                </label>
-              </div>
+                <div className="form-row-group">
+                  <div className="form-row">
+                    <label>Start Date</label>
+                    <input type="date" className="form-control" value={formData.start_date} onChange={e => setFormData({ ...formData, start_date: e.target.value })} required />
+                  </div>
+                  <div className="form-row">
+                    <label>End Date</label>
+                    <input type="date" className="form-control" value={formData.end_date} onChange={e => setFormData({ ...formData, end_date: e.target.value })} disabled={formData.is_current} required={!formData.is_current} />
+                  </div>
+                </div>
 
-              <div className="form-row">
-                <label>Job Description</label>
-                <textarea
-                  className="form-control"
-                  rows={6}
-                  value={formData.description}
-                  onChange={e => setFormData({ ...formData, description: e.target.value })}
-                  placeholder="Describe your responsibilities and achievements..."
+                <div className="form-row checkbox-row">
+                  <label className="checkbox-container">
+                    <input type="checkbox" checked={formData.is_current} onChange={e => setFormData({ ...formData, is_current: e.target.checked })} />
+                    <span className="checkbox-label">I currently work here</span>
+                  </label>
+                </div>
+
+                <div className="form-row">
+                  <label>Default Description (Fallback)</label>
+                  <textarea className="form-control" rows={4} value={formData.description} onChange={e => setFormData({ ...formData, description: e.target.value })} />
+                </div>
+
+                <div className="form-row">
+                  <label>Reason for Leaving</label>
+                  <input className="form-control" value={formData.leaving_reason} onChange={e => setFormData({ ...formData, leaving_reason: e.target.value })} />
+                </div>
+
+                <div className="form-actions">
+                  <button type="submit" className="btn btn-primary"><FontAwesomeIcon icon={faSave} /> Save Job</button>
+                  <button type="button" className="btn" onClick={() => setEditMode(false)}>Cancel</button>
+                </div>
+              </form>
+
+              {/* 在編輯模式下也顯示描述版本管理 */}
+              {currentExperience && (
+                <DescriptionManager 
+                  experienceId={currentExperience.id} 
+                  descriptions={currentExperience.descriptions || []} 
+                  onRefresh={fetchExperience} 
                 />
-              </div>
-
-              <div className="form-row">
-                <label>Reason for Leaving</label>
-                <input
-                  className="form-control"
-                  value={formData.leaving_reason}
-                  onChange={e => setFormData({ ...formData, leaving_reason: e.target.value })}
-                  placeholder="Optional..."
-                />
-              </div>
-
-              <div className="form-actions">
-                <button type="submit" className="btn btn-primary">
-                  <FontAwesomeIcon icon={faSave} /> Save Job
-                </button>
-                <button type="button" className="btn" onClick={() => setEditMode(false)}>
-                  Cancel
-                </button>
-              </div>
-            </form>
+              )}
+            </div>
           ) : (
             <div className="experience-view">
               <div className="view-header">
@@ -216,18 +190,25 @@ const ExperiencePanel = () => {
               </div>
 
               <div className="view-content">
-                <label>Description</label>
-                <p className="description-text">{currentExperience.description}</p>
-              </div>
-              <div className="view-content">
-                <label>Leaving Reason</label>
-                <p className="description-text">{currentExperience.leaving_reason}</p>
-              </div>
-              <div className="form-actions" style={{ borderBottom: '1px solid #eee', paddingBottom: '20px', marginBottom: '20px' }}>
-                <button className="btn btn-primary" onClick={() => setEditMode(true)}><FontAwesomeIcon icon={faEdit} /> Edit</button>
+                <label style={{fontWeight:'bold', color:'#666'}}>Active Resume Description:</label>
+                <p className="description-text" style={{background:'#f9f9f9', padding:'10px', borderRadius:'4px', borderLeft:'4px solid #007bff'}}>
+                  {currentExperience.descriptions?.find(d => d.is_active)?.content || currentExperience.description || "No description set."}
+                </p>
               </div>
 
-              {/* INTEGRATED SUB-COMPONENT */}
+              {/* 詳情模式下也顯示管理表格，方便快速切換 Active */}
+              <DescriptionManager 
+                experienceId={currentExperience.id} 
+                descriptions={currentExperience.descriptions || []} 
+                onRefresh={fetchExperience} 
+              />
+
+              <div className="form-actions" style={{ marginTop: '20px' }}>
+                <button className="btn btn-primary" onClick={() => setEditMode(true)}>
+                  <FontAwesomeIcon icon={faEdit} /> Edit Core Info
+                </button>
+              </div>
+
               <RelatedProjects
                 experienceId={currentExperience.id}
                 companyName={currentExperience.company}

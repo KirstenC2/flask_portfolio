@@ -1,4 +1,5 @@
 import os
+from models import ExperienceDescription
 import jwt
 from functools import wraps
 from datetime import datetime, timedelta
@@ -12,7 +13,7 @@ CORS(admin_bp,
      resources={"/api/admin/*": {"origins": "http://localhost:3000"}},
      supports_credentials=True,
      allow_headers=["Content-Type", "Authorization"],
-     methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"])
+     methods=["GET", "POST", "PUT","PATCH", "DELETE", "OPTIONS"])
 APP_SECRET_KEY = os.environ.get('APP_SECRET_KEY', 'dev-secret-key-change-in-production')
 
 def token_required(f):
@@ -487,6 +488,7 @@ def _exp_to_dict(exp: Experience):
         'title': exp.title,
         'company': exp.company,
         'description': exp.description,
+        # 'description_versions': exp.description_versions,
         'start_date': exp.start_date.isoformat() if exp.start_date else None,
         'end_date': exp.end_date.isoformat() if exp.end_date else None,
         'leaving_reason': exp.leaving_reason,
@@ -506,11 +508,33 @@ def _parse_dt(val):
         except Exception:
             return None
 
-@admin_bp.route('/api/admin/experience', methods=['GET', 'OPTIONS'])
+@admin_bp.route('/api/admin/experience', methods=['GET','OPTIONS'])
 @token_required
-def list_experience(current_admin):
+def get_experiences(current_admin):
     exps = Experience.query.order_by(Experience.order.desc()).all()
-    return jsonify([_exp_to_dict(e) for e in exps])
+    output = []
+    for e in exps:
+        # 手動將子表資料轉換成 list of dicts
+        desc_list = [{
+            "id": d.id,
+            "category": d.category,
+            "version_name": d.version_name,
+            "content": d.content,
+            "is_active": d.is_active
+        } for d in e.descriptions]
+
+        output.append({
+            "id": e.id,
+            "title": e.title,
+            "company": e.company,
+            "description": e.description,
+            "start_date": e.start_date.isoformat() if e.start_date else None,
+            "end_date": e.end_date.isoformat() if e.end_date else None,
+            "is_current": e.is_current,
+            "order": e.order,
+            "descriptions": desc_list  # 關鍵：確保這行存在
+        })
+    return jsonify(output)
 
 @admin_bp.route('/api/admin/experience', methods=['POST', 'OPTIONS'])
 @token_required
@@ -520,6 +544,7 @@ def create_experience(current_admin):
         title=(data.get('title') or '').strip(),
         company=(data.get('company') or '').strip(),
         description=data.get('description') or '',
+        # description_versions=data.get('description_versions') or None,
         start_date=_parse_dt(data.get('start_date')),
         end_date=_parse_dt(data.get('end_date')),
         leaving_reason=data.get('leaving_reason') or '',
@@ -555,6 +580,67 @@ def update_experience(current_admin, id):
     except Exception as e:
         db.session.rollback()
         return jsonify({"error": str(e)}), 500
+
+@admin_bp.route('/api/admin/experience/<int:id>/description', methods=['POST', 'OPTIONS'])
+@token_required
+def add_new_description(current_admin, id):
+    data = request.json
+    # Create a new ExperienceDescription record
+    new_desc = ExperienceDescription(
+        experience_id=id,
+        category=data.get('category', 'General'),
+        version_name=data.get('version_name', 'Default'),
+        content=data.get('content', '')
+    )
+    db.session.add(new_desc)
+    try:
+        db.session.commit()
+        return jsonify({"message": "Description added successfully"}), 200
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"error": str(e)}), 500
+
+# 2. 切換特定版本的 Active 狀態
+@admin_bp.route('/api/admin/experience/description/<int:desc_id>/activate', methods=['PUT'])
+def activate_description(desc_id):
+    desc = ExperienceDescription.query.get_or_404(desc_id)
+    
+    # 將「同一個工作」下「同一個類別」的所有版本先設為 False
+    ExperienceDescription.query.filter_by(
+        experience_id=desc.experience_id, 
+        category=desc.category
+    ).update({ExperienceDescription.is_active: False})
+    
+    # 啟用目前選擇的版本
+    desc.is_active = True
+    db.session.commit()
+    return jsonify({"message": "Version activated"}), 200
+
+
+@admin_bp.route('/api/admin/experience/description/<int:desc_id>', methods=['PATCH','OPTIONS'])
+@token_required
+def update_description(current_admin, desc_id):
+    desc = ExperienceDescription.query.get_or_404(desc_id)
+    data = request.json
+    
+    if 'category' in data:
+        desc.category = data['category']
+    if 'version_name' in data:
+        desc.version_name = data['version_name']
+    if 'content' in data:
+        desc.content = data['content']
+        
+    db.session.commit()
+    return jsonify({"message": "Updated"}), 200
+
+@admin_bp.route('/api/admin/experience/description/<int:desc_id>', methods=['DELETE','OPTIONS'])
+@token_required
+def delete_description(current_admin, desc_id):
+    desc = ExperienceDescription.query.get_or_404(desc_id)
+    db.session.delete(desc)
+    db.session.commit()
+    return jsonify({"message": "Deleted"}), 200
+
 # @admin_bp.route('/api/admin/experience/<int:exp_id>', methods=['PUT', 'OPTIONS'])
 # @token_required
 # def update_experience(current_admin, exp_id):

@@ -1,29 +1,65 @@
 /* LIGHT THEME: CLEAN & MINIMAL */
 .experience-showcase {
-    background-color: #ffffff; /* Pure White */
-    color: #1e293b; /* Deep slate for primary text */
     min-height: 100vh;
-    padding: 80px 20px;
+    padding:0;
     font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
 }
 
 .timeline-hero {
-    text-align: center;
-    max-width: 800px;
-    margin: 0 auto 100px;
+  /* position: relative; Necessary to contain the absolute pseudo-element */
+  color: #f0f0f0;
+  text-align: center;
+  height: 100vh;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  overflow: hidden;
 }
+
+.timeline-hero::before {
+  content: "";
+  position: absolute;
+  top: 0; 
+  left: 0;
+  width: 100%; 
+  height: 100%;
+  
+  /* Background properties moved here */
+  background-image: url('/src/assets/journey-hero.png');
+  background-size: cover;
+  background-position: center;
+  
+  /* The Blur Effect */
+  filter: blur(8px);
+  
+  /* Scale slightly to hide the white/transparent edges caused by blurring */
+  transform: scale(1.1); 
+  
+  /* Ensure the background stays behind the text */
+  z-index: -1; 
+}
+
+.timeline-hero::after {
+  content: "";
+  position: absolute;
+  top: 0; left: 0; width: 100%; height: 100%;
+  background: rgba(0, 0, 0, 0.3); /* Darkens the image slightly */
+  z-index: -1;
+}
+
 
 .gradient-text {
     font-size: 3.5rem;
-    /* Deeper gradients work better on white */
-    background: linear-gradient(90deg, #4f46e5, #7c3aed); 
+    background: linear-gradient(90deg, #2b046e,#b291ce, #2b046e); 
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
-    font-weight: 800;
+    font-weight: 1000;
 }
 
 .roadmap-container {
     position: relative;
+    padding-top: 2rem;
     max-width: 900px;
     margin: 0 auto;
     padding-left: 50px;

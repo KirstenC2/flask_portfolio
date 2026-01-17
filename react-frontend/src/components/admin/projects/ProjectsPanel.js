@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { 
-  faProjectDiagram, 
-  faPlus, 
-  faEdit, 
-  faTrash, 
-  faSave, 
+import {
+  faProjectDiagram,
+  faPlus,
+  faEdit,
+  faTrash,
+  faSave,
   faTimes,
   faSpinner,
   faExternalLinkAlt,
@@ -20,6 +20,9 @@ const ProjectsPanel = () => {
   const [error, setError] = useState(null);
   const [editMode, setEditMode] = useState(false);
   const [currentProject, setCurrentProject] = useState(null);
+  const [selectedFile, setSelectedFile] = useState(null);
+  const [uploading, setUploading] = useState(false);
+  const [displayUrls, setDisplayUrls] = useState({});
   const [formData, setFormData] = useState({
     title: '',
     description: '',
@@ -28,16 +31,51 @@ const ProjectsPanel = () => {
     project_url: '',
     github_url: ''
   });
-  
+
   // Fetch projects on component mount
   useEffect(() => {
     fetchProjects();
   }, []);
+
+  // 當 projects 列表更新時，獲取所有圖片的連結
+useEffect(() => {
+  projects.forEach(project => {
+    if (project.image_url && !project.image_url.startsWith('http')) {
+      fetchImageUrl(project.image_url);
+    }
+  });
+}, [projects]);
+
+// 當選擇某個專案時，也要確保該專案的圖片連結已獲取
+useEffect(() => {
+  if (currentProject?.image_url && !currentProject.image_url.startsWith('http')) {
+    fetchImageUrl(currentProject.image_url);
+  }
+}, [currentProject]);
+  const fetchImageUrl = async (path) => {
+  if (!path || displayUrls[path]) return;
   
+  // 假設 path 是 "projects/123.jpg"
+  const parts = path.split('/');
+  const bucket = parts[0];
+  const filename = parts[1];
+
+  try {
+    // 這裡我們直接傳送拆分後的 bucket 和 filename
+    const response = await fetch(`http://localhost:5001/api/attachments/view/${bucket}/${filename}`);
+    const data = await response.json();
+    
+    if (data.url) {
+      setDisplayUrls(prev => ({ ...prev, [path]: data.url }));
+    }
+  } catch (err) {
+    console.error("無法取得圖片連結", err);
+  }
+};
   const fetchProjects = async () => {
     setLoading(true);
     setError(null);
-    
+
     try {
       const token = localStorage.getItem('adminToken');
       const response = await fetch('http://localhost:5001/api/admin/projects', {
@@ -45,11 +83,11 @@ const ProjectsPanel = () => {
           'Authorization': `Bearer ${token}`
         }
       });
-      
+
       if (!response.ok) {
         throw new Error('Failed to fetch projects');
       }
-      
+
       const data = await response.json();
       setProjects(data);
     } catch (err) {
@@ -59,7 +97,7 @@ const ProjectsPanel = () => {
       setLoading(false);
     }
   };
-  
+
   const handleSelectProject = (project) => {
     setCurrentProject(project);
     setFormData({
@@ -72,7 +110,7 @@ const ProjectsPanel = () => {
     });
     setEditMode(false);
   };
-  
+
   const handleCreateNew = () => {
     setCurrentProject(null);
     setFormData({
@@ -85,11 +123,11 @@ const ProjectsPanel = () => {
     });
     setEditMode(true);
   };
-  
+
   const handleEditProject = () => {
     setEditMode(true);
   };
-  
+
   const handleCancelEdit = () => {
     if (currentProject) {
       // Reset form to current project data
@@ -112,10 +150,10 @@ const ProjectsPanel = () => {
         github_url: ''
       });
     }
-    
+
     setEditMode(false);
   };
-  
+
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData({
@@ -123,59 +161,131 @@ const ProjectsPanel = () => {
       [name]: value
     });
   };
-  
+
+  // const handleSubmit = async (e) => {
+  //   e.preventDefault();
+  //   setLoading(true);
+
+  //   try {
+  //     const token = localStorage.getItem('adminToken');
+  //     const method = currentProject ? 'PUT' : 'POST';
+  //     const url = currentProject 
+  //       ? `http://localhost:5001/api/admin/projects/${currentProject.id}`
+  //       : 'http://localhost:5001/api/admin/projects';
+
+  //     const response = await fetch(url, {
+  //       method,
+  //       headers: {
+  //         'Content-Type': 'application/json',
+  //         'Authorization': `Bearer ${token}`
+  //       },
+  //       body: JSON.stringify(formData)
+  //     });
+
+  //     if (!response.ok) {
+  //       throw new Error(`Failed to ${currentProject ? 'update' : 'create'} project`);
+  //     }
+
+  //     // Refresh projects list
+  //     fetchProjects();
+
+  //     // Exit edit mode
+  //     setEditMode(false);
+
+  //     // If creating new, clear current project
+  //     if (!currentProject) {
+  //       setCurrentProject(null);
+  //     }
+
+  //   } catch (err) {
+  //     console.error(`Error ${currentProject ? 'updating' : 'creating'} project:`, err);
+  //     setError(`Failed to ${currentProject ? 'update' : 'create'} project. Please try again.`);
+  //   } finally {
+  //     setLoading(false);
+  //   }
+  // };
+  const uploadFile = async (file) => {
+    const fileName = `${Date.now()}-${file.name}`;
+    const bucket = 'projects';
+    const formDataUpload = new FormData();
+    formDataUpload.append('file', file);
+
+    try {
+      const response = await fetch(`http://localhost:5001/api/attachments/upload/${bucket}/${fileName}`, {
+        method: 'POST',
+        body: formDataUpload,
+      });
+
+      if (!response.ok) throw new Error('Upload failed');
+
+      const data = await response.json();
+
+      // 調錯點：這裡必須對應後端 jsonify 的 Key
+      console.log("Backend response:", data); // 先印出來看看結構
+      return data.path; // 如果後端給的是 {"path": "..."}, 這裡就要用 data.path
+    } catch (err) {
+      console.error("MinIO Upload Error:", err);
+      throw err;
+    }
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
-    
+
     try {
+      let finalImageUrl = formData.image_url;
+
+      // 如果有選擇新檔案，先上傳到 MinIO
+      if (selectedFile) {
+        setUploading(true);
+        finalImageUrl = await uploadFile(selectedFile);
+        setUploading(false);
+      }
+
       const token = localStorage.getItem('adminToken');
       const method = currentProject ? 'PUT' : 'POST';
-      const url = currentProject 
+      const url = currentProject
         ? `http://localhost:5001/api/admin/projects/${currentProject.id}`
         : 'http://localhost:5001/api/admin/projects';
-      
+
+      // 將最後獲取的 MinIO URL 放入要傳送的資料中
+      const projectData = {
+        ...formData,
+        image_url: finalImageUrl
+      };
+
       const response = await fetch(url, {
         method,
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`
         },
-        body: JSON.stringify(formData)
+        body: JSON.stringify(projectData)
       });
-      
-      if (!response.ok) {
-        throw new Error(`Failed to ${currentProject ? 'update' : 'create'} project`);
-      }
-      
-      // Refresh projects list
+
+      if (!response.ok) throw new Error('Failed to save project');
+
+      setSelectedFile(null); // 上傳成功後清空選擇
       fetchProjects();
-      
-      // Exit edit mode
       setEditMode(false);
-      
-      // If creating new, clear current project
-      if (!currentProject) {
-        setCurrentProject(null);
-      }
-      
+
     } catch (err) {
-      console.error(`Error ${currentProject ? 'updating' : 'creating'} project:`, err);
-      setError(`Failed to ${currentProject ? 'update' : 'create'} project. Please try again.`);
+      setError("Failed to save project or upload image.");
     } finally {
       setLoading(false);
+      setUploading(false);
     }
   };
-  
   const handleDeleteProject = async () => {
     if (!currentProject) return;
-    
+
     if (!window.confirm(`Are you sure you want to delete "${currentProject.title}"?`)) {
       return;
     }
-    
+
     setLoading(true);
-    
+
     try {
       const token = localStorage.getItem('adminToken');
       const response = await fetch(`http://localhost:5001/api/admin/projects/${currentProject.id}`, {
@@ -184,17 +294,17 @@ const ProjectsPanel = () => {
           'Authorization': `Bearer ${token}`
         }
       });
-      
+
       if (!response.ok) {
         throw new Error('Failed to delete project');
       }
-      
+
       // Refresh projects list
       fetchProjects();
-      
+
       // Clear current project
       setCurrentProject(null);
-      
+
     } catch (err) {
       console.error('Error deleting project:', err);
       setError('Failed to delete project. Please try again.');
@@ -202,7 +312,7 @@ const ProjectsPanel = () => {
       setLoading(false);
     }
   };
-  
+
   return (
     <div className="projects-panel">
       <div className="projects-header">
@@ -210,13 +320,13 @@ const ProjectsPanel = () => {
           <FontAwesomeIcon icon={faPlus} /> New Project
         </button>
       </div>
-      
+
       {error && <div className="error-message">{error}</div>}
-      
+
       <div className="projects-content">
         <div className="projects-list">
           <h3>Your Projects</h3>
-          
+
           {loading && !projects.length ? (
             <div className="loading-state">
               <FontAwesomeIcon icon={faSpinner} className="spinner" />
@@ -231,14 +341,18 @@ const ProjectsPanel = () => {
           ) : (
             <ul className="project-items">
               {projects.map(project => (
-                <li 
-                  key={project.id} 
+                <li
+                  key={project.id}
                   className={`project-item ${currentProject && currentProject.id === project.id ? 'active' : ''}`}
                   onClick={() => handleSelectProject(project)}
                 >
                   <div className="project-item-image">
                     {project.image_url ? (
-                      <img src={project.image_url} alt={project.title} />
+                      <img 
+                        // 這裡改用 displayUrls[path]
+                        src={displayUrls[project.image_url] || project.image_url} 
+                        alt={project.title} 
+                      />
                     ) : (
                       <div className="no-image">
                         <FontAwesomeIcon icon={faImage} />
@@ -254,7 +368,7 @@ const ProjectsPanel = () => {
             </ul>
           )}
         </div>
-        
+
         <div className="project-details">
           {loading && currentProject ? (
             <div className="loading-state">
@@ -270,7 +384,7 @@ const ProjectsPanel = () => {
             <div className="project-form-container">
               <div className="form-header">
                 <h3>{editMode ? (currentProject ? 'Edit Project' : 'Create New Project') : 'Project Details'}</h3>
-                
+
                 {!editMode && currentProject && (
                   <div className="form-actions">
                     <button className="edit-btn" onClick={handleEditProject}>
@@ -282,7 +396,7 @@ const ProjectsPanel = () => {
                   </div>
                 )}
               </div>
-              
+
               {editMode ? (
                 <form className="project-form" onSubmit={handleSubmit}>
                   <div className="form-group">
@@ -296,7 +410,7 @@ const ProjectsPanel = () => {
                       required
                     />
                   </div>
-                  
+
                   <div className="form-group">
                     <label htmlFor="technologies">Technologies*</label>
                     <input
@@ -309,7 +423,7 @@ const ProjectsPanel = () => {
                       placeholder="E.g., React, Node.js, MongoDB"
                     />
                   </div>
-                  
+
                   <div className="form-group">
                     <label htmlFor="description">Description*</label>
                     <textarea
@@ -321,19 +435,26 @@ const ProjectsPanel = () => {
                       rows={5}
                     />
                   </div>
-                  
+
+                  // 在 form-group 內增加預覽圖
                   <div className="form-group">
-                    <label htmlFor="image_url">Image URL</label>
+                    <label htmlFor="image_file">Project Image (MinIO)</label>
                     <input
-                      type="url"
-                      id="image_url"
-                      name="image_url"
-                      value={formData.image_url}
-                      onChange={handleChange}
-                      placeholder="https://example.com/image.jpg"
+                      type="file"
+                      id="image_file"
+                      accept="image/*"
+                      onChange={(e) => setSelectedFile(e.target.files[0])}
                     />
+
+                    {/* 新增：選取檔案後的本地預覽 */}
+                    {selectedFile && (
+                      <div className="image-preview">
+                        <img src={URL.createObjectURL(selectedFile)} alt="Preview" style={{ width: '100px', marginTop: '10px' }} />
+                        <p>New image selected</p>
+                      </div>
+                    )}
                   </div>
-                  
+
                   <div className="form-group">
                     <label htmlFor="project_url">Project URL</label>
                     <input
@@ -345,7 +466,7 @@ const ProjectsPanel = () => {
                       placeholder="https://example.com"
                     />
                   </div>
-                  
+
                   <div className="form-group">
                     <label htmlFor="github_url">GitHub URL</label>
                     <input
@@ -357,7 +478,7 @@ const ProjectsPanel = () => {
                       placeholder="https://github.com/username/repo"
                     />
                   </div>
-                  
+
                   <div className="form-buttons">
                     <button type="submit" className="save-btn" disabled={loading}>
                       {loading ? <FontAwesomeIcon icon={faSpinner} className="spinner" /> : <FontAwesomeIcon icon={faSave} />}
@@ -372,16 +493,20 @@ const ProjectsPanel = () => {
                 <div className="project-view">
                   {currentProject.image_url && (
                     <div className="project-image">
-                      <img src={currentProject.image_url} alt={currentProject.title} />
+                      <img 
+                        // 這裡也改用 displayUrls[path]
+                        src={displayUrls[currentProject.image_url] || currentProject.image_url} 
+                        alt={currentProject.title} 
+                      />
                     </div>
                   )}
-                  
+
                   <div className="project-info">
                     <h2>{currentProject.title}</h2>
                     <div className="project-tech">
                       <strong>Technologies:</strong> {currentProject.technologies}
                     </div>
-                    
+
                     <div className="project-links">
                       {currentProject.project_url && (
                         <a href={currentProject.project_url} target="_blank" rel="noopener noreferrer">
@@ -394,7 +519,7 @@ const ProjectsPanel = () => {
                         </a>
                       )}
                     </div>
-                    
+
                     <div className="project-description">
                       <h3>Description</h3>
                       <p>{currentProject.description}</p>

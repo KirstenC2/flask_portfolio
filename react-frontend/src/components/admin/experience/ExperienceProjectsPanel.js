@@ -51,6 +51,25 @@ const RelatedProjects = ({ experienceId, companyName }) => {
     setEditingProjectId(null);
   };
 
+  const renderPointForm = (text) => {
+  if (!text) return null;
+  // 支援偵測「換行」、「* 」或「- 」開頭
+  const points = text.split('\n').filter(p => p.trim() !== '');
+  
+  return (
+    <ul className="proj-bullet-list">
+      {points.map((point, index) => (
+        <li key={index} style={{ marginBottom: '4px' }}>
+          {/* 去除字串開頭可能存在的 * 或 - 符號 */}
+          {point.replace(/^[*-]\s*/, '')}
+        </li>
+      ))}
+    </ul>
+  );
+};
+
+
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
@@ -159,7 +178,7 @@ const RelatedProjects = ({ experienceId, companyName }) => {
                   </div>
                 </div>
                 {proj.technologies && <span className="proj-tech-badge">{proj.technologies}</span>}
-                <p className="proj-desc-text">{proj.description}</p>
+                <p className="proj-desc-text">{renderPointForm(proj.description)}</p>
               </div>
             </div>
           ))

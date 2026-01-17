@@ -9,7 +9,7 @@ MINIO_ENDPOINT = os.getenv('MINIO_ENDPOINT', 'minio:9000') # Use the service nam
 MINIO_ACCESS_KEY = os.getenv('MINIO_ACCESS_KEY', 'minioadmin')
 MINIO_SECRET_KEY = os.getenv('MINIO_SECRET_KEY', 'minioadmin')
 MINIO_SECURE = False
-MINIO_BUCKET_NAME = {'attachments', 'diary', 'resume', 'skills'}  # Add this line
+MINIO_BUCKET_NAME = {'attachments', 'diary', 'resume', 'skills','projects'}  # Add this line
 
 # 初始化 Client
 minio_client = Minio(

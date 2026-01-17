@@ -2,7 +2,7 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import axios from 'axios';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
-
+import './Blog.css'; // 建議將樣式抽離
 function slugify(s) {
   return (s || '')
     .toLowerCase()
@@ -11,7 +11,6 @@ function slugify(s) {
     .replace(/\s+/g, '-')
     .replace(/-+/g, '-');
 }
-
 export default function BlogEditor() {
   const [title, setTitle] = useState('');
   const [slug, setSlug] = useState('');
@@ -19,14 +18,18 @@ export default function BlogEditor() {
   const [tags, setTags] = useState('');
   const [message, setMessage] = useState('');
   const [autoSlug, setAutoSlug] = useState(true);
+  const [wordCount, setWordCount] = useState(0);
 
   const textAreaRef = useRef(null);
   const api = useMemo(() => axios.create({ baseURL: 'http://localhost:5001' }), []);
 
+  // 計算字數
   useEffect(() => {
-    if (autoSlug) {
-      setSlug(slugify(title));
-    }
+    setWordCount(contentMd.trim().length);
+  }, [contentMd]);
+
+  useEffect(() => {
+    if (autoSlug) setSlug(slugify(title));
   }, [title, autoSlug]);
 
   const onSlugChange = (e) => {
@@ -101,53 +104,98 @@ export default function BlogEditor() {
   ]), [applyWrap, insertAtCursor]);
 
   return (
-    <div className="container" style={{ padding: '5rem 1.5rem' }}>
-      <h1>New Blog Post</h1>
-      {message && <p>{message}</p>}
-      <form onSubmit={submit}>
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
-          <div>
-            <div style={{ marginBottom: '1rem' }}>
-              <label>Title</label>
-              <input value={title} onChange={e => setTitle(e.target.value)} className="form-control" />
-            </div>
-            <div style={{ marginBottom: '0.5rem', display: 'flex', gap: 8, alignItems: 'center' }}>
-              <div style={{ flex: 1 }}>
-                <label>Slug</label>
-                <input value={slug} onChange={onSlugChange} className="form-control" />
-              </div>
-              <label style={{ whiteSpace: 'nowrap' }}>
-                <input type="checkbox" checked={autoSlug} onChange={e => setAutoSlug(e.target.checked)} /> Auto
-              </label>
-            </div>
-            <div style={{ marginBottom: '1rem' }}>
-              <label>Tags (comma separated)</label>
-              <input value={tags} onChange={e => setTags(e.target.value)} className="form-control" />
-            </div>
-
-            <div style={{ marginBottom: 8, display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-              {toolbar.map(btn => (
-                <button key={btn.label} type="button" className="btn" onClick={btn.onClick}>{btn.label}</button>
-              ))}
-            </div>
-
-            <div style={{ marginBottom: '1rem' }}>
-              <label>Content (Markdown)</label>
-              <textarea ref={textAreaRef} onKeyDown={onKeyDown} value={contentMd} onChange={e => setContentMd(e.target.value)} className="form-control" rows={18} />
-            </div>
-            <button type="submit" className="btn btn-primary">Create (Ctrl/Cmd+S)</button>
-          </div>
-
-          <div>
-            <div style={{ marginBottom: '0.5rem' }}>
-              <label>Preview</label>
-            </div>
-            <div style={{ border: '1px solid #e5e7eb', borderRadius: 6, padding: 16, minHeight: 300, background: '#fff' }}>
-              <ReactMarkdown remarkPlugins={[remarkGfm]}>{contentMd || '*Nothing to preview yet*'}</ReactMarkdown>
-            </div>
-          </div>
+    <div className="blog-editor-wrapper">
+      {/* Top Navigation / Status Bar */}
+      <nav className="editor-nav">
+        <div className="nav-left">
+          <span className="editor-status">{wordCount} characters</span>
+          {message && <span className="save-message">{message}</span>}
         </div>
-      </form>
+        <div className="nav-right">
+          <label className="import-btn">
+            Import .md
+            <input type="file" accept=".md" style={{ display: 'none' }} />
+          </label>
+          <button className="btn-publish" onClick={submit}>Publish Post</button>
+        </div>
+      </nav>
+
+      <main className="editor-main">
+        {/* Left Side: Editor */}
+        <section className="editor-pane">
+          <input
+            className="title-field"
+            placeholder="Article Title..."
+            value={title}
+            onChange={e => setTitle(e.target.value)}
+          />
+
+          <div className="meta-info">
+            <div className="slug-group">
+              <span className="prefix">/post/</span>
+              <input value={slug} onChange={onSlugChange} placeholder="url-slug" />
+              <label><input type="checkbox" checked={autoSlug} onChange={e => setAutoSlug(e.target.checked)} /> Auto</label>
+            </div>
+            <input
+              className="tag-field"
+              placeholder="Add tags (comma separated)..."
+              value={tags}
+              onChange={e => setTags(e.target.value)}
+            />
+          </div>
+
+          <div style={{
+            marginBottom: 8,
+            display: 'flex',
+            gap: 8,
+            flexWrap: 'wrap', // 關鍵：允許按鈕換行
+            background: '#2c3e50',
+            padding: '8px',
+            borderRadius: '4px 4px 0 0',
+            alignItems: 'center'
+          }}>
+            {toolbar.map(btn => (
+              <button
+                key={btn.label}
+                type="button"
+                className="btn"
+                onClick={btn.onClick}
+                style={{
+                  padding: '4px 12px',
+                  fontSize: '13px',
+                  backgroundColor: '#3e4f5f',
+                  color: 'white',
+                  border: 'none',
+                  cursor: 'pointer'
+                }}
+              >
+                {btn.label}
+              </button>
+            ))}
+            {/* 右側標籤 */}
+            <span style={{ marginLeft: 'auto', color: '#9ca3af', fontSize: '12px', paddingRight: '8px' }}>Editor</span>
+          </div>
+
+          <textarea
+            ref={textAreaRef}
+            className="markdown-textarea"
+            placeholder="Tell your story..."
+            value={contentMd}
+            onChange={e => setContentMd(e.target.value)}
+          />
+        </section>
+
+        {/* Right Side: Live Preview */}
+        <section className="preview-pane">
+          <div className="preview-header">LIVE PREVIEW</div>
+          <article className="prose">
+            <h1>{title || "Untitled Post"}</h1>
+            <ReactMarkdown remarkPlugins={[remarkGfm]}>
+              {contentMd || "*Your content will appear here...*"}
+            </ReactMarkdown>
+          </article>
+        </section>
+      </main>
     </div>
   );
 }

@@ -118,3 +118,65 @@
   outline: 2px solid #111827;
   outline-offset: 2px;
 }
+/* BlogEditor.css 核心概念 */
+.blog-editor-wrapper {
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background: #fff;
+}
+
+.editor-nav {
+  height: 60px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0 2rem;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.editor-main {
+  flex: 1;
+  display: flex;
+  overflow: hidden; /* 防止整頁滾動，改為區域滾動 */
+}
+
+.editor-pane, .preview-pane {
+  flex: 1;
+  overflow-y: auto;
+  padding: 2rem 3rem;
+}
+
+/* 讓 Input 看起來不像 Input */
+.title-field {
+  font-size: 2.5rem;
+  font-weight: 800;
+  border: none;
+  width: 100%;
+  margin-bottom: 1rem;
+  outline: none;
+}
+
+.markdown-textarea {
+  width: 100%;
+  height: calc(100% - 200px);
+  border: none;
+  resize: none;
+  font-family: 'Fira Code', monospace;
+  font-size: 1.1rem;
+  line-height: 1.6;
+  outline: none;
+}
+
+/* 預覽區稍微調暗，區分區塊 */
+.preview-pane {
+  background-color: #f9fafb;
+  border-left: 1px solid #f0f0f0;
+}
+
+/* 內容美化 (Typography) */
+.prose {
+  line-height: 1.7;
+  color: #374151;
+}
+.prose h1 { font-size: 2.25rem; margin-bottom: 1rem; }

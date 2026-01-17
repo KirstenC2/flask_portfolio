@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import axios from 'axios';
 import './BlogPanel.css'; // Import the CSS file below
-
+import ReactMarkdown from 'react-markdown';
 const api = axios.create({ baseURL: 'http://localhost:5001' });
 
 function TagsPills({ tags }) {
@@ -42,10 +42,35 @@ export default function BlogPanel() {
     }
   };
 
-  useEffect(() => { loadPosts(); }, []);
+  useEffect(() => {
+    // 只有在「新建」且 Slug 尚未手動修改過時才自動生成
+    if (!editingId && form.title) {
+      const generatedSlug = form.title
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, '-')
+        .replace(/(^-|-$)/g, '');
+      setForm(f => ({ ...f, slug: generatedSlug }));
+    }
+  }, [form.title, editingId]);
+
+  const insertText = (before, after = '') => {
+    const textarea = document.querySelector('.markdown-editor');
+    const start = textarea.selectionStart;
+    const end = textarea.selectionEnd;
+    const text = textarea.value;
+    const selectedText = text.substring(start, end);
+    const newText = text.substring(0, start) + before + selectedText + after + text.substring(end);
+
+    setForm(f => ({ ...f, content_md: newText }));
+    // 重新聚焦並選取
+    setTimeout(() => {
+      textarea.focus();
+      textarea.setSelectionRange(start + before.length, end + before.length);
+    }, 0);
+  };
 
   const onSubmit = async (e) => {
-    e.preventDefault(); 
+    e.preventDefault();
     setError('');
     const payload = {
       title: form.title,
@@ -156,41 +181,76 @@ export default function BlogPanel() {
 
       {/* RIGHT SIDE: EDITOR PANEL */}
       {showForm && (
-        <div className="editor-sidepanel">
+        <div className="editor-sidepanel professional-editor">
           <div className="sidepanel-header">
-            <h2>{editingId ? 'Edit Post' : 'Create Post'}</h2>
-            <button className="btn-close" onClick={() => setShowForm(false)}>✕</button>
+            <h2>{editingId ? '✍️ Edit Post' : '🚀 Create New Post'}</h2>
+            <div className="header-actions">
+              <button className="btn-close" onClick={() => setShowForm(false)}>✕</button>
+            </div>
           </div>
-          
+
           <form onSubmit={onSubmit} className="form">
-            <div className="form-row">
-              <label>Title</label>
-              <input className="form-control" value={form.title} onChange={e => setForm(f => ({ ...f, title: e.target.value }))} required placeholder="Post title..." />
-            </div>
-            
-            <div className="form-row-group">
+            {/* 標題與 Slug */}
+            <div className="editor-meta-grid">
               <div className="form-row">
-                <label>Slug</label>
-                <input className="form-control" value={form.slug} onChange={e => setForm(f => ({ ...f, slug: e.target.value }))} placeholder="url-friendly-slug" />
+                <label>Post Title</label>
+                <input className="form-control title-input" value={form.title} onChange={e => setForm(f => ({ ...f, title: e.target.value }))} required placeholder="Enter an engaging title..." />
               </div>
               <div className="form-row">
-                <label>Tags</label>
-                <input className="form-control" value={form.tags} onChange={e => setForm(f => ({ ...f, tags: e.target.value }))} placeholder="react, tutorial..." />
+                <label>Slug (URL Path)</label>
+                <div className="slug-input-wrapper">
+                  <span>your-blog.com/post/</span>
+                  <input className="form-control" value={form.slug} onChange={e => setForm(f => ({ ...f, slug: e.target.value }))} placeholder="slug-name" />
+                </div>
               </div>
             </div>
 
             <div className="form-row">
-              <label>Content (Markdown)</label>
-              <textarea className="form-control markdown-editor" rows={15} value={form.content_md} onChange={e => setForm(f => ({ ...f, content_md: e.target.value }))} placeholder="Write your content here..." />
+              <label>Tags</label>
+              <input className="form-control" value={form.tags} onChange={e => setForm(f => ({ ...f, tags: e.target.value }))} placeholder="Separate tags with commas (e.g. React, CSS, Node)" />
             </div>
 
-            <div className="form-actions">
-              <button type="submit" className="btn btn-primary">{editingId ? 'Save Changes' : 'Publish Post'}</button>
-              <label className="btn">
-                Import .md
-                <input type="file" accept=".md" style={{ display: 'none' }} onChange={e => onImportMd(e.target.files?.[0])} />
-              </label>
-              {editingId && <button type="button" className="btn btn-secondary" onClick={() => { setEditingId(null); setForm(emptyForm); setShowForm(false); }}>Cancel</button>}
+            {/* Markdown 編輯器工具列 */}
+            <div className="markdown-section">
+              <div className="editor-toolbar">
+                <button type="button" onClick={() => insertText('**', '**')}><b>B</b></button>
+                <button type="button" onClick={() => insertText('*', '*')}><i>I</i></button>
+                <button type="button" onClick={() => insertText('# ')}>H1</button>
+                <button type="button" onClick={() => insertText('[', '](url)')}>Link</button>
+                <button type="button" onClick={() => insertText('```\n', '\n```')}>Code</button>
+                <div className="toolbar-divider"></div>
+                <span>Editor</span>
+              </div>
+
+              <div className="split-editor">
+                <textarea
+                  className="form-control markdown-editor"
+                  value={form.content_md}
+                  onChange={e => setForm(f => ({ ...f, content_md: e.target.value }))}
+                  placeholder="Start writing in Markdown..."
+                />
+                <div className="markdown-preview">
+                  <div className="preview-label">Live Preview</div>
+                  <div className="preview-content">
+                    <ReactMarkdown>{form.content_md || "*Preview will appear here...*"}</ReactMarkdown>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="form-footer">
+              <div className="footer-left">
+                <label className="btn-import">
+                  📂 Import .md
+                  <input type="file" accept=".md" style={{ display: 'none' }} onChange={e => onImportMd(e.target.files?.[0])} />
+                </label>
+              </div>
+              <div className="footer-right">
+                <button type="button" className="btn btn-outline" onClick={() => setShowForm(false)}>Cancel</button>
+                <button type="submit" className="btn btn-primary btn-publish">
+                  {editingId ? 'Save Changes' : 'Publish to Blog'}
+                </button>
+              </div>
             </div>
           </form>
         </div>

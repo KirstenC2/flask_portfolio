@@ -62,7 +62,16 @@ const ResumeBuilder = ({ onBack }) => {
     const addExperience = () => {
         setResumeData(prev => ({
             ...prev,
-            experience: [...prev.experience, { company: "Company Name", role: "Role", period: "MM/YYYY - Present", desc: "Job details..." }]
+            experience: [
+                ...prev.experience,
+                {
+                    company: "New Company",
+                    role: "Role",
+                    period: "Period",
+                    desc: "",
+                    tasks: [] // 確保這裡有初始化空陣列
+                }
+            ]
         }));
     };
 
@@ -72,7 +81,27 @@ const ResumeBuilder = ({ onBack }) => {
             experience: prev.experience.filter((_, i) => i !== index)
         }));
     };
-    // Helper functions (same as before)
+
+    const handleToggleTaskActive = (expIndex, taskId) => {
+        const newExperience = [...resumeData.experience];
+        const targetExp = newExperience[expIndex];
+
+        // 實作排他性選擇：同類別(category)的 task 只准一個 active，或者簡單點，同個經歷只准一個 active
+        // 這裡示範「同個經歷中，同一時間只有一個 task 會顯示在 Resume 上」
+        targetExp.tasks = targetExp.tasks.map(task => ({
+            ...task,
+            is_active: task.id === taskId
+        }));
+
+        // 同步更新簡要描述 (desc)，這樣 PDF 如果是抓 desc 欄位也能同步
+        const activeTask = targetExp.tasks.find(t => t.id === taskId);
+        if (activeTask) {
+            targetExp.desc = activeTask.content;
+        }
+
+        setResumeData(prev => ({ ...prev, experience: newExperience }));
+    };
+
     const handleChange = (e) => {
         const { name, value } = e.target;
         setResumeData(prev => ({ ...prev, [name]: value }));
@@ -122,12 +151,12 @@ const ResumeBuilder = ({ onBack }) => {
             <div style={editPanelStyle}>
                 <button onClick={onBack} style={backBtnStyle}><FontAwesomeIcon icon={faChevronLeft} /> Back</button>
                 <h2 style={{ color: '#2c3e50', marginBottom: '20px' }}>Resume Editor</h2>
-                
+
                 {/* Basic Info (Fixed) */}
                 <div style={sectionBox}>
                     <h3 style={sectionTitleStyle}>General Information</h3>
                     <input name="name" value={resumeData.name} onChange={handleChange} style={inputStyle} />
-                    <input name="title" value={resumeData.title} onChange={handleChange} style={{...inputStyle, marginTop: '10px'}} />
+                    <input name="title" value={resumeData.title} onChange={handleChange} style={{ ...inputStyle, marginTop: '10px' }} />
                 </div>
 
                 {/* Technical Skills (Dynamic) */}
@@ -139,10 +168,10 @@ const ResumeBuilder = ({ onBack }) => {
                     {resumeData.skillGroups.map((group, index) => (
                         <div key={index} style={itemCardStyle}>
                             <div style={{ display: 'flex', gap: '5px' }}>
-                                <input placeholder="Category" value={group.category} onChange={(e) => handleSkillChange(index, 'category', e.target.value)} style={{...inputStyle, fontWeight: 'bold'}} />
+                                <input placeholder="Category" value={group.category} onChange={(e) => handleSkillChange(index, 'category', e.target.value)} style={{ ...inputStyle, fontWeight: 'bold' }} />
                                 <button onClick={() => deleteSkillGroup(index)} style={deleteBtn}><FontAwesomeIcon icon={faTrash} /></button>
                             </div>
-                            <textarea placeholder="Items" value={group.items} onChange={(e) => handleSkillChange(index, 'items', e.target.value)} style={{...inputStyle, marginTop: '5px', height: '50px'}} />
+                            <textarea placeholder="Items" value={group.items} onChange={(e) => handleSkillChange(index, 'items', e.target.value)} style={{ ...inputStyle, marginTop: '5px', height: '50px' }} />
                         </div>
                     ))}
                 </div>
@@ -154,7 +183,7 @@ const ResumeBuilder = ({ onBack }) => {
                         <button onClick={addLanguage} style={smallAddBtn}><FontAwesomeIcon icon={faPlus} /></button>
                     </div>
                     {resumeData.languages.map((lang, index) => (
-                        <div key={index} style={{...itemCardStyle, display: 'flex', gap: '5px', alignItems: 'center'}}>
+                        <div key={index} style={{ ...itemCardStyle, display: 'flex', gap: '5px', alignItems: 'center' }}>
                             <input placeholder="Language" value={lang.language} onChange={(e) => handleLanguageChange(index, 'language', e.target.value)} style={inputStyle} />
                             <input placeholder="Level" value={lang.level} onChange={(e) => handleLanguageChange(index, 'level', e.target.value)} style={inputStyle} />
                             <button onClick={() => deleteLanguage(index)} style={deleteBtn}><FontAwesomeIcon icon={faTrash} /></button>
@@ -168,15 +197,29 @@ const ResumeBuilder = ({ onBack }) => {
                         <h3 style={sectionTitleStyle}>Experience</h3>
                         <button onClick={addExperience} style={smallAddBtn}><FontAwesomeIcon icon={faPlus} /></button>
                     </div>
-                    {resumeData.experience.map((exp, index) => (
-                        <div key={index} style={itemCardStyle}>
+                    {resumeData.experience.map((exp, expIndex) => (
+                        <div key={expIndex} style={itemCardStyle}>
                             <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
-                                <button onClick={() => deleteExperience(index)} style={deleteBtn}><FontAwesomeIcon icon={faTrash} /></button>
+                                <button onClick={() => deleteExperience(expIndex)} style={deleteBtn}><FontAwesomeIcon icon={faTrash} /></button>
                             </div>
-                            <input placeholder="Company" value={exp.company} onChange={(e) => handleExpChange(index, 'company', e.target.value)} style={{...inputStyle, fontWeight: 'bold'}} />
-                            <input placeholder="Role" value={exp.role} onChange={(e) => handleExpChange(index, 'role', e.target.value)} style={{...inputStyle, marginTop: '5px'}} />
-                            <input placeholder="Period" value={exp.period} onChange={(e) => handleExpChange(index, 'period', e.target.value)} style={{...inputStyle, marginTop: '5px'}} />
-                            <textarea placeholder="Description" value={exp.desc} onChange={(e) => handleExpChange(index, 'desc', e.target.value)} style={{...inputStyle, marginTop: '5px', height: '60px'}} />
+                            <input placeholder="Company" value={exp.company} onChange={(e) => handleExpChange(expIndex, 'company', e.target.value)} style={{ ...inputStyle, fontWeight: 'bold' }} />
+                            <input placeholder="Role" value={exp.role} onChange={(e) => handleExpChange(expIndex, 'role', e.target.value)} style={{ ...inputStyle, marginTop: '5px' }} />
+                            <input placeholder="Period" value={exp.period} onChange={(e) => handleExpChange(expIndex, 'period', e.target.value)} style={{ ...inputStyle, marginTop: '5px' }} />
+                            {/* 直接列出所有 Task 預覽 */}
+                            <div style={{ marginTop: '10px', padding: '10px', backgroundColor: '#f9f9f9', borderRadius: '4px', border: '1px dashed #ccc' }}>
+                                <p style={{ fontSize: '12px', fontWeight: 'bold', color: '#666' }}>Tasks (Will be listed in PDF):</p>
+                                {exp.tasks && exp.tasks.length > 0 ? (
+                                    <ul style={{ paddingLeft: '20px', margin: '5px 0' }}>
+                                        {exp.tasks.map((task, tIdx) => (
+                                            <li key={tIdx} style={{ fontSize: '12px', color: '#444', marginBottom: '3px' }}>
+                                                {typeof task === 'object' ? task.content : task}
+                                            </li>
+                                        ))}
+                                    </ul>
+                                ) : (
+                                    <p style={{ fontSize: '12px', color: '#999', fontStyle: 'italic' }}>{exp.desc || "No tasks added."}</p>
+                                )}
+                            </div>
                         </div>
                     ))}
                 </div>
@@ -207,5 +250,19 @@ const backBtnStyle = { background: 'none', border: 'none', color: '#2980b9', cur
 const loaderStyle = { display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh', color: '#fff' };
 const deleteBtn = { background: 'none', border: 'none', color: '#e74c3c', cursor: 'pointer' };
 const smallAddBtn = { background: 'none', border: 'none', color: '#27ae60', cursor: 'pointer' };
+const taskSelectorContainer = {
+    marginTop: '10px',
+    padding: '8px',
+    backgroundColor: '#eee',
+    borderRadius: '4px'
+};
 
+const taskOptionStyle = {
+    padding: '8px',
+    border: '2px solid',
+    borderRadius: '4px',
+    marginBottom: '5px',
+    cursor: 'pointer',
+    transition: 'all 0.2s ease'
+};
 export default ResumeBuilder;

@@ -1,6 +1,7 @@
 # routers/minio.py
 from flask import Blueprint, request, jsonify
 from utils.minio_utils import minio_client, MINIO_BUCKET_NAME
+from io import BytesIO
 import uuid
 import os
 from flask_cors import CORS
@@ -9,6 +10,8 @@ from urllib.parse import urlparse, urlunparse
 from datetime import timedelta
 from minio.error import S3Error
 from models import db
+import mimetypes
+
 minio_bp = Blueprint('minio', __name__)
 CORS(minio_bp)
 @minio_bp.route('/api/upload/resumes', methods=['GET'])
@@ -75,20 +78,53 @@ def upload_resume():  # Changed function name for clarity
             db.session.rollback()
         return jsonify({"error": str(e)}), 500
 
+@minio_bp.route('/api/attachments/upload/<bucket>/<filename>', methods=['POST'])
+def upload_attachments(bucket, filename):
+    try:
+        file = request.files['file']
+        
+        # 執行上傳到 MinIO
+        minio_client.put_object(
+            bucket_name=bucket,
+            object_name=filename,
+            data=file,
+            length=-1, 
+            part_size=10*1024*1024,
+            content_type=file.content_type
+        )
+        
+        # 這裡決定了回傳什麼給前端
+        # 建議回傳一個完整的物件，包含 path
+        return jsonify({
+            "message": "Upload successful",
+            "path": f"{bucket}/{filename}", # 這是路徑
+            "filename": filename
+        }), 200
+        
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
 
 @minio_bp.route('/api/attachments/view/<bucket>/<filename>', methods=['GET'])
 def get_preview_url(bucket, filename):
     try:
-        # 生成一個 10 分鐘內有效的臨時連結
+        # 1. 自動判斷檔案類型 (例如：.jpg -> image/jpeg, .pdf -> application/pdf)
+        content_type, _ = mimetypes.guess_type(filename)
+        
+        # 如果猜不到類型，預設為二進位流
+        if not content_type:
+            content_type = 'application/octet-stream'
+
+        # 2. 生成臨時連結
         url = minio_client.get_presigned_url(
             "GET",
             bucket,
             filename,
             expires=timedelta(minutes=10),
-            # 強制瀏覽器直接預覽而非下載
             response_headers={
-                'response-content-disposition': 'inline',
-                'response-content-type': 'application/pdf'
+                'response-content-disposition': 'inline', # 讓瀏覽器直接在線顯示
+                'response-content-type': content_type     # 這裡改成動態變數
             }
         )
         

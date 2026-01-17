@@ -1,5 +1,5 @@
 import os
-from models import ExperienceDescription
+from models import TaskDescription
 import jwt
 from functools import wraps
 from datetime import datetime, timedelta
@@ -511,17 +511,23 @@ def _parse_dt(val):
 @admin_bp.route('/api/admin/experience', methods=['GET','OPTIONS'])
 @token_required
 def get_experiences(current_admin):
-    exps = Experience.query.order_by(Experience.order.desc()).all()
+    # 修正 1：移除沒用的 tasks 全查語句，避免這裡噴錯
+    # 原本的 TaskDescription.query.order_by(Experience.order.desc()) 會噴錯，因為 TaskDescription 表沒有 order 欄位
+    
+    # 修正 2：使用 joinedload (選填但建議) 解決 N+1 問題，一次把 Task 都抓出來
+    from sqlalchemy.orm import joinedload
+    exps = Experience.query.options(joinedload(Experience.tasks)).order_by(Experience.order.desc()).all()
+    
     output = []
     for e in exps:
-        # 手動將子表資料轉換成 list of dicts
-        desc_list = [{
+        # 這裡直接使用 e.tasks，SQLAlchemy 會自動幫你處理對應的 experience_id
+        tasks_list = [{
             "id": d.id,
             "category": d.category,
             "version_name": d.version_name,
             "content": d.content,
             "is_active": d.is_active
-        } for d in e.descriptions]
+        } for d in e.tasks]
 
         output.append({
             "id": e.id,
@@ -532,7 +538,7 @@ def get_experiences(current_admin):
             "end_date": e.end_date.isoformat() if e.end_date else None,
             "is_current": e.is_current,
             "order": e.order,
-            "descriptions": desc_list  # 關鍵：確保這行存在
+            "tasks": tasks_list
         })
     return jsonify(output)
 
@@ -554,24 +560,24 @@ def create_experience(current_admin):
     db.session.add(exp)
     db.session.commit()
     return jsonify(_exp_to_dict(exp)), 201
-
 @admin_bp.route('/api/admin/experience/<int:id>', methods=['PUT', 'OPTIONS'])
 @token_required
 def update_experience(current_admin, id):
     exp = Experience.query.get_or_404(id)
     data = request.json
     
-    # 1. Update basic fields
+    # 1. 更新基本欄位 (確保包含 description)
     exp.title = data.get('title', exp.title)
     exp.company = data.get('company', exp.company)
+    exp.description = data.get('description', exp.description)  # <-- 補上這一行
     
-    # 2. Handle the Relationship (Skills)
+    # 2. 更新日期與狀態 (如果你前端有傳這些的話)
+    exp.is_current = data.get('is_current', exp.is_current)
+    exp.order = data.get('order', exp.order)
+    
+    # 3. 處理關聯技能 (維持原樣)
     if 'skill_ids' in data:
-        # Fetch the Skill objects based on the IDs sent from React
         new_skills = Skill.query.filter(Skill.id.in_(data['skill_ids'])).all()
-        
-        # Replace the current list with the new list
-        # SQLAlchemy handles the junction table (skill_experience) automatically!
         exp.skills = new_skills
     
     try:
@@ -581,12 +587,12 @@ def update_experience(current_admin, id):
         db.session.rollback()
         return jsonify({"error": str(e)}), 500
 
-@admin_bp.route('/api/admin/experience/<int:id>/description', methods=['POST', 'OPTIONS'])
+@admin_bp.route('/api/admin/experience/<int:id>/task', methods=['POST', 'OPTIONS'])
 @token_required
-def add_new_description(current_admin, id):
+def add_new_task(current_admin, id):
     data = request.json
     # Create a new ExperienceDescription record
-    new_desc = ExperienceDescription(
+    new_desc = TaskDescription(
         experience_id=id,
         category=data.get('category', 'General'),
         version_name=data.get('version_name', 'Default'),
@@ -601,70 +607,54 @@ def add_new_description(current_admin, id):
         return jsonify({"error": str(e)}), 500
 
 # 2. 切換特定版本的 Active 狀態
-@admin_bp.route('/api/admin/experience/description/<int:desc_id>/activate', methods=['PUT'])
-def activate_description(desc_id):
-    desc = ExperienceDescription.query.get_or_404(desc_id)
-    
-    # 將「同一個工作」下「同一個類別」的所有版本先設為 False
-    ExperienceDescription.query.filter_by(
-        experience_id=desc.experience_id, 
-        category=desc.category
-    ).update({ExperienceDescription.is_active: False})
-    
-    # 啟用目前選擇的版本
-    desc.is_active = True
-    db.session.commit()
-    return jsonify({"message": "Version activated"}), 200
-
-
-@admin_bp.route('/api/admin/experience/description/<int:desc_id>', methods=['PATCH','OPTIONS'])
+@admin_bp.route('/api/admin/experience/task/<int:task_id>/activate', methods=['PUT'])
 @token_required
-def update_description(current_admin, desc_id):
-    desc = ExperienceDescription.query.get_or_404(desc_id)
+def toggle_task_activation(current_admin, task_id):
+    try:
+        target_task = TaskDescription.query.get(task_id)
+        if not target_task: return jsonify({"error": "Task not found"}), 404
+
+        # 如果點擊的是目前啟用的 -> 把它關掉 (Deactivate)
+        if target_task.is_active:
+            target_task.is_active = False
+        else:
+            # 如果點擊的是未啟用的 -> 先關掉同類別的其他任務，再開啟它
+            TaskDescription.query.filter(
+                TaskDescription.experience_id == target_task.experience_id,
+                TaskDescription.category == target_task.category
+            ).update({TaskDescription.is_active: False})
+            target_task.is_active = True
+
+        db.session.commit()
+        return jsonify({"success": True}), 200
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"error": str(e)}), 500
+
+
+@admin_bp.route('/api/admin/experience/task/<int:task_id>', methods=['PATCH','OPTIONS'])
+@token_required
+def update_task(current_admin, task_id):
+    task = TaskDescription.query.get_or_404(task_id)
     data = request.json
     
     if 'category' in data:
-        desc.category = data['category']
+        task.category = data['category']
     if 'version_name' in data:
-        desc.version_name = data['version_name']
+        task.version_name = data['version_name']
     if 'content' in data:
-        desc.content = data['content']
+        task.content = data['content']
         
     db.session.commit()
     return jsonify({"message": "Updated"}), 200
 
-@admin_bp.route('/api/admin/experience/description/<int:desc_id>', methods=['DELETE','OPTIONS'])
+@admin_bp.route('/api/admin/experience/task/<int:task_id>', methods=['DELETE','OPTIONS'])
 @token_required
-def delete_description(current_admin, desc_id):
-    desc = ExperienceDescription.query.get_or_404(desc_id)
-    db.session.delete(desc)
+def delete_task(current_admin, task_id):
+    task = TaskDescription.query.get_or_404(task_id)
+    db.session.delete(task)
     db.session.commit()
     return jsonify({"message": "Deleted"}), 200
-
-# @admin_bp.route('/api/admin/experience/<int:exp_id>', methods=['PUT', 'OPTIONS'])
-# @token_required
-# def update_experience(current_admin, exp_id):
-#     exp = Experience.query.get_or_404(exp_id)
-#     data = request.get_json(force=True) or {}
-#     if 'title' in data:
-#         exp.title = (data.get('title') or '').strip()
-#     if 'company' in data:
-#         exp.company = (data.get('company') or '').strip()
-#     if 'description' in data:
-#         exp.description = data.get('description') or ''
-#     if 'start_date' in data:
-#         exp.start_date = _parse_dt(data.get('start_date'))
-#     if 'end_date' in data:
-#         exp.end_date = _parse_dt(data.get('end_date'))
-#     if 'is_current' in data:
-#         exp.is_current = bool(data.get('is_current'))
-#     if 'order' in data:
-#         try:
-#             exp.order = int(data.get('order') or 0)
-#         except Exception:
-#             pass
-#     db.session.commit()
-#     return jsonify(_exp_to_dict(exp))
 
 @admin_bp.route('/api/admin/experience/<int:exp_id>', methods=['DELETE', 'OPTIONS'])
 @token_required
@@ -745,19 +735,3 @@ def delete_education(current_admin, edu_id):
     db.session.delete(edu)
     db.session.commit()
     return jsonify({'message': 'Education deleted'})
-
-# @admin_bp.route('/api/admin/resumes/<int:id>/activate', methods=['PUT', 'OPTIONS'])
-# @token_required
-# def activate_resume(current_admin, id):
-#     resume = Resume.query.get_or_404(id)
-#     resume.is_active = True
-#     db.session.commit()
-#     return jsonify({'message': 'Resume activated'})
-
-# @admin_bp.route('/api/admin/resumes/<int:id>/deactivate', methods=['PUT', 'OPTIONS'])
-# @token_required
-# def deactivate_resume(current_admin, id):
-#     resume = Resume.query.get_or_404(id)
-#     resume.is_active = False
-#     db.session.commit()
-#     return jsonify({'message': 'Resume deactivated'})

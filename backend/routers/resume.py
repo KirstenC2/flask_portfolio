@@ -1,16 +1,13 @@
 import os
 from flask import Blueprint, jsonify, request
-from models import db, Experience, Skill, ExperienceDescription
+from models import db, Experience, Skill, TaskDescription
 
 resume_bp = Blueprint('resume', __name__)
 
 @resume_bp.route('/api/resume', methods=['GET'])
 def get_full_resume():
     try:
-        # 獲取前端想要的面向，例如 ?category=Backend (預設給一個通用的)
-        target_category = request.args.get('category', 'General')
-        
-        # 1. 處理技能與語言 (維持原樣)
+        # 1. 處理技能與語言
         all_skills = Skill.query.all()
         skill_groups = {}
         languages_from_skills = []
@@ -24,40 +21,30 @@ def get_full_resume():
 
         formatted_skill_groups = [{"category": cat, "items": ", ".join(items)} for cat, items in skill_groups.items()]
 
-        # 3. 處理經歷 (重點修改處)
+        # 2. 處理經歷與其對應的 Tasks
         exps = Experience.query.order_by(Experience.start_date.desc()).all()
         formatted_experience = []
+        # 獲取想要的面向 (例如：category=Backend)
+        target_cat = request.args.get('category') 
 
         for e in exps:
-            # 從關聯的 descriptions 中找尋符合 category 且 is_active=True 的那一筆
-            # 這裡使用 next() 來找尋第一個符合條件的物件
-            active_desc_obj = next(
-                (d for d in e.descriptions if d.category == target_category and d.is_active), 
-                None
-            )
-            
-            # 如果找不到該面向，則 Fallback 找 General 面向的 active 版
-            if not active_desc_obj:
-                active_desc_obj = next(
-                    (d for d in e.descriptions if d.category == 'General' and d.is_active), 
-                    None
-                )
-
-            # 最終確定的描述文字
-            # 優先級：指定面向(Active) > General(Active) > Experience原始欄位
-            final_desc = active_desc_obj.content if active_desc_obj else e.description
+            # 根據是否有傳入 category 來決定過濾條件
+            if target_cat:
+                active_tasks = [t.content for t in e.tasks if t.is_active and t.category == target_cat]
+            else:
+                active_tasks = [t.content for t in e.tasks if t.is_active]
 
             formatted_experience.append({
                 "company": e.company,
                 "role": e.title,
                 "period": f"{e.start_date.strftime('%m/%Y')} - {e.end_date.strftime('%m/%Y') if e.end_date else 'Present'}",
-                "desc": final_desc
+                "desc": e.description,
+                "tasks": active_tasks
             })
-
         # 3. 封裝 JSON  
         full_data = {
             "name": "Choo Vern Jet",
-            "title": "Software Engineer", # 這裡也可以改成根據 target_category 動態顯示
+            "title": "Software Engineer",
             "email": "choovernjet@gmail.com",
             "phone": "+886 0979 707 990",
             "summary": "Expert in scalable backend development and DevOps...",
@@ -70,4 +57,6 @@ def get_full_resume():
         return jsonify(full_data), 200
 
     except Exception as e:
+        # 加入 print 方便你在終端機除錯
+        print(f"Resume API Error: {str(e)}")
         return jsonify({"error": str(e)}), 500

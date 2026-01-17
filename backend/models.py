@@ -55,11 +55,11 @@ class Experience(db.Model):
     leaving_reason = db.Column(db.Text, nullable=True)  # Reason for leaving (if applicable)
     # Relationship to projects completed during this experience
     projects = db.relationship('ExperienceProject', backref='experience', lazy=True, cascade='all, delete-orphan')
-    descriptions = db.relationship('ExperienceDescription', backref='experience', cascade='all, delete-orphan')
+    tasks = db.relationship('TaskDescription', backref='experience', cascade='all, delete-orphan')
     def __repr__(self):
         return f"Experience('{self.title}', '{self.company}')"
 
-class ExperienceDescription(db.Model):
+class TaskDescription(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     experience_id = db.Column(db.Integer, db.ForeignKey('experience.id'), nullable=False)
     

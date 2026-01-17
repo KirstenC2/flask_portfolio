@@ -6,7 +6,7 @@ import {
 import RelatedProjects from './ExperienceProjectsPanel';
 import './ExperiencePanel.css';
 import '../../../common/global.css';
-import DescriptionManager from './DescriptionManager';
+import TaskManager from './TaskManager';
 
 const ExperiencePanel = () => {
   const [experience, setExperience] = useState([]);
@@ -168,15 +168,15 @@ const ExperiencePanel = () => {
 
                 <div className="form-actions">
                   <button type="submit" className="btn btn-primary"><FontAwesomeIcon icon={faSave} /> Save Job</button>
-                  <button type="button" className="btn" onClick={() => setEditMode(false)}>Cancel</button>
+                  <button type="button" className="btn btn-secondary" onClick={() => setEditMode(false)}>Cancel</button>
                 </div>
               </form>
 
               {/* 在編輯模式下也顯示描述版本管理 */}
               {currentExperience && (
-                <DescriptionManager 
+                <TaskManager 
                   experienceId={currentExperience.id} 
-                  descriptions={currentExperience.descriptions || []} 
+                  tasks={currentExperience.tasks || []} 
                   onRefresh={fetchExperience} 
                 />
               )}
@@ -197,9 +197,9 @@ const ExperiencePanel = () => {
               </div>
 
               {/* 詳情模式下也顯示管理表格，方便快速切換 Active */}
-              <DescriptionManager 
+              <TaskManager 
                 experienceId={currentExperience.id} 
-                descriptions={currentExperience.descriptions || []} 
+                tasks={currentExperience.tasks || []} 
                 onRefresh={fetchExperience} 
               />
 

@@ -1,0 +1,198 @@
+/* ProjectDetail.css */
+
+.project-detail-page {
+  padding: 8rem 1.5rem 4rem; /* 預留上方空間給導航欄 */
+  background-color: #f9fafb;
+  min-height: 100vh;
+}
+
+.project-detail-page .container {
+  max-width: 1100px;
+  margin: 0 auto;
+}
+
+/* 返回連結樣式 */
+.back-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: #6366f1;
+  text-decoration: none;
+  font-weight: 500;
+  margin-bottom: 2rem;
+  transition: transform 0.2s ease;
+}
+
+.back-link:hover {
+  transform: translateX(-5px);
+}
+
+/* 標題與元數據 */
+.detail-header h1 {
+  font-size: 2.5rem;
+  color: #111827;
+  margin-bottom: 1rem;
+}
+
+.detail-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 1.5rem;
+  color: #6b7280;
+  margin-bottom: 2.5rem;
+}
+
+.detail-tags {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.tech-tag {
+  background-color: #eef2ff;
+  color: #4f46e5;
+  padding: 0.2rem 0.75rem;
+  border-radius: 9999px;
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
+/* 佈局網格 */
+.detail-grid {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 3rem;
+}
+
+/* 主內容區 */
+.detail-main {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+
+.detail-image {
+  width: 100%;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
+  background-color: #fff;
+}
+
+.detail-image img {
+  width: 100%;
+  height: auto;
+  display: block;
+  object-fit: cover;
+}
+
+.no-img-placeholder {
+  height: 400px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #f3f4f6;
+  color: #d1d5db;
+  font-size: 4rem;
+}
+
+.detail-section h3 {
+  font-size: 1.5rem;
+  color: #1f2937;
+  margin-bottom: 1rem;
+  border-bottom: 2px solid #e5e7eb;
+  padding-bottom: 0.5rem;
+}
+
+.detail-section p {
+  line-height: 1.7;
+  color: #4b5563;
+  white-space: pre-wrap; /* 保持換行格式 */
+}
+
+/* 側邊欄與資訊卡 */
+.detail-sidebar {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.action-cards {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.action-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  padding: 0.875rem;
+  border-radius: 8px;
+  text-decoration: none;
+  font-weight: 600;
+  transition: all 0.2s ease;
+}
+
+.action-btn.github {
+  background-color: #1f2937;
+  color: #fff;
+}
+
+.action-btn.live {
+  background-color: #4f46e5;
+  color: #fff;
+}
+
+.action-btn:hover {
+  opacity: 0.9;
+  transform: translateY(-2px);
+}
+
+.info-box {
+  background-color: #fff;
+  padding: 1.5rem;
+  border-radius: 12px;
+  border: 1px solid #e5e7eb;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+}
+
+.info-box h4 {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 1.1rem;
+  color: #111827;
+  margin-bottom: 1rem;
+}
+
+.info-box ul {
+  padding-left: 1.25rem;
+  color: #4b5563;
+}
+
+.info-box li {
+  margin-bottom: 0.5rem;
+  line-height: 1.5;
+}
+
+/* 響應式調整 */
+@media (max-width: 868px) {
+  .detail-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .detail-header h1 {
+    font-size: 2rem;
+  }
+  
+  .detail-sidebar {
+    order: 2; /* 在手機上將側邊欄放在下方 */
+  }
+  
+  .detail-main {
+    order: 1;
+  }
+}

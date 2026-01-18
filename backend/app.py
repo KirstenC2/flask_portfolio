@@ -9,6 +9,7 @@ from routers.blog import blog_bp
 from routers.diary import diary_bp
 from routers.minio import minio_bp
 from routers.resume import resume_bp
+from routers.projects import project_bp
 from datetime import datetime
 from seed_data import seed_sample_data
 from dotenv import load_dotenv
@@ -48,6 +49,7 @@ app.register_blueprint(blog_bp)
 app.register_blueprint(diary_bp)
 app.register_blueprint(minio_bp)
 app.register_blueprint(resume_bp)
+app.register_blueprint(project_bp)
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5001, debug=True)

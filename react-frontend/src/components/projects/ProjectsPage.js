@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import axios from 'axios';
+import ProjectDetail from './ProjectDetail';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faGithub, faReact } from '@fortawesome/free-brands-svg-icons';
 import { faExternalLinkAlt, faCalendarAlt } from '@fortawesome/free-solid-svg-icons';
@@ -137,7 +138,11 @@ const ProjectsPage = () => {
                   {renderTechnologies(project.technologies)}
 
                   <div className="project-links">
-                    <Link to={`/project/${project.id}`} className="view-project-btn">
+                    <Link 
+                      to={`/project/${project.id}`} 
+                      state={{ project }} // 將當前專案資料傳遞給詳情頁
+                      className="view-project-btn"
+                    >
                       View Details
                     </Link>
 

@@ -12,6 +12,7 @@ import StudiesPage from './components/studies/StudiesPage';
 import StudyDetail from './components/studies/StudyDetail';
 import SkillsPage from './components/skills/SkillsPage';
 import ProjectsPage from './components/projects/ProjectsPage';
+import ProjectDetail from './components/projects/ProjectDetail';
 import AboutPage from './components/about/AboutPage';
 import ContactPage from './components/contact/ContactPage';
 import ExperiencePage from './components/experience/ExperiencePage';
@@ -21,9 +22,6 @@ import BlogEditor from './components/blog/BlogEditor';
 // Admin Components
 import LoginPage from './components/admin/auth/LoginPage';
 import Dashboard from './components/admin/dashboard/Dashboard';
-
-// Placeholder components for pages we haven't created yet
-const ProjectDetail = () => <div className="container" style={{ padding: '5rem 1.5rem' }}><h1>Project Detail</h1><p>This page is under construction.</p></div>;
 
 // Private Route component to protect admin routes
 const PrivateRoute = ({ children }) => {

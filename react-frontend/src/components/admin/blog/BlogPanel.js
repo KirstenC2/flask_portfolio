@@ -43,6 +43,10 @@ export default function BlogPanel() {
   };
 
   useEffect(() => {
+    loadPosts();
+  }, []); // Runs once on mount
+  
+  useEffect(() => {
     // 只有在「新建」且 Slug 尚未手動修改過時才自動生成
     if (!editingId && form.title) {
       const generatedSlug = form.title

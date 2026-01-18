@@ -13,7 +13,20 @@ import {
 } from '@fortawesome/free-solid-svg-icons';
 import { faGithub } from '@fortawesome/free-brands-svg-icons';
 import './ProjectsPanel.css';
+const renderBulletPoints = (text) => {
+  if (!text) return null;
+  // 支援以換行、分號或逗號拆分
+  const points = text.split(/[\n;]+/).filter(p => p.trim() !== "");
+  if (points.length === 0) return null;
 
+  return (
+    <ul className="bullet-points-list">
+      {points.map((point, index) => (
+        <li key={index}>{point.trim()}</li>
+      ))}
+    </ul>
+  );
+};
 const ProjectsPanel = () => {
   const [projects, setProjects] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -29,7 +42,9 @@ const ProjectsPanel = () => {
     technologies: '',
     image_url: '',
     project_url: '',
-    github_url: ''
+    github_url: '',
+    features: '', // 以換行分隔
+    goals: ''    // 以換行分隔
   });
 
   // Fetch projects on component mount
@@ -38,40 +53,41 @@ const ProjectsPanel = () => {
   }, []);
 
   // 當 projects 列表更新時，獲取所有圖片的連結
-useEffect(() => {
-  projects.forEach(project => {
-    if (project.image_url && !project.image_url.startsWith('http')) {
-      fetchImageUrl(project.image_url);
-    }
-  });
-}, [projects]);
+  useEffect(() => {
+    projects.forEach(project => {
+      if (project.image_url && !project.image_url.startsWith('http')) {
+        fetchImageUrl(project.image_url);
+      }
+    });
+  }, [projects]);
 
-// 當選擇某個專案時，也要確保該專案的圖片連結已獲取
-useEffect(() => {
-  if (currentProject?.image_url && !currentProject.image_url.startsWith('http')) {
-    fetchImageUrl(currentProject.image_url);
-  }
-}, [currentProject]);
-  const fetchImageUrl = async (path) => {
-  if (!path || displayUrls[path]) return;
+  // 當選擇某個專案時，也要確保該專案的圖片連結已獲取
+  useEffect(() => {
+    if (currentProject?.image_url && !currentProject.image_url.startsWith('http')) {
+      fetchImageUrl(currentProject.image_url);
+    }
+  }, [currentProject]);
   
-  // 假設 path 是 "projects/123.jpg"
-  const parts = path.split('/');
-  const bucket = parts[0];
-  const filename = parts[1];
+  const fetchImageUrl = async (path) => {
+    if (!path || displayUrls[path]) return;
 
-  try {
-    // 這裡我們直接傳送拆分後的 bucket 和 filename
-    const response = await fetch(`http://localhost:5001/api/attachments/view/${bucket}/${filename}`);
-    const data = await response.json();
-    
-    if (data.url) {
-      setDisplayUrls(prev => ({ ...prev, [path]: data.url }));
+    // 假設 path 是 "projects/123.jpg"
+    const parts = path.split('/');
+    const bucket = parts[0];
+    const filename = parts[1];
+
+    try {
+      // 這裡我們直接傳送拆分後的 bucket 和 filename
+      const response = await fetch(`http://localhost:5001/api/attachments/view/${bucket}/${filename}`);
+      const data = await response.json();
+
+      if (data.url) {
+        setDisplayUrls(prev => ({ ...prev, [path]: data.url }));
+      }
+    } catch (err) {
+      console.error("無法取得圖片連結", err);
     }
-  } catch (err) {
-    console.error("無法取得圖片連結", err);
-  }
-};
+  };
   const fetchProjects = async () => {
     setLoading(true);
     setError(null);
@@ -162,48 +178,6 @@ useEffect(() => {
     });
   };
 
-  // const handleSubmit = async (e) => {
-  //   e.preventDefault();
-  //   setLoading(true);
-
-  //   try {
-  //     const token = localStorage.getItem('adminToken');
-  //     const method = currentProject ? 'PUT' : 'POST';
-  //     const url = currentProject 
-  //       ? `http://localhost:5001/api/admin/projects/${currentProject.id}`
-  //       : 'http://localhost:5001/api/admin/projects';
-
-  //     const response = await fetch(url, {
-  //       method,
-  //       headers: {
-  //         'Content-Type': 'application/json',
-  //         'Authorization': `Bearer ${token}`
-  //       },
-  //       body: JSON.stringify(formData)
-  //     });
-
-  //     if (!response.ok) {
-  //       throw new Error(`Failed to ${currentProject ? 'update' : 'create'} project`);
-  //     }
-
-  //     // Refresh projects list
-  //     fetchProjects();
-
-  //     // Exit edit mode
-  //     setEditMode(false);
-
-  //     // If creating new, clear current project
-  //     if (!currentProject) {
-  //       setCurrentProject(null);
-  //     }
-
-  //   } catch (err) {
-  //     console.error(`Error ${currentProject ? 'updating' : 'creating'} project:`, err);
-  //     setError(`Failed to ${currentProject ? 'update' : 'create'} project. Please try again.`);
-  //   } finally {
-  //     setLoading(false);
-  //   }
-  // };
   const uploadFile = async (file) => {
     const fileName = `${Date.now()}-${file.name}`;
     const bucket = 'projects';
@@ -348,10 +322,10 @@ useEffect(() => {
                 >
                   <div className="project-item-image">
                     {project.image_url ? (
-                      <img 
+                      <img
                         // 這裡改用 displayUrls[path]
-                        src={displayUrls[project.image_url] || project.image_url} 
-                        alt={project.title} 
+                        src={displayUrls[project.image_url] || project.image_url}
+                        alt={project.title}
                       />
                     ) : (
                       <div className="no-image">
@@ -390,7 +364,7 @@ useEffect(() => {
                     <button className="edit-btn" onClick={handleEditProject}>
                       <FontAwesomeIcon icon={faEdit} /> Edit
                     </button>
-                    <button className="delete-btn" onClick={handleDeleteProject}>
+                    <button className="btn" onClick={handleDeleteProject}>
                       <FontAwesomeIcon icon={faTrash} /> Delete
                     </button>
                   </div>
@@ -421,6 +395,30 @@ useEffect(() => {
                       onChange={handleChange}
                       required
                       placeholder="E.g., React, Node.js, MongoDB"
+                    />
+                  </div>
+
+                  <div className="form-group">
+                    <label htmlFor="goals">Project Goals (One per line)*</label>
+                    <textarea
+                      id="goals"
+                      name="goals"
+                      value={formData.goals}
+                      onChange={handleChange}
+                      placeholder="e.g. Build a scalable API&#10;Improve UI performance"
+                      rows={3}
+                    />
+                  </div>
+
+                  <div className="form-group">
+                    <label htmlFor="features">Main Features (One per line)*</label>
+                    <textarea
+                      id="features"
+                      name="features"
+                      value={formData.features}
+                      onChange={handleChange}
+                      placeholder="e.g. Real-time notifications&#10;Dark mode support"
+                      rows={4}
                     />
                   </div>
 
@@ -493,35 +491,37 @@ useEffect(() => {
                 <div className="project-view">
                   {currentProject.image_url && (
                     <div className="project-image">
-                      <img 
+                      <img
                         // 這裡也改用 displayUrls[path]
-                        src={displayUrls[currentProject.image_url] || currentProject.image_url} 
-                        alt={currentProject.title} 
+                        src={displayUrls[currentProject.image_url] || currentProject.image_url}
+                        alt={currentProject.title}
                       />
                     </div>
                   )}
 
                   <div className="project-info">
                     <h2>{currentProject.title}</h2>
+
                     <div className="project-tech">
                       <strong>Technologies:</strong> {currentProject.technologies}
                     </div>
 
-                    <div className="project-links">
-                      {currentProject.project_url && (
-                        <a href={currentProject.project_url} target="_blank" rel="noopener noreferrer">
-                          <FontAwesomeIcon icon={faExternalLinkAlt} /> View Project
-                        </a>
-                      )}
-                      {currentProject.github_url && (
-                        <a href={currentProject.github_url} target="_blank" rel="noopener noreferrer">
-                          <FontAwesomeIcon icon={faGithub} /> GitHub Repository
-                        </a>
-                      )}
-                    </div>
+                    {currentProject.goals && (
+                      <div className="info-section">
+                        <h3><FontAwesomeIcon icon={faProjectDiagram} /> Project Goals</h3>
+                        {renderBulletPoints(currentProject.goals)}
+                      </div>
+                    )}
+
+                    {currentProject.features && (
+                      <div className="info-section">
+                        <h3><FontAwesomeIcon icon={faSave} /> Main Features</h3>
+                        {renderBulletPoints(currentProject.features)}
+                      </div>
+                    )}
 
                     <div className="project-description">
-                      <h3>Description</h3>
+                      <h3>Background</h3>
                       <p>{currentProject.description}</p>
                     </div>
                   </div>

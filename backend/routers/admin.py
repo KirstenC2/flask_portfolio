@@ -181,6 +181,8 @@ def _project_to_dict(p: Project):
         'title': p.title,
         'description': p.description,
         'technologies': p.technologies,
+        'goals': p.goals,
+        'features': p.features,
         'image_url': p.image_url,
         'project_url': p.project_url,
         'github_url': p.github_url,
@@ -201,6 +203,8 @@ def create_admin_project(current_admin):
         title=(data.get('title') or '').strip(),
         description=data.get('description'),
         technologies=data.get('technologies'),
+        goals=data.get('goals'),
+        features=data.get('features'),
         image_url=data.get('image_url'),
         project_url=data.get('project_url'),
         github_url=data.get('github_url'),
@@ -220,6 +224,10 @@ def update_admin_project(current_admin, project_id):
         p.description = data.get('description')
     if 'technologies' in data:
         p.technologies = data.get('technologies')
+    if 'goals' in data:
+        p.goals = data.get('goals')
+    if 'features' in data:
+        p.features = data.get('features')
     if 'image_url' in data:
         p.image_url = data.get('image_url')
     if 'project_url' in data:

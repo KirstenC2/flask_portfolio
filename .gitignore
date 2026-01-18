@@ -15,6 +15,9 @@ dist/
 build/
 *.egg-info/
 
+#minio
+
+
 # Local development settings
 .env.local
 .env.development.local

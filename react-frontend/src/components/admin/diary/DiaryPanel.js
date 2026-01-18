@@ -1,9 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
-  faPlus, faEdit, faTrash, faSave, faTimes,
-  faSun, faCloud, faCloudRain, faCloudSun, faCalendarDay, faQuoteLeft,
-  faFaceSmileWink, faFaceFrown, faFaceAngry, faMeh
+  faImage, faEdit, faTrash, faSave, faTimes,
+  faSun, faCloud, faCloudRain, faCloudSun, faCalendarDay, faQuoteLeft
 } from '@fortawesome/free-solid-svg-icons';
 import './DiaryPanel.css';
 import '../../../common/global.css';
@@ -20,7 +19,7 @@ const getWeatherIcon = (weather) => {
 };
 
 const getEmotionIconImage = (emotion) => {
-  const icons = { 
+  const icons = {
     happy: 'happy.png',
     sad: 'sad.png',
     angry: 'angry.png',
@@ -44,20 +43,55 @@ const Diary = () => {
   const [error, setError] = useState(null);
   const [editMode, setEditMode] = useState(false);
   const [currentDiary, setCurrentDiary] = useState(null);
+  const [selectedFile, setSelectedFile] = useState(null);
+
+  // NEW: Added missing state for image URLs
+  const [displayUrls, setDisplayUrls] = useState({});
 
   const [formData, setFormData] = useState({
     weather: 'sunny',
     date: new Date().toISOString().split('T')[0],
     content: '',
+    image_url: '',
     emotion: 'happy'
   });
 
   const weatherOptions = ['sunny', 'cloudy', 'rainy'];
-  const emotionOptions = ['happy', 'sad', 'angry', 'neutral', 'tired','helpless'];
+  const emotionOptions = ['happy', 'sad', 'angry', 'neutral', 'tired', 'helpless'];
 
   useEffect(() => {
     fetchDiaries();
   }, []);
+
+  // FIXED: Corrected reference from currentProject to currentDiary
+  useEffect(() => {
+    if (currentDiary?.image_url && !currentDiary.image_url.startsWith('http')) {
+      fetchImageUrl(currentDiary.image_url);
+    }
+  }, [currentDiary]);
+
+  // FIXED: Added safety checks to prevent sending "undefined" to backend
+  const fetchImageUrl = async (path) => {
+    if (!path || displayUrls[path] || path === 'undefined') return;
+
+    const parts = path.split('/');
+    if (parts.length < 2) return;
+
+    const bucket = parts[0];
+    const filename = parts[1];
+
+    try {
+      const response = await fetch(`http://localhost:5001/api/attachments/view/${bucket}/${filename}`);
+      if (!response.ok) return;
+      const data = await response.json();
+
+      if (data.url) {
+        setDisplayUrls(prev => ({ ...prev, [path]: data.url }));
+      }
+    } catch (err) {
+      console.error("Failed to get image link", err);
+    }
+  };
 
   const hasDiaryOnDate = (date) => {
     const year = date.getFullYear();
@@ -90,7 +124,8 @@ const Diary = () => {
       setFormData({
         ...formData,
         date: dateString,
-        content: ''
+        content: '',
+        image_url: ''
       });
       setEditMode(true);
     }
@@ -132,6 +167,7 @@ const Diary = () => {
       weather: 'sunny',
       date: new Date().toISOString().split('T')[0],
       content: '',
+      image_url: '',
       emotion: 'happy'
     });
     setEditMode(true);
@@ -142,6 +178,7 @@ const Diary = () => {
       weather: currentDiary.weather,
       date: formatDateForInput(currentDiary.date),
       content: currentDiary.content,
+      image_url: currentDiary.image_url,
       emotion: currentDiary.emotion
     });
     setEditMode(true);
@@ -150,22 +187,50 @@ const Diary = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setSubmitting(true);
+    setError(null);
+
     try {
+      let finalImagePath = formData.image_url;
+
+      if (selectedFile) {
+        const bucket = 'diary';
+        // Clean filename to avoid special character issues
+        const cleanFileName = `${Date.now()}-${selectedFile.name.replace(/\s+/g, '_')}`;
+
+        const uploadData = new FormData();
+        uploadData.append('file', selectedFile);
+
+        const uploadRes = await fetch(`http://localhost:5001/api/attachments/upload/${bucket}/${cleanFileName}`, {
+          method: 'POST',
+          body: uploadData
+        });
+
+        if (!uploadRes.ok) {
+          const errData = await uploadRes.json();
+          throw new Error(errData.error || 'Upload failed');
+        }
+
+        const uploadResult = await uploadRes.json();
+        finalImagePath = uploadResult.path;
+      }
+
+      const diaryPayload = { ...formData, image_url: finalImagePath };
       const isUpdating = currentDiary && currentDiary.id;
-      const url = isUpdating
-        ? `http://localhost:5001/api/diary/${currentDiary.id}`
-        : 'http://localhost:5001/api/diary';
+      const url = isUpdating ? `http://localhost:5001/api/diary/${currentDiary.id}` : 'http://localhost:5001/api/diary';
 
       const response = await fetch(url, {
         method: isUpdating ? 'PUT' : 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(formData)
+        body: JSON.stringify(diaryPayload)
       });
 
-      if (!response.ok) throw new Error('Save failed');
+      if (!response.ok) throw new Error('Save diary failed');
 
       setEditMode(false);
+      setSelectedFile(null);
       await fetchDiaries();
+      // Reset current diary to show the updated version
+      setCurrentDiary(null);
     } catch (err) {
       setError(err.message);
     } finally {
@@ -277,6 +342,31 @@ const Diary = () => {
                   />
                 </div>
 
+                <div className="form-group">
+                  <label htmlFor="image_file">Entry Image</label>
+                  <input
+                    type="file"
+                    id="image_file"
+                    accept="image/*"
+                    className="form-control"
+                    onChange={(e) => setSelectedFile(e.target.files[0])}
+                  />
+
+                  {selectedFile && (
+                    <div className="image-preview" style={{ position: 'relative', display: 'inline-block' }}>
+                      <img src={URL.createObjectURL(selectedFile)} alt="Preview" style={{ width: '150px', marginTop: '10px', borderRadius: '5px' }} />
+                      <button
+                        type="button"
+                        onClick={() => setSelectedFile(null)}
+                        style={{ position: 'absolute', top: '15px', right: '5px', background: 'red', color: 'white', border: 'none', borderRadius: '50%', cursor: 'pointer' }}
+                      >
+                        <FontAwesomeIcon icon={faTimes} />
+                      </button>
+                      <p style={{ fontSize: '12px', color: '#666' }}>Ready to upload</p>
+                    </div>
+                  )}
+                </div>
+
                 <div className="form-actions">
                   <button
                     type="submit"
@@ -332,6 +422,22 @@ const Diary = () => {
                 <div className="diary-content">
                   <h4><FontAwesomeIcon icon={faQuoteLeft} /> My Thoughts</h4>
                   <p>{currentDiary.content}</p>
+                  {/* 在 view-content 內部的 diary-content 下方添加 */}
+                  {/* FIXED: Added proper image container with fallback */}
+                  {currentDiary.image_url && (
+                    <div className="diary-image-display" style={{ marginTop: '20px' }}>
+                      <img
+                        src={displayUrls[currentDiary.image_url] || ''}
+                        alt="Diary entry"
+                        style={{ width: '100%', borderRadius: '12px', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}
+                        onLoad={() => console.log("Image loaded")}
+                        onError={(e) => {
+                          console.log("Image load error, retrying...");
+                          fetchImageUrl(currentDiary.image_url);
+                        }}
+                      />
+                    </div>
+                  )}
                 </div>
 
                 <div className="diary-actions">

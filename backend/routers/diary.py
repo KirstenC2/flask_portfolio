@@ -14,6 +14,7 @@ def diary():
             weather=diary_data.get("weather", ""),
             emotion=diary_data.get("emotion", ""),
             content=diary_data.get("content", ""),
+            image_url=diary_data.get("image_url", "")
         )
         db.session.add(new_diary)
         db.session.commit()
@@ -31,6 +32,7 @@ def diary():
                         "weather": diary.weather,
                         "emotion": diary.emotion,
                         "content": diary.content,
+                        "image_url": diary.image_url
                     }
                     for diary in diaries
                 ]

@@ -288,6 +288,35 @@
   color: #333;
 }
 
+.info-section {
+  margin-top: 20px;
+}
+
+.info-section h3 {
+  font-size: 1rem;
+  color: #333;
+  border-bottom: 1px solid #eee;
+  padding-bottom: 5px;
+  margin-bottom: 10px;
+}
+
+.bullet-points-list {
+  padding-left: 20px;
+  list-style-type: disc; /* 強制顯示實心圓點 */
+}
+
+.bullet-points-list li {
+  margin-bottom: 6px;
+  color: #555;
+  line-height: 1.5;
+  font-size: 0.95rem;
+}
+
+/* 讓輸入框的 placeholder 顯示換行符號 */
+textarea::placeholder {
+  white-space: pre-line;
+}
+
 .project-tech {
   color: #555;
   margin-bottom: 1.2rem;

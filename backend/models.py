@@ -10,6 +10,8 @@ class Project(db.Model):
     description = db.Column(db.Text, nullable=False)
     technologies = db.Column(db.String(200), nullable=False)
     image_url = db.Column(db.String(200), nullable=True)
+    goals = db.Column(db.Text)    # 新增
+    features = db.Column(db.Text) # 新增
     project_url = db.Column(db.String(200), nullable=True)
     github_url = db.Column(db.String(200), nullable=True)
     date_created = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
@@ -138,8 +140,9 @@ class Diary(db.Model):
     weather = db.Column(db.String(20), nullable=False)
     content = db.Column(db.Text, nullable=True)
     emotion = db.Column(db.String(20), nullable=True)
+    image_url = db.Column(db.String(200), nullable=True)
     def __repr__(self):
-        return f"Diary('{self.date}', '{self.weather}', '{self.content}')"
+        return f"Diary('{self.date}', '{self.weather}', '{self.content}','{self.image_url})"
         
 
 # Personal life story events (non-work experience)

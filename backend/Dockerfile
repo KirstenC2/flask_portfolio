@@ -25,5 +25,5 @@ RUN mkdir -p /app/instance && \
 EXPOSE 5001
 
 ENV FLASK_APP=main.py
-# Use Gunicorn to run the 'app' object inside 'app.py' on port 5001
-CMD ["gunicorn", "-b", "0.0.0.0:5001", "app:app"]
+# Use Gunicorn to run the 'app' object inside 'main.py' on port 5001
+CMD ["gunicorn", "-b", "0.0.0.0:5001", "main:app"]

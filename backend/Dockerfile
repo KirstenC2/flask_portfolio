@@ -23,8 +23,6 @@ RUN mkdir -p /app/instance && \
 
 EXPOSE 5001
 
-# Set environment variables
 ENV FLASK_APP=app.py
-ENV FLASK_ENV=production
-
-CMD ["python", "app.py"]
+# Use Gunicorn to run the 'app' object inside 'app.py' on port 5001
+CMD ["gunicorn", "-b", "0.0.0.0:5001", "app:app"]

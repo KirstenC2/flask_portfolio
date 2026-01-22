@@ -222,6 +222,8 @@ def projects():
         'description': project.description,
         'technologies': project.technologies,
         'image_url': project.image_url,
+        'goals': project.goals,
+        'features': project.features,
         'github_url': project.github_url,
         'date_created': project.date_created.isoformat() if project.date_created else None
     } for project in all_projects]
@@ -236,6 +238,8 @@ def project(project_id):
         'description': project.description,
         'technologies': project.technologies,
         'image_url': project.image_url,
+        'goals': project.goals,
+        'features': project.features,
         'github_url': project.github_url,
         'date_created': project.date_created.isoformat() if project.date_created else None
     }

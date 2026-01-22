@@ -46,6 +46,25 @@
     color: #1f2937;
 }
 
+.border-danger {
+    border: 1px solid #fee2e2 !important;
+    background-color: #fef2f2 !important;
+}
+
+.bg-red {
+    background-color: #fee2e2;
+    color: #ef4444;
+}
+
+.text-red {
+    color: #b91c1c;
+}
+
+.error-text {
+    font-size: 0.75rem;
+    color: #ef4444;
+    font-weight: 600;
+}
 /* Form Styles */
 .motor-form .form-group {
     display: flex;

@@ -12,7 +12,8 @@ RUN pip install --no-cache-dir \
     pyjwt==2.8.0 \
     werkzeug==2.3.7 \
     psycopg2-binary==2.9.9 \
-    minio==7.0.0
+    minio==7.0.0 \ 
+    gunicorn==20.1.0
 
 # Copy the application code
 COPY . .
@@ -23,6 +24,6 @@ RUN mkdir -p /app/instance && \
 
 EXPOSE 5001
 
-ENV FLASK_APP=app.py
+ENV FLASK_APP=main.py
 # Use Gunicorn to run the 'app' object inside 'app.py' on port 5001
 CMD ["gunicorn", "-b", "0.0.0.0:5001", "app:app"]

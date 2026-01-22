@@ -310,6 +310,16 @@
   font-size: 1.2rem;
 }
 
+.profile-img {
+  width: 300px; /* Adjust size as needed */
+  height: 300px; /* Adjust size as needed */
+  border-radius: 50%;
+  object-fit: cover;
+  border: 4px solid #fff;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  margin-bottom: 1.5rem;
+}
+
 .error {
   color: #e74c3c;
 }

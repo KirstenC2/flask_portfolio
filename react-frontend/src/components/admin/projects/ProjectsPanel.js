@@ -67,7 +67,7 @@ const ProjectsPanel = () => {
       fetchImageUrl(currentProject.image_url);
     }
   }, [currentProject]);
-  
+
   const fetchImageUrl = async (path) => {
     if (!path || displayUrls[path]) return;
 
@@ -117,12 +117,17 @@ const ProjectsPanel = () => {
   const handleSelectProject = (project) => {
     setCurrentProject(project);
     setFormData({
-      title: project.title,
-      description: project.description,
-      technologies: project.technologies,
-      image_url: project.image_url,
-      project_url: project.project_url,
-      github_url: project.github_url
+      title: project.title || '',
+      description: project.description || '',
+      technologies: project.technologies || '',
+      image_url: project.image_url || '',
+      project_url: project.project_url || '',
+      github_url: project.github_url || '',
+      features: project.features || '', // 確保這些被載入
+      goals: project.goals || '',       // 確保這些被載入
+      role: project.role || '',         // 新增 R&D 欄位
+      contribution: project.contribution || '',
+      challenges: project.challenges || ''
     });
     setEditMode(false);
   };

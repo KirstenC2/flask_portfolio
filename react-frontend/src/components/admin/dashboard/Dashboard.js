@@ -29,7 +29,7 @@ import LifeEventsPanel from '../life/LifeEventsPanel';
 import BlogPanel from '../blog/BlogPanel';
 import DiaryPanel from '../diary/DiaryPanel';
 import ResumePanel from '../resume/ResumePanel';
-
+import DebtPanel from '../debt/DebtPanel'
 
 const Dashboard = () => {
   const navigate = useNavigate();
@@ -109,6 +109,8 @@ const Dashboard = () => {
         return <DiaryPanel />;
       case 'resume':
         return <ResumePanel />;
+      case 'debt':
+        return <DebtPanel />;
       case 'overview':
       default:
         return (
@@ -250,6 +252,12 @@ const Dashboard = () => {
                     Diary
                   </button>
                 </li>
+                <li className={activeSection === 'debt' ? 'active' : ''}>
+                  <button onClick={() => setActiveSection('debt')}>
+                    <FontAwesomeIcon icon={faBook} />
+                    Debt
+                  </button>
+                </li>
               </div>)}
           </ul>
         </nav>
@@ -280,6 +288,7 @@ const Dashboard = () => {
             {activeSection === 'life' && 'Life Events'}
             {activeSection === 'blog' && 'Blog'}
             {activeSection === 'diary' && 'Diary'}
+            {activeSection === 'debt' && 'Debt'}
           </h1>
         </div>
 

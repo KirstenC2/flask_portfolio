@@ -19,6 +19,7 @@
     "ckeditor": "^4.12.1",
     "ckeditor5": "^47.4.0",
     "html2pdf.js": "^0.14.0",
+    "lucide-react": "^0.562.0",
     "marked": "^17.0.1",
     "react": "^19.1.0",
     "react-calendar": "^6.0.0",

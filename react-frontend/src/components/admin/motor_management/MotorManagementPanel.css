@@ -1,32 +1,59 @@
+.mileage-alert {
+    background: #fff3e0;
+    border-left: 4px solid #ff9800;
+    padding: 10px 20px;
+    border-radius: 4px;
+    font-weight: bold;
+}
+
+.mileage-alert span {
+    color: #e65100;
+    font-size: 1.2rem;
+}
+
+.text-price {
+    color: #2e7d32;
+    font-weight: bold;
+}
+
+.motor-form {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 20px;
+    background: none;
+    padding: 15px;
+    border-radius: 8px;
+}
+
 /* Container Layout */
-.debt-container {
+.motor-container {
     max-width: 1100px;
     margin: 2rem auto;
     padding: 0 1.5rem;
     font-family: 'Inter', system-ui, sans-serif;
 }
 
-.debt-header-section {
-    display: flex;
-    justify-content: space-between;
+.motor-header-section {
+    display: grid;
+    /* justify-content: space-between; */
     align-items: center;
     margin-bottom: 2rem;
 }
 
-.debt-header-section h1 {
+.motor-header-section h1 {
     font-size: 1.5rem;
     font-weight: 700;
     color: #1f2937;
 }
 
 /* Form Styles */
-.debt-form-inline .form-group {
+.motor-form .form-group {
     display: flex;
     gap: 0.75rem;
     align-items: center;
 }
 
-.debt-form-inline input {
+.motor-form input {
     border: 1px solid #d1d5db;
     border-radius: 0.5rem;
     padding: 0.5rem 0.75rem;
@@ -35,7 +62,7 @@
     transition: border-color 0.2s;
 }
 
-.debt-form-inline input:focus {
+.motor-form input:focus {
     border-color: #2563eb;
     box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.1);
 }
@@ -64,79 +91,13 @@
     border: 1px solid #e5e7eb;
 }
 
-.stat-row {
-    display: flex;
-    gap: 1.5rem;
-    margin-bottom: 2rem;
-}
-
-.stat-item-card {
-    flex: 1;
-    background: white;
-    padding: 1.25rem 1.5rem;
-    border-radius: 12px;
-    border: 1px solid #e5e7eb;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
-    display: flex;
-    align-items: center;
-    gap: 1rem;
-    transition: transform 0.2s, box-shadow 0.2s;
-}
-
-.stat-item-card:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-}
-
-/* 圖示容器 */
-.stat-icon-wrapper {
-    background-color: #eff6ff;
-    color: #2563eb;
-    padding: 12px;
-    border-radius: 10px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-
-.stat-icon-wrapper.secondary {
-    background-color: #fef2f2;
-    color: #ef4444;
-}
-
-/* 文字內容排版 */
-.stat-content {
-    display: flex;
-    flex-direction: column;
-}
-
-.stat-label {
-    font-size: 0.875rem;
-    color: #6b7280;
-    margin: 0;
-    font-weight: 500;
-}
-
-.stat-value {
-    font-size: 1.5rem;
-    font-weight: 700;
-    color: #111827;
-    margin: 0.25rem 0 0 0;
-}
-
-.stat-unit {
-    font-size: 0.875rem;
-    color: #9ca3af;
-    margin-left: 4px;
-    font-weight: 400;
-}
-.debt-table {
+.motor-table {
     width: 100%;
     border-collapse: collapse;
     text-align: left;
 }
 
-.debt-table th {
+.motor-table th {
     background-color: #f9fafb;
     padding: 1rem 1.5rem;
     font-size: 0.75rem;
@@ -146,7 +107,7 @@
     border-bottom: 1px solid #e5e7eb;
 }
 
-.debt-table td {
+.motor-table td {
     padding: 1rem 1.5rem;
     font-size: 0.925rem;
     color: #374151;
@@ -154,7 +115,7 @@
 }
 
 .row-expanded { background-color: #eff6ff; }
-.debt-table tr:hover:not(.detail-row) { background-color: #f9fafb; }
+.motor-table tr:hover:not(.detail-row) { background-color: #f9fafb; }
 
 /* Typography & Colors */
 .text-right { text-align: right; }
@@ -245,3 +206,55 @@
 
 .history-table th { padding-bottom: 0.5rem; color: #9ca3af; text-align: left; }
 .history-table td { padding: 0.5rem 0; border-bottom: 1px solid #e2e8f0; }
+
+.status-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+.status-card {
+    padding: 1.25rem;
+    border-radius: 12px;
+    background: #fff;
+    border: 1px solid #e5e7eb;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+}
+
+.status-label {
+    font-size: 0.875rem;
+    color: #6b7280;
+    margin-bottom: 0.5rem;
+}
+
+.status-value {
+    font-size: 1.75rem;
+    font-weight: 800;
+    color: #1f2937;
+}
+
+.status-hint {
+    font-size: 0.8125rem;
+    margin-top: 0.5rem;
+    font-weight: 500;
+}
+
+/* 狀態顏色：安全 */
+.status-safe {
+    border-left: 5px solid #10b981;
+}
+
+/* 狀態顏色：超過三個月 (危險) */
+.status-danger {
+    border-left: 5px solid #ef4444;
+    background-color: #fef2f2;
+}
+
+.status-danger .status-value {
+    color: #b91c1c;
+}
+
+.status-danger .status-hint {
+    color: #991b1b;
+}

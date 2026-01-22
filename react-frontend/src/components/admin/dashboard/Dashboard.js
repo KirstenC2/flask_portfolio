@@ -13,7 +13,9 @@ import {
   faTachometerAlt,
   faUserCircle,
   faStar,
-  faBlog
+  faBlog,
+  faMotorcycle,
+  faFileInvoiceDollar
 } from '@fortawesome/free-solid-svg-icons';
 import './Dashboard.css';
 import { Divider } from '@mui/material';
@@ -29,7 +31,8 @@ import LifeEventsPanel from '../life/LifeEventsPanel';
 import BlogPanel from '../blog/BlogPanel';
 import DiaryPanel from '../diary/DiaryPanel';
 import ResumePanel from '../resume/ResumePanel';
-import DebtPanel from '../debt/DebtPanel'
+import DebtPanel from '../debt/DebtPanel';
+import MotorManagementPanel from '../motor_management/MotorManagementPanel';
 
 const Dashboard = () => {
   const navigate = useNavigate();
@@ -111,6 +114,8 @@ const Dashboard = () => {
         return <ResumePanel />;
       case 'debt':
         return <DebtPanel />;
+      case 'motor':
+        return <MotorManagementPanel />;
       case 'overview':
       default:
         return (
@@ -254,8 +259,14 @@ const Dashboard = () => {
                 </li>
                 <li className={activeSection === 'debt' ? 'active' : ''}>
                   <button onClick={() => setActiveSection('debt')}>
-                    <FontAwesomeIcon icon={faBook} />
+                    <FontAwesomeIcon icon={faFileInvoiceDollar} />
                     Debt
+                  </button>
+                </li>
+                <li className={activeSection === 'motor' ? 'active' : ''}>
+                  <button onClick={() => setActiveSection('motor')}>
+                    <FontAwesomeIcon icon={faMotorcycle} />
+                    Motor Management
                   </button>
                 </li>
               </div>)}
@@ -289,6 +300,7 @@ const Dashboard = () => {
             {activeSection === 'blog' && 'Blog'}
             {activeSection === 'diary' && 'Diary'}
             {activeSection === 'debt' && 'Debt'}
+            {activeSection === 'motor' && 'Motor Management'}
           </h1>
         </div>
 

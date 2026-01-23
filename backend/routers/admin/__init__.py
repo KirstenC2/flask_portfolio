@@ -3,9 +3,15 @@ import jwt
 from functools import wraps
 from flask import Blueprint, request, jsonify, current_app
 from models import Admin
+from flask_cors import CORS
 APP_SECRET_KEY = os.environ.get('APP_SECRET_KEY', 'dev-secret-key-change-in-production')
 
 admin_bp = Blueprint('admin', __name__, url_prefix='/api/admin')
+CORS(admin_bp, 
+     resources={"/api/admin/*": {"origins": "http://localhost:3000"}},
+     supports_credentials=True,
+     allow_headers=["Content-Type", "Authorization"],
+     methods=["GET", "POST", "PUT","PATCH", "DELETE", "OPTIONS"])
 
 def token_required(f):
     @wraps(f)
@@ -36,4 +42,4 @@ def token_required(f):
         return f(current_admin, *args, **kwargs)
     return decorated
 # Crucial: Import the routes AFTER defining admin_bp to avoid circular imports
-from . import auth, admin, skills, education, life_events,study, projects, admin
+from . import auth, skills, education, life_events,study, projects, experience, message, expenses

@@ -55,3 +55,45 @@ class PaymentLog(db.Model):
 
     def __repr__(self):
         return f'<Payment {self.payment_date}: {self.amount}>'
+
+# ----------------------------------------------------------------
+# 1. Expense Category: Groups expenses (e.g., "Food", "Transport")
+# ----------------------------------------------------------------
+class ExpenseCategory(db.Model):
+    __tablename__ = 'expense_categories'
+
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(50), nullable=False, unique=True)
+    icon = db.Column(db.String(50))  # e.g., "fast-food", "car" (for frontend icons)
+    color = db.Column(db.String(20)) # e.g., "#FF5733" for charts
+    
+    # Relationship: One category has many expenses
+    expenses = db.relationship('Expense', backref='category', lazy=True, cascade="all, delete-orphan")
+
+    @property
+    def total_spent(self):
+        """Quickly sum all expenses in this category"""
+        return sum(e.amount for e in self.expenses)
+
+    def __repr__(self):
+        return f'<Category {self.name}>'
+
+# ----------------------------------------------------------------
+# 2. Individual Expense: The actual spending entry
+# ----------------------------------------------------------------
+class Expense(db.Model):
+    __tablename__ = 'expenses'
+
+    id = db.Column(db.Integer, primary_key=True)
+    category_id = db.Column(db.Integer, db.ForeignKey('expense_categories.id'), nullable=False)
+    
+    title = db.Column(db.String(100), nullable=False) # e.g., "Dinner with friends"
+    amount = db.Column(db.Numeric(15, 2), nullable=False)
+    expense_date = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
+    
+    note = db.Column(db.String(255))
+    created_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    def __repr__(self):
+        return f'<Expense {self.title}: {self.amount}>'

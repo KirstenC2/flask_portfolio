@@ -1,7 +1,5 @@
-from . import admin_bp,APP_SECRET_KEY, token_required
+from . import admin_bp, token_required
 from flask import request, jsonify
-import jwt
-from datetime import datetime, timedelta
 from models import db, Project
 
 # ----------------------

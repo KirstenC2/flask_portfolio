@@ -1,7 +1,7 @@
 import os
 from flask import Flask
 from flask_cors import CORS
-from models import db, Project, Skill, Study, Experience, Education, Message, Admin
+from models import db,Project, Skill, Study, Experience, Education, Message, Admin
 from routers.home import home_bp
 from routers.contact import contact_bp
 from routers.admin import admin_bp
@@ -15,6 +15,7 @@ from routers.motor import motor_bp
 from datetime import datetime
 from seed_data import seed_sample_data
 from dotenv import load_dotenv
+# from flask_sqlalchemy import SQLAlchemy
 # 載入 .env 檔案
 load_dotenv()
 

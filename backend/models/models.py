@@ -1,8 +1,7 @@
-from flask_sqlalchemy import SQLAlchemy
+
 from datetime import datetime
 from werkzeug.security import generate_password_hash, check_password_hash
-from decimal import Decimal
-db = SQLAlchemy()
+from . import db
 
 class Project(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -134,16 +133,7 @@ class Admin(db.Model):
     def __repr__(self):
         return f"Admin('{self.username}', '{self.email}')"
 
-class Diary(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    date = db.Column(db.DateTime, nullable=False)
-    weather = db.Column(db.String(20), nullable=False)
-    content = db.Column(db.Text, nullable=True)
-    emotion = db.Column(db.String(20), nullable=True)
-    image_url = db.Column(db.String(200), nullable=True)
-    def __repr__(self):
-        return f"Diary('{self.date}', '{self.weather}', '{self.content}','{self.image_url})"
-        
+
 
 # Personal life story events (non-work experience)
 class LifeEvent(db.Model):
@@ -168,18 +158,7 @@ class Introduction(db.Model):
     def __repr__(self):
         return f"Introduction()"
 
-class Post(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    title = db.Column(db.String(200), nullable=False)
-    slug = db.Column(db.String(200), unique=True, nullable=False)
-    content_md = db.Column(db.Text, nullable=False)
-    content_html = db.Column(db.Text, nullable=True)
-    tags = db.Column(db.String(250), nullable=True)  # comma-separated
-    created_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
-    updated_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow, onupdate=datetime.utcnow)
 
-    def __repr__(self):
-        return f"Post('{self.slug}', '{self.title}')"
 
 class Resume(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -188,77 +167,3 @@ class Resume(db.Model):
     is_active = db.Column(db.Boolean, default=False) # 是否為當前網站下載使用的版本
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
-# ----------------------------------------------------------------
-# 1. 債務主表：紀錄總額、狀態
-# ----------------------------------------------------------------
-class DebtRecord(db.Model):
-    __tablename__ = 'debt_records'
-
-    id = db.Column(db.Integer, primary_key=True)
-    title = db.Column(db.String(100), nullable=False)  # 標題，例如 "跟小明借的午餐費"
-    total_amount = db.Column(db.Numeric(15, 2), nullable=False)  # 原始總金額
-    
-    # 時間戳記
-    created_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
-    updated_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow, onupdate=datetime.utcnow)
-    
-    # 反向關聯：透過 debt_record.payments 即可取得所有還款紀錄
-    # backref 會自動在 PaymentLog 增加一個 .debt 屬性
-    payments = db.relationship('PaymentLog', backref='debt', lazy=True, cascade="all, delete-orphan")
-
-    @property
-    def current_balance(self):
-        """計算目前剩餘應還金額"""
-        paid_total = sum(p.amount for p in self.payments)
-        return self.total_amount - Decimal(str(paid_total))
-
-    @property
-    def is_fully_paid(self):
-        """是否已還清"""
-        return self.current_balance <= 0
-
-    def __repr__(self):
-        return f'<Debt {self.title}: {self.current_balance}/{self.total_amount}>'
-
-
-# ----------------------------------------------------------------
-# 2. 還款明細表：紀錄每次還錢的日期、金額
-# ----------------------------------------------------------------
-class PaymentLog(db.Model):
-    __tablename__ = 'payment_logs'
-
-    id = db.Column(db.Integer, primary_key=True)
-    debt_id = db.Column(db.Integer, db.ForeignKey('debt_records.id'), nullable=False)
-    
-    # 核心紀錄：還了多少錢、什麼時候還的
-    amount = db.Column(db.Numeric(15, 2), nullable=False)
-    payment_date = db.Column(db.DateTime, nullable=False, default=datetime.utcnow) # 使用者可以自定義日期
-    
-    # 備註（例如：轉帳單號、現金交付等）
-    note = db.Column(db.String(255))
-    
-    created_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
-    updated_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow, onupdate=datetime.utcnow)
-
-    def __repr__(self):
-        return f'<Payment {self.payment_date}: {self.amount}>'
-
-class MotorRecord(db.Model):
-    __tablename__ = 'motor_records'
-    id = db.Column(db.Integer, primary_key=True)
-    item_name = db.Column(db.String(50), default="換機油") # 預設機油，也可記輪胎等
-    mileage = db.Column(db.Integer, nullable=False)        # 里程數
-    price = db.Column(db.Integer, nullable=False)          # 價格
-    maintenance_date = db.Column(db.Date, nullable=False)  # 維修日期
-    note = db.Column(db.String(200))                       # 備註（機油品牌等）
-    created_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
-    updated_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow, onupdate=datetime.utcnow)
-    def to_dict(self):
-        return {
-            "id": self.id,
-            "item_name": self.item_name,
-            "mileage": self.mileage,
-            "price": self.price,
-            "maintenance_date": self.maintenance_date.isoformat(),
-            "note": self.note
-        }

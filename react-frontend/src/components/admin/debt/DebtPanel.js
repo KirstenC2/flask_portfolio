@@ -16,10 +16,10 @@ const DebtTableApp = () => {
     const [expenses, setExpenses] = useState([]); // Ensure this is []
     const [categories, setCategories] = useState([]); // Ensure this is []
     const [newExpense, setNewExpense] = useState({
+        expense_date: new Date().toISOString().split('T')[0],
         title: '',
         amount: '',
-        category_id: '',
-        expense_date: new Date().toISOString().split('T')[0]
+        category_id: ''
     });
     const fetchDebts = async () => {
         try {
@@ -72,7 +72,7 @@ const DebtTableApp = () => {
             },
             body: JSON.stringify(newExpense),
         });
-        setNewExpense({ title: '', amount: '', category_id: '', expense_date: new Date().toISOString().split('T')[0] });
+        setNewExpense({ expense_date: new Date().toISOString().split('T')[0], title: '', amount: '', category_id: '' });
         fetchData();
     };
     // 當展開不同的債務時，重置分頁到第一頁
@@ -269,6 +269,11 @@ const DebtTableApp = () => {
                                 <option key={cat.id} value={cat.id}>{cat.name}</option>
                             ))}
                         </select>
+                        <input
+                            type="date"
+                            value={newExpense.expense_date}
+                            onChange={e => setNewExpense({ ...newExpense, expense_date: e.target.value })}
+                        />
                         <input
                             type="text" placeholder="支出項目 (如: 午餐)"
                             value={newExpense.title}

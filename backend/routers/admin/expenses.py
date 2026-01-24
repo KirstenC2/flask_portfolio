@@ -2,6 +2,7 @@ from . import admin_bp, token_required
 from flask import request, jsonify
 from models.finance_models import db, Expense,ExpenseCategory
 from datetime import datetime
+from sqlalchemy import func, extract
 
 def _expense_to_dict(e: Expense):
     return {
@@ -58,9 +59,23 @@ def create_expense_category(current_admin):
 @admin_bp.route('/expenses', methods=['GET', 'OPTIONS'])
 @token_required
 def get_admin_expenses(current_admin):
-    # Sort by date (newest first)
-    expenses = Expense.query.order_by(Expense.expense_date.desc()).all()
-    return jsonify([_expense_to_dict(e) for e in expenses])
+    try:
+        # 從 URL 參數獲取年份 (例如: /api/admin/expenses?year=2026)
+        year_param = request.args.get('year', type=int)
+
+        query = Expense.query
+
+        # 如果有傳入年份，則進行過濾
+        if year_param:
+            query = query.filter(extract('year', Expense.expense_date) == year_param)
+
+        # 按照日期排序（最新的在前）
+        expenses = query.order_by(Expense.expense_date.desc()).all()
+        
+        return jsonify([_expense_to_dict(e) for e in expenses])
+    except Exception as e:
+        print(f"Error fetching expenses: {str(e)}")
+        return jsonify({'message': '獲取支出列表失敗', 'error': str(e)}), 500
 
 @admin_bp.route('/expenses', methods=['POST', 'OPTIONS'])
 @token_required
@@ -110,3 +125,52 @@ def delete_admin_expense(current_admin, expense_id):
     db.session.delete(e)
     db.session.commit()
     return jsonify({'message': 'Expense deleted'})
+
+@admin_bp.route('/expenses/stats', methods=['GET', 'OPTIONS'])
+@token_required
+def get_expense_stats(current_admin):
+    try:
+        # 從 URL 參數獲取年份，預設為今年
+        selected_year = request.args.get('year', default=datetime.utcnow().year, type=int)
+        current_month_str = datetime.utcnow().strftime('%Y-%m')
+
+        # 1. 每月統計 (過濾特定年份)
+        monthly_query = db.session.query(
+            func.to_char(Expense.expense_date, 'YYYY-MM').label('month'),
+            func.sum(Expense.amount).label('total')
+        ).filter(
+            Expense.expense_date.isnot(None),
+            extract('year', Expense.expense_date) == selected_year
+        ).group_by('month').order_by('month').all()
+
+        # 2. 每日統計 (保持不變，通常只看當月)
+        daily_query = db.session.query(
+            func.to_char(Expense.expense_date, 'YYYY-MM-DD').label('day'),
+            func.sum(Expense.amount).label('total')
+        ).filter(
+            func.to_char(Expense.expense_date, 'YYYY-MM') == current_month_str
+        ).group_by('day').order_by('day').all()
+
+        return jsonify({
+            "monthly": [{"month": r.month, "total": float(r.total or 0)} for r in monthly_query if r.month],
+            "daily": [{"day": r.day, "total": float(r.total or 0)} for r in daily_query if r.day]
+        })
+    except Exception as e:
+        return jsonify({'message': '後端統計計算錯誤', 'error': str(e)}), 500
+
+@admin_bp.route('/expenses/by-category', methods=['GET', 'OPTIONS'])
+@token_required
+def get_expenses_by_category(current_admin):
+    """
+    Useful for Pie Charts: Spend per category.
+    """
+    stats = db.session.query(
+        ExpenseCategory.name,
+        func.sum(Expense.amount).label('total')
+    ).join(Expense, ExpenseCategory.id == Expense.category_id)\
+     .group_by(ExpenseCategory.name).all()
+
+    return jsonify([
+        {'category': name, 'total': float(total or 0)} 
+        for name, total in stats
+    ])

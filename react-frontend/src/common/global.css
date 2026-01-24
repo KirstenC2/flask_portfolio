@@ -10,6 +10,15 @@
   gap: 1rem;
 }
 
+.form-row select {
+  flex: 1;
+  padding: 0.8rem;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 0.95rem;
+  font-family: inherit;
+}
+
 .form-row .form-group {
   flex: 1;
 }

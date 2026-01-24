@@ -5,7 +5,8 @@ import {
     ResponsiveContainer, Cell, LabelList
 } from 'recharts';
 import { StatRow } from './StatRow';
-
+import './ExpenseSection.css';
+import '../../../common/global.css';
 const ExpenseSection = ({
     expenses = [],
     categories = [],
@@ -54,9 +55,9 @@ const [currentPage, setCurrentPage] = useState(1);
 
     return (
         <section>
-            <div className="debt-header-section">
+            <div className="expense-header-section">
                 <h1>日常支出紀錄</h1>
-                <form onSubmit={onCreate} className="debt-form-inline">
+                <form onSubmit={onCreate} className="expense-form-inline">
                     <div className="form-row">
                         <select
                             required
@@ -160,7 +161,7 @@ const [currentPage, setCurrentPage] = useState(1);
 
             {/* 表格內容 */}
             <div className="table-wrapper">
-                <table className="debt-table">
+                <table className="expense-table">
                     <thead>
                         <tr>
                             <th>日期</th>

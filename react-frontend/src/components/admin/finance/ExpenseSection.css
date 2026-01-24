@@ -1,0 +1,134 @@
+/* 1. 表單區域修正 (沿用 Debt 但微調顏色) */
+.expense-header-section {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2rem;
+}
+
+.expense-form-inline .form-row {
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+}
+
+.expense-form-inline select, 
+.expense-form-inline input {
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    padding: 0.5rem 0.75rem;
+    font-size: 0.875rem;
+    outline: none;
+}
+
+/* 2. 圖表容器樣式 */
+.chart-container {
+    background: white;
+    border-radius: 16px;
+    padding: 1.5rem;
+    margin-bottom: 2rem;
+    border: 1px solid #f1f5f9;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+}
+
+.chart-header {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-bottom: 1.5rem;
+}
+
+.chart-header h3 {
+    font-size: 1rem;
+    font-weight: 600;
+    color: #1e293b;
+    margin: 0;
+    flex: 1;
+}
+
+.chart-empty-state {
+    height: 300px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #f8fafc;
+    border-radius: 12px;
+    color: #94a3b8;
+    border: 2px dashed #e2e8f0;
+}
+
+/* 3. 分頁按鈕樣式 */
+.pagination-controls {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 1.5rem;
+    margin-top: 2rem;
+    padding-bottom: 2rem;
+}
+
+.pagination-btn {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 1rem;
+    border: 1px solid #e2e8f0;
+    background: white;
+    border-radius: 8px;
+    color: #64748b;
+    font-size: 0.875rem;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.pagination-btn:hover:not(:disabled) {
+    background: #fdf2f8;
+    color: #ec4899;
+    border-color: #fbcfe8;
+}
+
+.pagination-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.pagination-info {
+    font-size: 0.875rem;
+    color: #64748b;
+}
+
+/* 4. 分類標籤 (Status Tag) */
+.status-tag {
+    padding: 0.25rem 0.75rem;
+    border-radius: 9999px;
+    font-size: 0.75rem;
+    font-weight: 600;
+}
+
+
+.expense-table {
+    width: 100%;
+    border-collapse: collapse;
+    text-align: left;
+}
+
+.expense-table th {
+    background-color: #f9fafb;
+    padding: 1rem 1.5rem;
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    color: #6b7280;
+    font-weight: 600;
+    border-bottom: 1px solid #e5e7eb;
+}
+
+.expense-table td {
+    padding: 1rem 1.5rem;
+    font-size: 0.925rem;
+    color: #374151;
+    border-bottom: 1px solid #f3f4f6;
+}
+
+.row-expanded { background-color: #eff6ff; }
+.expense-table tr:hover:not(.detail-row) { background-color: #f9fafb; }
+

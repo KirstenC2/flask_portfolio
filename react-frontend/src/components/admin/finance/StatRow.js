@@ -1,5 +1,5 @@
 import React from 'react';
-
+import './stat.css';
 const StatCard = ({ icon: Icon, label, value, unit, colorStyle = {} }) => (
   <div className="stat-item-card">
     <div className="stat-icon-wrapper" style={colorStyle}>

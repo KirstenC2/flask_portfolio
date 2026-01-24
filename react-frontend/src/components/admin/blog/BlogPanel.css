@@ -8,33 +8,6 @@
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
 }
 
-.list-section {
-  flex: 1;
-  background: white;
-  padding: 24px;
-  border-radius: 12px;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-.list-section.shrink {
-  flex: 0.35; /* Shrinks the list to make room for editor */
-  min-width: 300px;
-}
-
-/* Editor Panel */
-.editor-sidepanel {
-  flex: 0.65;
-  background: white;
-  padding: 24px;
-  border-radius: 12px;
-  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
-  position: sticky;
-  top: 30px;
-  height: fit-content;
-  animation: slideIn 0.3s ease-out;
-}
-
 @keyframes slideIn {
   from { opacity: 0; transform: translateX(30px); }
   to { opacity: 1; transform: translateX(0); }

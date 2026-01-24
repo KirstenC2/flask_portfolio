@@ -16,6 +16,7 @@ import {
   faStickyNote
 } from '@fortawesome/free-solid-svg-icons';
 import './StudiesPanel.css';
+import '../../../common/global.css';
 
 const StudiesPanel = () => {
   const [studies, setStudies] = useState([]);
@@ -320,7 +321,7 @@ const StudiesPanel = () => {
     <div className="studies-panel">
       <div className="studies-header">
         <h2>Learning & Studies</h2>
-        <button className="new-study-btn" onClick={handleCreateNew}>
+        <button className="btn btn-primary" onClick={handleCreateNew}>
           <FontAwesomeIcon icon={faPlus} /> Add Study
         </button>
       </div>

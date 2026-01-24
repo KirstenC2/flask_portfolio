@@ -1,0 +1,37 @@
+/* 容器樣式 */
+.carousel-wrapper {
+    padding: 50px 0;
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+/* 卡片基礎過渡效果 */
+.project-card-container {
+    transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+    transform: scale(0.8); /* 預設側邊縮小 */
+    opacity: 0.5;          /* 預設側邊半透明 */
+    cursor: pointer;
+    margin: 0 10px;
+}
+
+
+/* 中間啟動中的卡片 */
+.project-card-container.is-active {
+    transform: scale(1.1); /* 放大 */
+    opacity: 1;            /* 全亮 */
+    z-index: 10;
+}
+
+/* 側邊卡片滑過效果 */
+.project-card-container.is-side:hover {
+    opacity: 0.8;
+}
+
+/* 針對 AntD Card 的美化 */
+.ant-card {
+    border-radius: 25px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+    text-align: center;
+    padding: 20px;
+    height: 300px;
+}

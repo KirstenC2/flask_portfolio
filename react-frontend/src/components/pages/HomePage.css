@@ -4,7 +4,8 @@
 }
 
 /* Loading and Error States */
-.loading, .error {
+.loading,
+.error {
   text-align: center;
   padding: 3rem 1rem;
   font-size: 1.2rem;
@@ -12,6 +13,14 @@
 
 .error {
   color: #e74c3c;
+}
+
+
+.project-container {
+  background-color: #cad9ebb6;
+  padding: 1.5rem;
+  margin-left: auto;
+  margin-right: 12px;
 }
 
 /* Container */
@@ -23,7 +32,8 @@
 
 /* Hero Section */
 .hero {
-  position: relative; /* Necessary to contain the absolute pseudo-element */
+  position: relative;
+  /* Necessary to contain the absolute pseudo-element */
   color: #f0f0f0;
   padding: 6rem 0;
   text-align: center;
@@ -31,38 +41,43 @@
   display: flex;
   flex-direction: column;
   justify-content: center;
-  overflow: hidden; /* Clips the blurry edges of the background */
+  overflow: hidden;
+  /* Clips the blurry edges of the background */
 }
 
 .hero::before {
   content: "";
   position: absolute;
-  top: 0; 
+  top: 0;
   left: 0;
-  width: 100%; 
+  width: 100%;
   height: 100%;
-  
+
   /* Background properties moved here */
   background-image: url('/src/assets/hero-bg.png');
   background-size: cover;
   background-position: center;
-  
+
   /* The Blur Effect */
   filter: blur(8px);
-  
+
   /* Scale slightly to hide the white/transparent edges caused by blurring */
-  transform: scale(1.1); 
-  
+  transform: scale(1.1);
+
   /* Ensure the background stays behind the text */
-  z-index: -1; 
+  z-index: -1;
 }
 
 /* Optional: Add a dark overlay to make white text pop more */
 .hero::after {
   content: "";
   position: absolute;
-  top: 0; left: 0; width: 100%; height: 100%;
-  background: rgba(0, 0, 0, 0.3); /* Darkens the image slightly */
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.3);
+  /* Darkens the image slightly */
   z-index: -1;
 }
 
@@ -93,8 +108,10 @@
 
 
 .profile-img {
-  width: 300px; /* Adjust size as needed */
-  height: 300px; /* Adjust size as needed */
+  width: 300px;
+  /* Adjust size as needed */
+  height: 300px;
+  /* Adjust size as needed */
   border-radius: 50%;
   object-fit: cover;
   border: 4px solid #fff;
@@ -102,10 +119,6 @@
   margin-bottom: 1.5rem;
 }
 
-/* Section Styles */
-section {
-  padding: 5rem 0;
-}
 
 .section-title {
   font-size: 2.2rem;
@@ -130,105 +143,75 @@ section {
   text-align: center;
   margin-top: 3rem;
 }
-
-/* Featured Projects */
-.featured-projects {
-  background-color: #f8f8f8;
-}
-
-.project-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
-  gap: 2rem;
-}
-
-.project-card {
-  background-color: #ffffff;
-  border-radius: 8px;
-  overflow: hidden;
-  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
-  transition: transform 0.3s ease, box-shadow 0.3s ease;
-}
-
-.project-card:hover {
-  transform: translateY(-5px);
-  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
-}
-
-.project-img {
-  height: 200px;
-  overflow: hidden;
-}
-
-.project-img img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  transition: transform 0.3s ease;
-}
-
-.project-card:hover .project-img img {
-  transform: scale(1.05);
-}
-
-.project-info {
-  padding: 1.5rem;
-}
-
-.project-info h3 {
-  font-size: 1.4rem;
-  margin-bottom: 0.8rem;
-}
-
-.project-tech {
-  margin: 1rem 0;
-  font-size: 0.9rem;
-  color: #666666;
-}
-
-.project-links {
+/* 佈局容器 */
+.skills-layout {
   display: flex;
-  gap: 1rem;
-  margin-top: 1.5rem;
-}
-
-/* Skills Section */
-.skills-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
-  gap: 2rem;
+  gap: 4rem;
+  align-items: center;
 }
 
 .skill-card {
-  background-color: #ffffff;
-  padding: 1.5rem;
-  border-radius: 8px;
-  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
-}
-
-.skill-card h3 {
-  font-size: 1.3rem;
-  margin-bottom: 0.5rem;
-}
-
-.skill-category {
-  color: #666666;
-  font-size: 0.9rem;
   margin-bottom: 1rem;
+  border: 1px solid #eeeeee;
+  border-radius: 12px;
+  padding: 1.5rem;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
 }
 
-.skill-bar {
-  height: 10px;
-  background-color: #eeeeee;
-  border-radius: 5px;
-  overflow: hidden;
+/* 左側固定寬度或比例 */
+.skills-left-content {
+  flex: 1;
+  position: sticky; /* 滾動時標題可固定（可選） */
+  top: 100px;
 }
 
-.skill-progress {
-  height: 100%;
-  background-color: #61dafb;
-  border-radius: 5px;
+.skills-left-content .section-title {
+  text-align: left;
+  margin-bottom: 1.5rem;
 }
+
+.section-description {
+  color: #666;
+  margin-bottom: 2rem;
+  line-height: 1.6;
+}
+
+/* 右側滾動區域 */
+.skills-right-content {
+  flex: 2; /* 右邊佔比兩倍 */
+}
+
+/* 調整 Grid 讓它在右側區域排成兩欄 */
+.skills-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+  gap: 1.5rem;
+  }
+
+/* 星星樣式 */
+.skill-stars {
+  display: flex;
+  gap: 5px;
+  margin-top: 8px;
+  font-size: 1.1rem;
+}
+
+/* 手機版適配 */
+@media (max-width: 992px) {
+  .skills-layout {
+    flex-direction: column;
+    gap: 2rem;
+  }
+  
+  .skills-left-content {
+    text-align: center;
+  }
+  
+  .skills-left-content .section-title {
+    text-align: center;
+  }
+}
+
 
 /* About Preview */
 .about-preview {
@@ -263,14 +246,7 @@ section {
   transform: translateY(-2px);
 }
 
-.btn-primary {
-  background-color: #61dafb;
-  color: #1e1e1e;
-}
 
-.btn-primary:hover {
-  background-color: #4ecdf9;
-}
 
 .btn-secondary {
   background-color: transparent;
@@ -292,18 +268,19 @@ section {
   .hero h1 {
     font-size: 2.5rem;
   }
-  
+
   .hero h2 {
     font-size: 1.5rem;
   }
-  
+
   .hero-btns {
     flex-direction: column;
     align-items: center;
     gap: 1rem;
   }
-  
-  .project-grid, .skills-grid {
+
+  .project-grid,
+  .skills-grid {
     grid-template-columns: 1fr;
   }
 }

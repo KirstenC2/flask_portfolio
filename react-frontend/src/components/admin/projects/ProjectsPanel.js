@@ -13,6 +13,7 @@ import {
 } from '@fortawesome/free-solid-svg-icons';
 import { faGithub } from '@fortawesome/free-brands-svg-icons';
 import './ProjectsPanel.css';
+import '../../../common/global.css';
 const renderBulletPoints = (text) => {
   if (!text) return null;
   // 支援以換行、分號或逗號拆分

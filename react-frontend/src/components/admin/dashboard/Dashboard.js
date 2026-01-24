@@ -31,7 +31,7 @@ import LifeEventsPanel from '../life/LifeEventsPanel';
 import BlogPanel from '../blog/BlogPanel';
 import DiaryPanel from '../diary/DiaryPanel';
 import ResumePanel from '../resume/ResumePanel';
-import DebtPanel from '../debt/DebtPanel';
+import FinancePanel from '../finance/FinancePanel';
 import MotorManagementPanel from '../motor_management/MotorManagementPanel';
 
 const Dashboard = () => {
@@ -112,8 +112,8 @@ const Dashboard = () => {
         return <DiaryPanel />;
       case 'resume':
         return <ResumePanel />;
-      case 'debt':
-        return <DebtPanel />;
+      case 'finance':
+        return <FinancePanel />;
       case 'motor':
         return <MotorManagementPanel />;
       case 'overview':
@@ -240,7 +240,7 @@ const Dashboard = () => {
             <Divider component="li" />
             {/* GROUP 2: MY CONTENT */}
             <li className="sidebar-subheader" onClick={() => toggleSection('content')}>
-              <h3>My Content</h3>
+              <h3>我的小工具</h3>
               <span className={`chevron ${expandedSections.content ? 'open' : ''}`}>▼</span>
             </li>
             {expandedSections.content && (
@@ -248,25 +248,25 @@ const Dashboard = () => {
                 <li className={activeSection === 'blog' ? 'active' : ''}>
                   <button onClick={() => setActiveSection('blog')}>
                     <FontAwesomeIcon icon={faBlog} />
-                    Blog
+                    部落客
                   </button>
                 </li>
                 <li className={activeSection === 'diary' ? 'active' : ''}>
                   <button onClick={() => setActiveSection('diary')}>
                     <FontAwesomeIcon icon={faBook} />
-                    Diary
+                    日記
                   </button>
                 </li>
-                <li className={activeSection === 'debt' ? 'active' : ''}>
-                  <button onClick={() => setActiveSection('debt')}>
+                <li className={activeSection === 'finance' ? 'active' : ''}>
+                  <button onClick={() => setActiveSection('finance')}>
                     <FontAwesomeIcon icon={faFileInvoiceDollar} />
-                    Debt
+                    金錢管理
                   </button>
                 </li>
                 <li className={activeSection === 'motor' ? 'active' : ''}>
                   <button onClick={() => setActiveSection('motor')}>
                     <FontAwesomeIcon icon={faMotorcycle} />
-                    Motor Management
+                    機車管理
                   </button>
                 </li>
               </div>)}
@@ -299,7 +299,7 @@ const Dashboard = () => {
             {activeSection === 'life' && 'Life Events'}
             {activeSection === 'blog' && 'Blog'}
             {activeSection === 'diary' && 'Diary'}
-            {activeSection === 'debt' && 'Debt'}
+            {activeSection === 'finance' && 'Finance'}
             {activeSection === 'motor' && 'Motor Management'}
           </h1>
         </div>

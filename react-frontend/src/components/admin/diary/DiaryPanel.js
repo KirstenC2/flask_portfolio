@@ -241,13 +241,7 @@ const Diary = () => {
   return (
     <div className="admin-container">
       {/* LEFT SIDE: DIARY LIST */}
-      <div className={`list-section ${editMode || currentDiary ? 'shrink' : ''}`}>
-        <div className="section-header">
-          {/* <button className="btn btn-primary" onClick={handleOpenCreate}>
-            <FontAwesomeIcon icon={faPlus} /> New Entry
-          </button> */}
-        </div>
-
+      <div className={`section ${editMode || currentDiary ? 'shrink' : ''}`}>
         {error && <div className="error-banner">{error}</div>}
         <div className="calendar-card">
           <Calendar
@@ -270,208 +264,210 @@ const Diary = () => {
       </div>
 
       {/* RIGHT SIDE: EDITOR / DETAILS */}
-      <div className="editor-sidepanel">
-        {editMode || currentDiary ? (
-          <>
-            <div className="sidepanel-header">
-              <h2>{editMode ? (currentDiary ? 'Edit Entry' : 'New Entry') : 'Entry Details'}</h2>
+      <section className="editor-section">
+        <div className="editor-sidepanel">
+          {editMode || currentDiary ? (
+            <>
+              <div className="sidepanel-header">
+                <h2>{editMode ? (currentDiary ? 'Edit Entry' : 'New Entry') : 'Entry Details'}</h2>
+                <button
+                  className="btn-close"
+                  onClick={() => {
+                    setEditMode(false);
+                    setCurrentDiary(null);
+                  }}
+                >
+                  ✕
+                </button>
+              </div>
+
+              {editMode ? (
+                <form onSubmit={handleSubmit} className="form">
+                  <div className="form-row">
+                    <label>Date</label>
+                    <input
+                      type="date"
+                      className="form-control"
+                      value={formData.date}
+                      onChange={e => setFormData({ ...formData, date: e.target.value })}
+                      required
+                    />
+                  </div>
+
+                  <div className="form-row">
+                    <label>Weather</label>
+                    <select
+                      className="form-control"
+                      value={formData.weather}
+                      onChange={e => setFormData({ ...formData, weather: e.target.value })}
+                      required
+                    >
+                      {weatherOptions.map(option => (
+                        <option key={option} value={option}>
+                          {option.charAt(0).toUpperCase() + option.slice(1)}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div className="form-row">
+                    <label>Mood</label>
+                    <select
+                      className="form-control"
+                      value={formData.emotion}
+                      onChange={e => setFormData({ ...formData, emotion: e.target.value })}
+                      required
+                    >
+                      {emotionOptions.map(option => (
+                        <option key={option} value={option}>
+                          {option.charAt(0).toUpperCase() + option.slice(1)}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div className="form-row">
+                    <label>Your Thoughts</label>
+                    <textarea
+                      className="form-control"
+                      value={formData.content}
+                      onChange={e => setFormData({ ...formData, content: e.target.value })}
+                      rows="8"
+                      required
+                    />
+                  </div>
+
+                  <div className="form-group">
+                    <label htmlFor="image_file">Entry Image</label>
+                    <input
+                      type="file"
+                      id="image_file"
+                      accept="image/*"
+                      className="form-control"
+                      onChange={(e) => setSelectedFile(e.target.files[0])}
+                    />
+
+                    {selectedFile && (
+                      <div className="image-preview" style={{ position: 'relative', display: 'inline-block' }}>
+                        <img src={URL.createObjectURL(selectedFile)} alt="Preview" style={{ width: '150px', marginTop: '10px', borderRadius: '5px' }} />
+                        <button
+                          type="button"
+                          onClick={() => setSelectedFile(null)}
+                          style={{ position: 'absolute', top: '15px', right: '5px', background: 'red', color: 'white', border: 'none', borderRadius: '50%', cursor: 'pointer' }}
+                        >
+                          <FontAwesomeIcon icon={faTimes} />
+                        </button>
+                        <p style={{ fontSize: '12px', color: '#666' }}>Ready to upload</p>
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="form-actions">
+                    <button
+                      type="submit"
+                      className="btn btn-primary"
+                      disabled={submitting}
+                    >
+                      <FontAwesomeIcon icon={faSave} />
+                      {submitting ? 'Saving...' : 'Save Entry'}
+                    </button>
+                    <button
+                      type="button"
+                      className="btn btn-secondary"
+                      onClick={() => {
+                        setEditMode(false);
+                        if (!currentDiary) setCurrentDiary(null);
+                      }}
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                </form>
+              ) : (
+                <div className="view-content">
+                  <div className="diary-header">
+                    <h3>
+                      {new Date(currentDiary.date).toLocaleDateString(undefined, {
+                        weekday: 'long',
+                        year: 'numeric',
+                        month: 'long',
+                        day: 'numeric'
+                      })}
+                    </h3>
+                    <div className="diary-meta">
+                      <span className="mood-tag">
+                        <img
+                          src={`/emoticons/${getEmotionIconImage(currentDiary.emotion)}`}
+                          alt={currentDiary.emotion}
+                          className="emotion-icon"
+                        />
+                      </span>
+                    </div>
+                    <div className="diary-meta">
+                      <span className="weather-tag">
+                        <FontAwesomeIcon
+                          icon={getWeatherIcon(currentDiary.weather)}
+                          style={{ color: getStatusColor(currentDiary.weather) }}
+                        />{' '}
+                        {currentDiary.weather.charAt(0).toUpperCase() + currentDiary.weather.slice(1)}
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="diary-content">
+                    <h4><FontAwesomeIcon icon={faQuoteLeft} /> My Thoughts</h4>
+                    <p>{currentDiary.content}</p>
+                    {/* 在 view-content 內部的 diary-content 下方添加 */}
+                    {/* FIXED: Added proper image container with fallback */}
+                    {currentDiary.image_url && (
+                      <div className="diary-image-display" style={{ marginTop: '20px' }}>
+                        <img
+                          src={displayUrls[currentDiary.image_url] || ''}
+                          alt="Diary entry"
+                          style={{ width: '100%', borderRadius: '12px', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}
+                          onLoad={() => console.log("Image loaded")}
+                          onError={(e) => {
+                            console.log("Image load error, retrying...");
+                            fetchImageUrl(currentDiary.image_url);
+                          }}
+                        />
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="diary-actions">
+                    <button
+                      className="btn btn-primary"
+                      onClick={handleOpenEdit}
+                    >
+                      <FontAwesomeIcon icon={faEdit} /> Edit
+                    </button>
+                    <button
+                      className="btn btn-danger"
+                      onClick={() => handleDelete(currentDiary.id)}
+                    >
+                      <FontAwesomeIcon icon={faTrash} /> Delete
+                    </button>
+                  </div>
+                </div>
+              )}
+            </>
+          ) : (
+            <div className="empty-state">
+              <div className="empty-icon">
+                <FontAwesomeIcon icon={faCalendarDay} size="3x" />
+              </div>
+              <h3>How was your day?</h3>
+              <p>Select a date from the calendar to view your thoughts or create a new entry.</p>
               <button
-                className="btn-close"
-                onClick={() => {
-                  setEditMode(false);
-                  setCurrentDiary(null);
-                }}
-              >
-                ✕
+                className="btn btn-primary"
+                onClick={handleOpenCreate}
+              > New Entry
               </button>
             </div>
-
-            {editMode ? (
-              <form onSubmit={handleSubmit} className="form">
-                <div className="form-row">
-                  <label>Date</label>
-                  <input
-                    type="date"
-                    className="form-control"
-                    value={formData.date}
-                    onChange={e => setFormData({ ...formData, date: e.target.value })}
-                    required
-                  />
-                </div>
-
-                <div className="form-row">
-                  <label>Weather</label>
-                  <select
-                    className="form-control"
-                    value={formData.weather}
-                    onChange={e => setFormData({ ...formData, weather: e.target.value })}
-                    required
-                  >
-                    {weatherOptions.map(option => (
-                      <option key={option} value={option}>
-                        {option.charAt(0).toUpperCase() + option.slice(1)}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-
-                <div className="form-row">
-                  <label>Mood</label>
-                  <select
-                    className="form-control"
-                    value={formData.emotion}
-                    onChange={e => setFormData({ ...formData, emotion: e.target.value })}
-                    required
-                  >
-                    {emotionOptions.map(option => (
-                      <option key={option} value={option}>
-                        {option.charAt(0).toUpperCase() + option.slice(1)}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-
-                <div className="form-row">
-                  <label>Your Thoughts</label>
-                  <textarea
-                    className="form-control"
-                    value={formData.content}
-                    onChange={e => setFormData({ ...formData, content: e.target.value })}
-                    rows="8"
-                    required
-                  />
-                </div>
-
-                <div className="form-group">
-                  <label htmlFor="image_file">Entry Image</label>
-                  <input
-                    type="file"
-                    id="image_file"
-                    accept="image/*"
-                    className="form-control"
-                    onChange={(e) => setSelectedFile(e.target.files[0])}
-                  />
-
-                  {selectedFile && (
-                    <div className="image-preview" style={{ position: 'relative', display: 'inline-block' }}>
-                      <img src={URL.createObjectURL(selectedFile)} alt="Preview" style={{ width: '150px', marginTop: '10px', borderRadius: '5px' }} />
-                      <button
-                        type="button"
-                        onClick={() => setSelectedFile(null)}
-                        style={{ position: 'absolute', top: '15px', right: '5px', background: 'red', color: 'white', border: 'none', borderRadius: '50%', cursor: 'pointer' }}
-                      >
-                        <FontAwesomeIcon icon={faTimes} />
-                      </button>
-                      <p style={{ fontSize: '12px', color: '#666' }}>Ready to upload</p>
-                    </div>
-                  )}
-                </div>
-
-                <div className="form-actions">
-                  <button
-                    type="submit"
-                    className="btn btn-primary"
-                    disabled={submitting}
-                  >
-                    <FontAwesomeIcon icon={faSave} />
-                    {submitting ? 'Saving...' : 'Save Entry'}
-                  </button>
-                  <button
-                    type="button"
-                    className="btn btn-secondary"
-                    onClick={() => {
-                      setEditMode(false);
-                      if (!currentDiary) setCurrentDiary(null);
-                    }}
-                  >
-                    Cancel
-                  </button>
-                </div>
-              </form>
-            ) : (
-              <div className="view-content">
-                <div className="diary-header">
-                  <h3>
-                    {new Date(currentDiary.date).toLocaleDateString(undefined, {
-                      weekday: 'long',
-                      year: 'numeric',
-                      month: 'long',
-                      day: 'numeric'
-                    })}
-                  </h3>
-                  <div className="diary-meta">
-                    <span className="mood-tag">
-                      <img
-                        src={`/emoticons/${getEmotionIconImage(currentDiary.emotion)}`}
-                        alt={currentDiary.emotion}
-                        className="emotion-icon"
-                      />
-                    </span>
-                  </div>
-                  <div className="diary-meta">
-                    <span className="weather-tag">
-                      <FontAwesomeIcon
-                        icon={getWeatherIcon(currentDiary.weather)}
-                        style={{ color: getStatusColor(currentDiary.weather) }}
-                      />{' '}
-                      {currentDiary.weather.charAt(0).toUpperCase() + currentDiary.weather.slice(1)}
-                    </span>
-                  </div>
-                </div>
-
-                <div className="diary-content">
-                  <h4><FontAwesomeIcon icon={faQuoteLeft} /> My Thoughts</h4>
-                  <p>{currentDiary.content}</p>
-                  {/* 在 view-content 內部的 diary-content 下方添加 */}
-                  {/* FIXED: Added proper image container with fallback */}
-                  {currentDiary.image_url && (
-                    <div className="diary-image-display" style={{ marginTop: '20px' }}>
-                      <img
-                        src={displayUrls[currentDiary.image_url] || ''}
-                        alt="Diary entry"
-                        style={{ width: '100%', borderRadius: '12px', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}
-                        onLoad={() => console.log("Image loaded")}
-                        onError={(e) => {
-                          console.log("Image load error, retrying...");
-                          fetchImageUrl(currentDiary.image_url);
-                        }}
-                      />
-                    </div>
-                  )}
-                </div>
-
-                <div className="diary-actions">
-                  <button
-                    className="btn btn-primary"
-                    onClick={handleOpenEdit}
-                  >
-                    <FontAwesomeIcon icon={faEdit} /> Edit
-                  </button>
-                  <button
-                    className="btn btn-danger"
-                    onClick={() => handleDelete(currentDiary.id)}
-                  >
-                    <FontAwesomeIcon icon={faTrash} /> Delete
-                  </button>
-                </div>
-              </div>
-            )}
-          </>
-        ) : (
-          <div className="empty-state">
-            <div className="empty-icon">
-              <FontAwesomeIcon icon={faCalendarDay} size="3x" />
-            </div>
-            <h3>How was your day?</h3>
-            <p>Select a date from the calendar to view your thoughts or create a new entry.</p>
-            <button
-              className="btn btn-primary"
-              onClick={handleOpenCreate}
-            > New Entry
-            </button>
-          </div>
-        )}
-      </div>
+          )}
+        </div>
+      </section>
     </div>
   );
 };

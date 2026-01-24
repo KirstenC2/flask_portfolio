@@ -174,3 +174,35 @@ def get_expenses_by_category(current_admin):
         {'category': name, 'total': float(total or 0)} 
         for name, total in stats
     ])
+
+# 新增類別
+@admin_bp.route('/expense-categories', methods=['POST'])
+@token_required
+def add_category(current_admin):
+    data = request.json
+    new_cat = ExpenseCategory(name=data['name'], description=data.get('description'))
+    db.session.add(new_cat)
+    db.session.commit()
+    return jsonify({'message': 'Category created'}), 201
+
+# 更新類別
+@admin_bp.route('/expense-categories/<int:id>', methods=['PUT'])
+@token_required
+def update_category(current_admin, id):
+    cat = ExpenseCategory.query.get_or_404(id)
+    data = request.json
+    cat.name = data['name']
+    cat.description = data.get('description')
+    cat.icon = data.get('icon')
+    cat.color = data.get('color')
+    db.session.commit()
+    return jsonify({'message': 'Category updated'})
+
+# 刪除類別
+@admin_bp.route('/expense-categories/<int:id>', methods=['DELETE'])
+@token_required
+def delete_category(current_admin, id):
+    cat = ExpenseCategory.query.get_or_404(id)
+    db.session.delete(cat)
+    db.session.commit()
+    return jsonify({'message': 'Category deleted'})

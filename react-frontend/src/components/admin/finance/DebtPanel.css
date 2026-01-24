@@ -1,0 +1,254 @@
+/* 1. 全域容器與佈局 */
+.debt-page-container {
+    max-width: 1100px;
+    margin: 2rem auto;
+    padding: 0 1.5rem;
+    font-family: 'Inter', system-ui, sans-serif;
+}
+
+.debt-header-section {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2.5rem;
+}
+
+.debt-header-section h1 {
+    font-size: 1.75rem;
+    font-weight: 800;
+    color: #1e293b;
+    margin: 0;
+}
+
+/* 2. 頂部新增債務表單 (Inline Form) */
+.debt-form-inline .form-row {
+    display: flex;
+    gap: 0.75rem;
+}
+
+.debt-form-inline input {
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    padding: 0.6rem 1rem;
+    font-size: 0.9rem;
+    outline: none;
+    transition: all 0.2s;
+}
+
+.debt-form-inline input:focus {
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.btn-add-main {
+    background-color: #0f172a;
+    color: white;
+    padding: 0.6rem 1.25rem;
+    border-radius: 8px;
+    font-weight: 600;
+    border: none;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.btn-add-main:hover { background-color: #334155; }
+
+/* 3. 統計與篩選列 */
+.finance-summary-grid {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2rem;
+    gap: 1.5rem;
+}
+
+.stat-card {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    background: white;
+    padding: 1rem 1.5rem;
+    border-radius: 12px;
+    border: 1px solid #e2e8f0;
+    flex: 0 1 300px;
+}
+
+.stat-card .label { color: #64748b; font-size: 0.85rem; margin: 0; }
+.stat-card .value { font-size: 1.25rem; font-weight: 700; color: #0f172a; margin: 0; }
+
+.filter-pills {
+    display: flex;
+    gap: 8px;
+    background: #f1f5f9;
+    padding: 4px;
+    border-radius: 10px;
+}
+
+.pill {
+    padding: 6px 16px;
+    border: none;
+    background: transparent;
+    border-radius: 8px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: #64748b;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.pill.active {
+    background: white;
+    color: #3b82f6;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+}
+
+/* 4. 進度卡片核心 (Debt Progress Card) */
+.debt-cards-stack {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.debt-progress-card {
+    background: white;
+    border-radius: 16px;
+    border: 1px solid #f1f5f9;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.02);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.debt-progress-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 15px -3px rgba(0,0,0,0.05);
+    border-color: #e2e8f0;
+}
+
+.card-main {
+    padding: 1.5rem;
+    cursor: pointer;
+}
+
+.card-info {
+    display: grid;
+    grid-template-columns: 1.5fr 2fr 40px; /* 標題 | 進度 | 箭頭 */
+    align-items: center;
+    gap: 2rem;
+}
+
+/* 標題與 Icon 區 */
+.title-area {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.debt-icon {
+    min-width: 44px;
+    height: 44px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
+}
+
+.title-area h3 { font-size: 1.05rem; font-weight: 700; margin: 0; color: #1e293b; }
+.title-area .subtitle { font-size: 0.85rem; color: #64748b; margin: 2px 0 0 0; }
+
+/* 進度條設計 */
+.progress-area {
+    display: flex;
+    flex-direction: column;
+}
+
+.progress-label {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: #64748b;
+    margin-bottom: 6px;
+}
+
+.progress-bar-outer {
+    height: 10px;
+    background: #f1f5f9;
+    border-radius: 5px;
+    overflow: hidden;
+}
+
+.progress-bar-inner {
+    height: 100%;
+    border-radius: 5px;
+    transition: width 1s ease-in-out;
+}
+
+/* 5. 展開細節區 (Details) */
+.card-details {
+    background: #f8fafc;
+    border-top: 1px solid #f1f5f9;
+    padding: 1.5rem;
+    border-radius: 0 0 16px 16px;
+}
+
+.details-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 2rem;
+}
+
+.payment-box h4, .history-box h4 {
+    font-size: 0.9rem;
+    margin-bottom: 1rem;
+    color: #475569;
+}
+
+.inline-form {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    background: white;
+    padding: 1rem;
+    border-radius: 12px;
+    border: 1px solid #e2e8f0;
+}
+
+.inline-form input {
+    border: 1px solid #cbd5e1;
+    border-radius: 6px;
+    padding: 0.5rem;
+}
+
+.inline-form button {
+    background: #3b82f6;
+    color: white;
+    border: none;
+    padding: 0.6rem;
+    border-radius: 6px;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+/* 歷史清單 */
+.scroll-history {
+    max-height: 180px;
+    overflow-y: auto;
+    background: white;
+    padding: 0.5rem 1rem;
+    border-radius: 12px;
+    border: 1px solid #e2e8f0;
+}
+
+.history-item {
+    display: flex;
+    justify-content: space-between;
+    padding: 10px 0;
+    border-bottom: 1px solid #f1f5f9;
+    font-size: 0.85rem;
+}
+
+.history-item:last-child { border: none; }
+.history-item .note { color: #64748b; flex: 1; margin-left: 1rem; }
+.history-item .amount { font-weight: 700; color: #10b981; }
+

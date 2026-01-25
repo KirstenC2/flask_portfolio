@@ -1,9 +1,9 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { 
     faRectangleXmark, faCircle, faPlus, faTrashAlt, 
     faEdit, faSave, faTimes, faBan, faCheck, faCommentDots,
-    faChevronLeft, faChevronRight , faFilter
+    faChevronLeft, faChevronRight , faFilter, faSearch
 } from '@fortawesome/free-solid-svg-icons';
 import '../../../../common/pagination.css';
 import '../../../../common/filterBar.css';
@@ -15,23 +15,33 @@ const TaskManager = ({ feature_id, tasks, onUpdate }) => {
     const [cancelingId, setCancelingId] = useState(null);
     const [cancelReason, setCancelReason] = useState('');
     const [filterType, setFilterType] = useState('active'); 
+    const [searchQuery, setSearchQuery] = useState('');
     const [currentPage, setCurrentPage] = useState(1);
     const itemsPerPage = 5;
 
     const token = localStorage.getItem('adminToken');
+    const filteredTasks = useMemo(() => {
+        let result = tasks;
 
-    // --- 【修正 1】先計算過濾後的清單 ---
-    const getFilteredTasks = () => {
+        // 1. 狀態過濾
         if (filterType === 'active') {
-            return tasks.filter(t => t.status === 'todo' || t.status === 'doing');
+            result = result.filter(t => t.status === 'todo' || t.status === 'doing');
         } else if (filterType === 'done') {
-            return tasks.filter(t => t.status === 'done');
+            result = result.filter(t => t.status === 'done');
         } else if (filterType === 'canceled') {
-            return tasks.filter(t => t.status === 'canceled');
+            result = result.filter(t => t.status === 'canceled');
         }
-        return tasks; // 'all'
-    };
-    const filteredTasks = getFilteredTasks();
+
+        // 2. 關鍵字搜尋
+        if (searchQuery.trim()) {
+            result = result.filter(t => 
+                t.content.toLowerCase().includes(searchQuery.toLowerCase())
+            );
+        }
+
+        return result;
+    }, [tasks, filterType, searchQuery]);
+
 
     // --- 【修正 2】基於過濾後的清單計算分頁 ---
     const totalPages = Math.ceil(filteredTasks.length / itemsPerPage);
@@ -99,6 +109,15 @@ const TaskManager = ({ feature_id, tasks, onUpdate }) => {
     return (
         <div className="task-table-root">
             <div className="filter-bar">
+                <div className="search-box">
+                    <FontAwesomeIcon icon={faSearch} className="search-icon" />
+                    <input 
+                        type="text" 
+                        placeholder="搜尋任務內容..." 
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                    />
+                </div>
                 <span className="filter-label"><FontAwesomeIcon icon={faFilter} /> Filter:</span>
                 <div className="filter-options">
                     <button className={filterType === 'active' ? 'active' : ''} onClick={() => setFilterType('active')}>Active (To Do / In Progress)</button>

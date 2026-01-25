@@ -15,6 +15,7 @@
     font-size: 13px;
 }
 
+
 .filter-options {
     display: flex;
     gap: 8px;
@@ -42,6 +43,7 @@
     border-color: #3498db;
     box-shadow: 0 2px 4px rgba(52, 152, 219, 0.2);
 }
+
 
 .no-data {
     text-align: center;

@@ -1,4 +1,4 @@
-from flask_sqlalchemy import SQLAlchemy
+from flask_sqlalchemy import SQLAlchemy, Decimal
 from datetime import datetime
 from werkzeug.security import generate_password_hash, check_password_hash
 
@@ -261,3 +261,31 @@ class MotorRecord(db.Model):
             "maintenance_date": self.maintenance_date.isoformat(),
             "note": self.note
         }
+
+
+class DevFeature(db.Model):
+    """
+    這代表開發中的一個「功能模組」或「需求清單」
+    例如：實作登入驗證、開發報表匯出功能
+    """
+    __tablename__ = 'dev_features'
+    id = db.Column(db.Integer, primary_key=True)
+    title = db.Column(db.String(100), nullable=False)
+    description = db.Column(db.Text) # 詳細的需求說明
+    project_id = db.Column(db.Integer, db.ForeignKey('project.id'), nullable=False)
+    
+    # 一個功能下有多個具體的開發任務
+    tasks = db.relationship('DevTask', backref='dev_feature', lazy=True, cascade="all, delete-orphan")
+
+class DevTask(db.Model):
+    """
+    具體的開發任務
+    例如：寫 API、切前端畫面、寫 Unit Test
+    """
+    __tablename__ = 'dev_tasks'
+    id = db.Column(db.Integer, primary_key=True)
+    content = db.Column(db.String(255), nullable=False)
+    status = db.Column(db.String(20), default='todo') # todo, doing, done
+    priority = db.Column(db.Integer, default=1)      # 優先級：1 (低), 2 (中), 3 (高)
+    dev_feature_id = db.Column(db.Integer, db.ForeignKey('dev_features.id'), nullable=False)
+    date_created = db.Column(db.DateTime, default=datetime.utcnow)

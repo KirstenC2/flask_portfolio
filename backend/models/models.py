@@ -43,8 +43,9 @@ class DevTask(db.Model):
     __tablename__ = 'dev_tasks'
     id = db.Column(db.Integer, primary_key=True)
     content = db.Column(db.String(255), nullable=False)
-    status = db.Column(db.String(20), default='todo') # todo, doing, done
-    priority = db.Column(db.Integer, default=1)      # 優先級：1 (低), 2 (中), 3 (高)
+    status = db.Column(db.String(20), default='todo') 
+    priority = db.Column(db.Integer, default=1)   
+    cancel_reason = db.Column(db.String(255), nullable=True)
     dev_feature_id = db.Column(db.Integer, db.ForeignKey('dev_features.id'), nullable=False)
     date_created = db.Column(db.DateTime, default=datetime.utcnow)
 

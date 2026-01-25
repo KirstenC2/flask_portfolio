@@ -3,7 +3,7 @@ import '../../../common/global.css';
 import TodoSection from './components/TodoSection';
 import WorkProjectManager from './components/WorkProjectManager';
 
-const WorkPanel = () => {
+const WorkPanel = ({ onProjectSelect }) => {
     // 預設可以改成 'todo' 或 'dev-progress'
     const [activeTab, setActiveTab] = useState('dev-progress');
 
@@ -12,8 +12,8 @@ const WorkPanel = () => {
             case 'todo':
                 return <TodoSection />;
             case 'dev-progress':
-                // 這裡會顯示所有工作專案的開發進度
-                return <WorkProjectManager />;
+                // 將 callback 傳給專案管理組件
+                return <WorkProjectManager onProjectClick={onProjectSelect} />;
             default:
                 return null;
         }

@@ -34,12 +34,13 @@ import ResumePanel from '../resume/ResumePanel';
 import FinancePanel from '../finance/FinancePanel';
 import MotorManagementPanel from '../motor_management/MotorManagementPanel';
 import WorkPanel from '../work/WorkPanel';
-
+import AdminProjectDetail from '../work/components/AdminProjectDetail';
 const Dashboard = () => {
   const navigate = useNavigate();
   const [activeSection, setActiveSection] = useState('overview');
   const [adminUser, setAdminUser] = useState(null);
   const [unreadMessages, setUnreadMessages] = useState(0);
+  const [selectedProjectId, setSelectedProjectId] = useState(null);
   const [expandedSections, setExpandedSections] = useState({
     journey: true,
     content: true
@@ -92,6 +93,14 @@ const Dashboard = () => {
   };
 
   const renderContent = () => {
+    if (activeSection === 'work' && selectedProjectId) {
+      return (
+        <AdminProjectDetail
+          projectId={selectedProjectId}
+          onBack={() => setSelectedProjectId(null)} // 清除 ID 即回到列表
+        />
+      );
+    }
     switch (activeSection) {
       case 'messages':
         return <MessagesPanel onMessageRead={fetchUnreadMessagesCount} />;
@@ -118,7 +127,8 @@ const Dashboard = () => {
       case 'motor':
         return <MotorManagementPanel />;
       case 'work':
-        return <WorkPanel />;
+        // 將「選擇專案」的函式傳進 WorkPanel
+        return <WorkPanel onProjectSelect={(id) => setSelectedProjectId(id)} />;
       case 'overview':
       default:
         return (
@@ -278,8 +288,8 @@ const Dashboard = () => {
                     工作管理
                   </button>
                 </li>
-                
-                
+
+
               </div>)}
           </ul>
         </nav>
@@ -313,7 +323,7 @@ const Dashboard = () => {
             {activeSection === 'finance' && 'Finance'}
             {activeSection === 'motor' && 'Motor Management'}
             {activeSection === 'work' && 'Work Management'}
-            </h1>
+          </h1>
         </div>
 
         <div className="content-body">

@@ -18,6 +18,7 @@ import ContactPage from './components/contact/ContactPage';
 import ExperiencePage from './components/experience/ExperiencePage';
 import BlogSplitView from './components/blog/BlogSplitView';
 import BlogEditor from './components/blog/BlogEditor';
+import AdminProjectDetail from './components/admin/work/components/AdminProjectDetail';
 
 // Admin Components
 import LoginPage from './components/admin/auth/LoginPage';
@@ -72,7 +73,8 @@ function App() {
             <Routes>
               <Route path="/" element={<HomePage />} />
               <Route path="/projects" element={<ProjectsPage />} />
-              <Route path="/project/:id" element={<ProjectDetail />} />
+              <Route path="/project/:id" element={<ProjectDetail />} /> {/* Public project detail */}
+
               <Route path="/skills" element={<SkillsPage />} />
               <Route path="/studies" element={<StudiesPage />} />
               <Route path="/study/:id" element={<StudyDetail />} />
@@ -81,6 +83,7 @@ function App() {
               <Route path="/experience" element={<ExperiencePage />} />
               <Route path="/blog/*" element={<BlogSplitView />} />
               <Route path="/admin/*" element={<LoginPage />} />
+              
             </Routes>
             <Footer />
           </div>

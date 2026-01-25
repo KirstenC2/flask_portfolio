@@ -55,7 +55,7 @@ def get_projects(current_admin):
                             "content": t.content,
                             "status": t.status,
                             "priority": t.priority
-                        } for t in f.tasks # 遍歷 DevTask
+                        } for t in sorted(f.tasks, key=lambda x: x.priority)
                     ]
                 } for f in p.dev_features # 遍歷 DevFeature
             ]
@@ -96,9 +96,9 @@ def get_projects_info(current_admin, project_id):
                             "content": t.content,
                             "status": t.status,
                             "priority": t.priority
-                        } for t in f.tasks # 遍歷 DevTask
+                        } for t in sorted(f.tasks, key=lambda x: x.priority)
                     ]
-                } for f in p.dev_features # 遍歷 DevFeature
+                } for f in p.dev_features
             ]
         }
         result.append(project_data)

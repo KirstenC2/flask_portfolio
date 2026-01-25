@@ -97,3 +97,20 @@ def add_new_dev_task(current_admin, feature_id):
     db.session.commit()
     
     return jsonify(_dev_task_to_dict(task))
+
+
+@admin_bp.route('projects/<int:project_id>/features', methods=['POST','OPTIONS'])
+@token_required
+def add_new_feature(current_admin, project_id):
+    data = request.get_json()
+    
+    feature = DevFeature(
+        project_id=project_id,
+        title=data.get('title'),
+        description=data.get('description')
+    )
+    
+    db.session.add(feature)
+    db.session.commit()
+    
+    return jsonify(_dev_feature_to_dict(feature))

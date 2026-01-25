@@ -22,6 +22,8 @@ const TaskManager = ({ feature_id, tasks, onUpdate }) => {
         if (success) setNewTask({ content: '', status: 'todo', priority: 4 });
     };
 
+    
+
     return (
         <div className="task-table-root">
             {/* --- Filter & Search Bar --- */}

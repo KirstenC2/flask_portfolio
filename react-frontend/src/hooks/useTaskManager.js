@@ -8,7 +8,7 @@ export const useTaskManager = (feature_id, tasks, onUpdate) => {
     const [currentPage, setCurrentPage] = useState(1);
     const itemsPerPage = 5;
 
-    // 1. 過濾與搜尋邏輯
+    // 2. 定義過濾邏輯 (useMemo)
     const filteredTasks = useMemo(() => {
         let result = tasks || [];
         if (filterType === 'active') {
@@ -20,7 +20,9 @@ export const useTaskManager = (feature_id, tasks, onUpdate) => {
         }
 
         if (searchQuery.trim()) {
-            result = result.filter(t => t.content.toLowerCase().includes(searchQuery.toLowerCase()));
+            result = result.filter(t =>
+                t.content.toLowerCase().includes(searchQuery.toLowerCase())
+            );
         }
         return result;
     }, [tasks, filterType, searchQuery]);
@@ -36,11 +38,26 @@ export const useTaskManager = (feature_id, tasks, onUpdate) => {
     };
 
     const handleAdd = async (taskData) => {
-        const res = await taskApi.create(feature_id, taskData);
-        if (res.ok) {
-            onUpdate();
-            setCurrentPage(1);
-            return true; // 回傳成功以便 UI 重置輸入框
+        if (!taskData.content.trim()) return false;
+
+        try {
+            const res = await taskApi.create(feature_id, taskData);
+            
+            // Debug 用：確認 API 是否成功
+            console.log("POST Task Status:", res.status);
+
+            if (res.ok) {
+                // 這裡最重要：一定要看到這個 console 執行
+                console.log("Attempting to trigger onUpdate...");
+                
+                // 執行父組件傳進來的 fetchProjectDetail
+                await onUpdate(true); 
+                
+                setCurrentPage(1);
+                return true; 
+            }
+        } catch (err) {
+            console.error("Add task failed:", err);
         }
         return false;
     };

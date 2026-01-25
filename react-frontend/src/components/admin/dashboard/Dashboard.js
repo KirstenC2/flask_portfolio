@@ -33,6 +33,7 @@ import DiaryPanel from '../diary/DiaryPanel';
 import ResumePanel from '../resume/ResumePanel';
 import FinancePanel from '../finance/FinancePanel';
 import MotorManagementPanel from '../motor_management/MotorManagementPanel';
+import WorkPanel from '../work/WorkPanel';
 
 const Dashboard = () => {
   const navigate = useNavigate();
@@ -116,6 +117,8 @@ const Dashboard = () => {
         return <FinancePanel />;
       case 'motor':
         return <MotorManagementPanel />;
+      case 'work':
+        return <WorkPanel />;
       case 'overview':
       default:
         return (
@@ -269,6 +272,14 @@ const Dashboard = () => {
                     機車管理
                   </button>
                 </li>
+                <li className={activeSection === 'work' ? 'active' : ''}>
+                  <button onClick={() => setActiveSection('work')}>
+                    <FontAwesomeIcon icon={faBriefcase} />
+                    工作管理
+                  </button>
+                </li>
+                
+                
               </div>)}
           </ul>
         </nav>
@@ -301,7 +312,8 @@ const Dashboard = () => {
             {activeSection === 'diary' && 'Diary'}
             {activeSection === 'finance' && 'Finance'}
             {activeSection === 'motor' && 'Motor Management'}
-          </h1>
+            {activeSection === 'work' && 'Work Management'}
+            </h1>
         </div>
 
         <div className="content-body">

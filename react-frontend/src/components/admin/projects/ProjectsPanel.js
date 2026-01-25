@@ -8,10 +8,8 @@ import {
   faSave,
   faTimes,
   faSpinner,
-  faExternalLinkAlt,
   faImage
 } from '@fortawesome/free-solid-svg-icons';
-import { faGithub } from '@fortawesome/free-brands-svg-icons';
 import './ProjectsPanel.css';
 import '../../../common/global.css';
 const renderBulletPoints = (text) => {
@@ -45,7 +43,8 @@ const ProjectsPanel = () => {
     project_url: '',
     github_url: '',
     features: '', // 以換行分隔
-    goals: ''    // 以換行分隔
+    goals: '' ,   // 以換行分隔
+    project_type: 'side'
   });
 
   // Fetch projects on component mount
@@ -126,6 +125,7 @@ const ProjectsPanel = () => {
       github_url: project.github_url || '',
       features: project.features || '', // 確保這些被載入
       goals: project.goals || '',       // 確保這些被載入
+      project_type: project.project_type || '',
       role: project.role || '',         // 新增 R&D 欄位
       contribution: project.contribution || '',
       challenges: project.challenges || ''
@@ -141,6 +141,7 @@ const ProjectsPanel = () => {
       technologies: '',
       image_url: '',
       project_url: '',
+      project_type: '',
       github_url: ''
     });
     setEditMode(true);
@@ -159,7 +160,8 @@ const ProjectsPanel = () => {
         technologies: currentProject.technologies,
         image_url: currentProject.image_url,
         project_url: currentProject.project_url,
-        github_url: currentProject.github_url
+        github_url: currentProject.github_url,
+        project_type: currentProject.project_type
       });
     } else {
       // Clear form
@@ -169,7 +171,8 @@ const ProjectsPanel = () => {
         technologies: '',
         image_url: '',
         project_url: '',
-        github_url: ''
+        github_url: '',
+        project_type: ''
       });
     }
 
@@ -392,6 +395,20 @@ const ProjectsPanel = () => {
                   </div>
 
                   <div className="form-group">
+                    <label htmlFor="project_type">Project Type*</label>
+                    <select
+                      id="project_type"
+                      name="project_type"
+                      value={formData.project_type}
+                      onChange={handleChange}
+                      required
+                    >
+                      <option value="side">Side Project</option>
+                      <option value="work">Work Project</option>
+                    </select>
+                  </div>
+
+                  <div className="form-group">
                     <label htmlFor="technologies">Technologies*</label>
                     <input
                       type="text"
@@ -530,8 +547,12 @@ const ProjectsPanel = () => {
                       <h3>Background</h3>
                       <p>{currentProject.description}</p>
                     </div>
+                    <hr className="my-8 border-gray-200" />
+              
                   </div>
                 </div>
+
+                
               )}
             </div>
           )}

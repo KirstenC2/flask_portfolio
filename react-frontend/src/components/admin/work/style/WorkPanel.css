@@ -1,0 +1,139 @@
+/* 專案卡片容器 */
+.work-manager-dashboard {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  padding: 10px 0;
+}
+
+.project-dev-card {
+  background: #ffffff;
+  border-radius: 12px;
+  border: 1px solid #e5e7eb;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+  overflow: hidden;
+}
+
+/* 專案頂部標題區 */
+.project-dev-header {
+  background: #f8fafc;
+  padding: 16px 20px;
+  border-bottom: 1px solid #e5e7eb;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.project-dev-header h4 {
+  margin: 0;
+  font-size: 1.2rem;
+  color: #1e293b;
+  font-weight: 700;
+}
+
+.tech-badge {
+  background: #dbeafe;
+  color: #1e40af;
+  font-size: 0.75rem;
+  padding: 4px 10px;
+  border-radius: 9999px;
+  font-weight: 600;
+}
+
+/* 功能模組區塊 (Feature Block) */
+.features-container {
+  padding: 20px;
+}
+
+.feature-block {
+  margin-bottom: 24px;
+}
+
+.feature-block:last-child {
+  margin-bottom: 0;
+}
+
+.feature-subtitle {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: #475569;
+  margin-bottom: 12px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* 任務列樣式 (Task Row) */
+.task-items {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding-left: 12px;
+  border-left: 2px solid #f1f5f9;
+}
+
+.task-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 14px;
+  background: #ffffff;
+  border: 1px solid #f1f5f9;
+  border-radius: 8px;
+  transition: all 0.2s ease;
+}
+
+.task-row:hover {
+  background: #f8fafc;
+  border-color: #cbd5e1;
+}
+
+.task-text {
+  font-size: 0.9rem;
+  color: #334155;
+}
+
+/* 當狀態為 'done' 時的樣式 */
+.task-row.done {
+  background: #f1f5f9;
+  opacity: 0.7;
+}
+
+.task-row.done .task-text {
+  text-decoration: line-through;
+  color: #94a3b8;
+}
+
+/* 狀態切換按鈕群 */
+.task-ctrl {
+  display: flex;
+  background: #f1f5f9;
+  padding: 3px;
+  border-radius: 6px;
+  gap: 2px;
+}
+
+.task-ctrl button {
+  padding: 4px 12px;
+  font-size: 0.75rem;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  background: transparent;
+  color: #64748b;
+  transition: all 0.2s;
+}
+
+.task-ctrl button:hover {
+  color: #1e293b;
+}
+
+/* 各個狀態 Active 的顏色 */
+.task-ctrl button.active {
+  background: #ffffff;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.task-row.todo .task-ctrl button.active { color: #64748b; font-weight: 700; }
+.task-row.doing .task-ctrl button.active { color: #2563eb; font-weight: 700; }
+.task-row.done .task-ctrl button.active { color: #16a34a; font-weight: 700; }

@@ -1,182 +1,224 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { 
     faRectangleXmark, faCircle, faPlus, faTrashAlt, 
-    faEdit, faSave, faTimes , faBan, faCheck
+    faEdit, faSave, faTimes, faBan, faCheck, faCommentDots,
+    faChevronLeft, faChevronRight , faFilter
 } from '@fortawesome/free-solid-svg-icons';
+import '../../../../common/pagination.css';
+import '../../../../common/filterBar.css';
 
 const TaskManager = ({ feature_id, tasks, onUpdate }) => {
     const [newTask, setNewTask] = useState({ content: '', status: 'todo', priority: 4 });
-    
-    // --- New State for Editing ---
     const [editingId, setEditingId] = useState(null);
-    const [editData, setEditData] = useState({ content: '', status: '', priority: 4 });
+    const [editData, setEditData] = useState({});
     const [cancelingId, setCancelingId] = useState(null);
     const [cancelReason, setCancelReason] = useState('');
+    const [filterType, setFilterType] = useState('active'); 
+    const [currentPage, setCurrentPage] = useState(1);
+    const itemsPerPage = 5;
+
     const token = localStorage.getItem('adminToken');
 
-    // Generic Update API Call
-    const updateTaskAPI = async (taskId, updatedFields) => {
+    // --- 【修正 1】先計算過濾後的清單 ---
+    const getFilteredTasks = () => {
+        if (filterType === 'active') {
+            return tasks.filter(t => t.status === 'todo' || t.status === 'doing');
+        } else if (filterType === 'done') {
+            return tasks.filter(t => t.status === 'done');
+        } else if (filterType === 'canceled') {
+            return tasks.filter(t => t.status === 'canceled');
+        }
+        return tasks; // 'all'
+    };
+    const filteredTasks = getFilteredTasks();
+
+    // --- 【修正 2】基於過濾後的清單計算分頁 ---
+    const totalPages = Math.ceil(filteredTasks.length / itemsPerPage);
+    const indexOfLastItem = currentPage * itemsPerPage;
+    const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+    
+    // 注意這裡：是從 filteredTasks 進行 slice，而不是 tasks
+    const currentTasks = filteredTasks.slice(indexOfFirstItem, indexOfLastItem);
+
+    const updateTaskAPI = async (taskId, fields) => {
         try {
             const res = await fetch(`http://localhost:5001/api/admin/tasks/${taskId}`, {
                 method: 'PATCH',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}`
-                },
-                body: JSON.stringify(updatedFields)
+                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                body: JSON.stringify(fields)
             });
             if (res.ok) {
                 onUpdate();
                 setEditingId(null);
-                setCancelingId(null); // Reset cancel state
-                setCancelReason('');   // Clear reason
+                setCancelingId(null);
+                setCancelReason('');
             }
-        } catch (err) { console.error("Update Error:", err); }
-    };
-
-    const handleConfirmCancel = (taskId) => {
-        if (!cancelReason.trim()) {
-            alert("Please provide a reason for cancellation.");
-            return;
-        }
-        updateTaskAPI(taskId, { status: 'canceled', cancel_reason: cancelReason });
+        } catch (err) { console.error(err); }
     };
 
     const handleAdd = async () => {
-        if (!newTask.content || !newTask.content.trim()) return;
+        if (!newTask.content.trim()) return;
         try {
             const res = await fetch(`http://localhost:5001/api/admin/features/${feature_id}/tasks`, {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}`
-                },
+                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
                 body: JSON.stringify({ ...newTask, feature_id })
             });
             if (res.ok) {
                 onUpdate();
                 setNewTask({ content: '', status: 'todo', priority: 4 });
+                setCurrentPage(1); // 新增後跳回第一頁查看
             }
         } catch (err) { console.error(err); }
     };
 
-    // Trigger Edit Mode
-    const startEditing = (task) => {
-        setEditingId(task.id);
-        setEditData({ 
-            content: task.content, 
-            status: task.status, 
-            priority: task.priority 
-        });
-    };
-
-
-    const toggleStatus = (task) => {
-        const newStatus = task.status === 'done' ? 'todo' : 'done';
-        updateTaskAPI(task.id, { status: newStatus });
+    const handlePageChange = (pageNumber) => {
+        setCurrentPage(pageNumber);
     };
 
     const handleDelete = async (taskId) => {
-        if (!window.confirm("Delete this task?")) return;
+        if (!window.confirm("確定刪除？")) return;
         try {
             await fetch(`http://localhost:5001/api/admin/tasks/${taskId}`, {
                 method: 'DELETE',
                 headers: { 'Authorization': `Bearer ${token}` }
             });
             onUpdate();
+            // 修正：如果該頁最後一筆被刪除，自動回前一頁
+            if (currentTasks.length === 1 && currentPage > 1) {
+                setCurrentPage(currentPage - 1);
+            }
         } catch (err) { console.error(err); }
     };
 
+    // 當切換 Filter 時，強制回到第一頁
+    useEffect(() => {
+        setCurrentPage(1);
+    }, [filterType]);
     return (
-        <div className="task-manager">
-            <div className="task-sub-list">
-                {tasks.map(task => {
-                    const isEditing = editingId === task.id;
-                    const isCanceling = cancelingId === task.id;
-                    return (
-                        <div key={task.id} className={`task-status-row ${task.status} ${isEditing ? 'is-editing' : ''}`}>
-                            <FontAwesomeIcon
-                                icon={task.status === 'done' ? faCheck : faCircle}
-                                className="status-icon"
-                                onClick={() => toggleStatus(task)}
-                            />
-                            
-
-                            {isCanceling ? (
-                                /* --- CANCEL REASON UI --- */
-                                <div className="cancel-reason-group">
-                                    <input 
-                                        type="text" 
-                                        placeholder="Reason for cancellation..."
-                                        value={cancelReason}
-                                        onChange={(e) => setCancelReason(e.target.value)}
-                                        autoFocus
-                                    />
-                                    <button className="confirm-cancel-btn" onClick={() => handleConfirmCancel(task.id)}>Submit</button>
-                                    <button className="abort-btn" onClick={() => setCancelingId(null)}>
-                                        <FontAwesomeIcon icon={faTimes} />
-                                    </button>
-                                </div>
-                            ) : isEditing ? (
-                                /* --- EDIT MODE UI --- */
-                                <div className="edit-inline-group">
-                                    <input 
-                                        type="text"
-                                        value={editData.content}
-                                        onChange={(e) => setEditData({...editData, content: e.target.value})}
-                                    />
-                                    <div className="edit-actions">
-                                        <button onClick={() => updateTaskAPI(task.id, editData)}><FontAwesomeIcon icon={faSave} /></button>
-                                        <button onClick={() => setEditingId(null)}><FontAwesomeIcon icon={faTimes} /></button>
-                                    </div>
-                                </div>
-                            ) : (
-                                /* --- VIEW MODE UI --- */
-                                <>
-                                    <span className="task-content">{task.content}</span>
-                                    <span className={`priority-tag p-${task.priority}`}>P{task.priority}</span>
-                                    <div className="task-actions">
-                                        <button className="cancel-task-btn" onClick={() => setCancelingId(task.id)} title="Cancel Task">
-                                            <FontAwesomeIcon icon={faBan} />
-                                        </button>
-                                        <button className="edit-task-btn" onClick={() => startEditing(task)}>
-                                            <FontAwesomeIcon icon={faEdit} />
-                                        </button>
-                                        <button className="delete-task-btn" onClick={() => handleDelete(task.id)}>
-                                            <FontAwesomeIcon icon={faTrashAlt} />
-                                        </button>
-                                    </div>
-                                </>
-                            )}
-                        </div>
-                    );
-                })}
+        <div className="task-table-root">
+            <div className="filter-bar">
+                <span className="filter-label"><FontAwesomeIcon icon={faFilter} /> Filter:</span>
+                <div className="filter-options">
+                    <button className={filterType === 'active' ? 'active' : ''} onClick={() => setFilterType('active')}>Active (To Do / In Progress)</button>
+                    <button className={filterType === 'all' ? 'active' : ''} onClick={() => setFilterType('all')}>All Tasks</button>
+                    <button className={filterType === 'done' ? 'active' : ''} onClick={() => setFilterType('done')}>Completed</button>
+                    <button className={filterType === 'canceled' ? 'active' : ''} onClick={() => setFilterType('canceled')}>Canceled</button>
+                </div>
             </div>
+            <table className="fixed-task-table">
+                <thead>
+                    <tr>
+                        <th style={{ width: '60px' }}>Status</th>
+                        <th style={{ width: 'auto' }}>Task Content</th>
+                        <th style={{ width: '100px' }}>Priority</th>
+                        <th style={{ width: '140px' }}>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {/* 注意：這裡改用 currentTasks 進行 map */}
+                    {currentTasks.map(task => {
+                        const isEditing = editingId === task.id;
+                        const isCanceling = cancelingId === task.id;
 
-            {/* ADD TASK SECTION */}
-            <div className="add-task-input-group">
-                <input
-                    className="task-input-main"
-                    value={newTask.content}
-                    onChange={(e) => setNewTask({ ...newTask, content: e.target.value })}
-                    placeholder="What needs to be done?"
-                    onKeyPress={(e) => e.key === 'Enter' && handleAdd()}
-                />
-                <select
-                    className="task-select-priority"
-                    value={newTask.priority}
-                    onChange={(e) => setNewTask({ ...newTask, priority: Number(e.target.value) })}
-                >
-                    <option value="1">P1 - High</option>
-                    <option value="2">P2 - Med</option>
-                    <option value="3">P3 - Low</option>
-                    <option value="4">P4 - None</option>
-                </select>
-                <button className="add-task-btn" onClick={handleAdd}>
-                    <FontAwesomeIcon icon={faPlus} />
-                </button>
-            </div>
+                        return (
+                            <tr key={task.id} className={`tr-row ${task.status}`}>
+                                <td className="cell-center">
+                                    <FontAwesomeIcon
+                                        icon={task.status === 'done' ? faCheck : task.status === 'canceled' ? faRectangleXmark : faCircle}
+                                        className={`status-icon-btn ${task.status}`}
+                                        onClick={() => updateTaskAPI(task.id, { status: task.status === 'done' ? 'todo' : 'done' })}
+                                    />
+                                </td>
+                                <td>
+                                    {isCanceling ? (
+                                        <div className="table-inline-edit">
+                                            <input className="table-input-text" value={cancelReason} onChange={e => setCancelReason(e.target.value)} placeholder="原因..." autoFocus />
+                                            <button className="btn-save-sm" onClick={() => updateTaskAPI(task.id, { status: 'canceled', cancel_reason: cancelReason })}>OK</button>
+                                            <button className="btn-cancel-sm" onClick={() => setCancelingId(null)}><FontAwesomeIcon icon={faTimes} /></button>
+                                        </div>
+                                    ) : isEditing ? (
+                                        <input className="table-input-text" value={editData.content} onChange={e => setEditData({...editData, content: e.target.value})} />
+                                    ) : (
+                                        <div className="table-content-text">
+                                            <span className="main-content">{task.content}</span>
+                                            {task.status === 'canceled' && task.cancel_reason && (
+                                                <div className="cancel-label"><FontAwesomeIcon icon={faCommentDots} /> {task.cancel_reason}</div>
+                                            )}
+                                        </div>
+                                    )}
+                                </td>
+                                <td className="cell-center">
+                                    {isEditing ? (
+                                        <select className="table-select" value={editData.priority} onChange={e => setEditData({...editData, priority: Number(e.target.value)})}>
+                                            {[1,2,3,4].map(n => <option key={n} value={n}>P{n}</option>)}
+                                        </select>
+                                    ) : (
+                                        <span className={`p-badge p-${task.priority}`}>P{task.priority}</span>
+                                    )}
+                                </td>
+                                <td className="cell-center">
+                                    <div className="table-action-group">
+                                        {isEditing ? (
+                                            <button className="action-icon-btn save" onClick={() => updateTaskAPI(task.id, editData)}><FontAwesomeIcon icon={faSave} /></button>
+                                        ) : !isCanceling ? (
+                                            <>
+                                                <button className="action-icon-btn" onClick={() => setCancelingId(task.id)}><FontAwesomeIcon icon={faBan} /></button>
+                                                <button className="action-icon-btn" onClick={() => { setEditingId(task.id); setEditData(task); }}><FontAwesomeIcon icon={faEdit} /></button>
+                                                <button className="action-icon-btn del" onClick={() => handleDelete(task.id)}><FontAwesomeIcon icon={faTrashAlt} /></button>
+                                            </>
+                                        ) : null}
+                                    </div>
+                                </td>
+                            </tr>
+                        );
+                    })}
+                </tbody>
+                <tfoot>
+                    <tr className="table-footer-add">
+                        <td className="cell-center"><FontAwesomeIcon icon={faPlus} /></td>
+                        <td><input className="table-input-text" placeholder="新增任務..." value={newTask.content} onChange={e => setNewTask({...newTask, content: e.target.value})} /></td>
+                        <td className="cell-center">
+                            <select className="table-select" value={newTask.priority} onChange={e => setNewTask({...newTask, priority: Number(e.target.value)})}>
+                                {[1,2,3,4].map(n => <option key={n} value={n}>P{n}</option>)}
+                            </select>
+                        </td>
+                        <td className="cell-center"><button className="table-add-btn" onClick={handleAdd}>Add</button></td>
+                    </tr>
+                </tfoot>
+            </table>
+
+            {/* --- Pagination Controls --- */}
+            {totalPages > 1 && (
+                <div className="pagination-controls">
+                    <button 
+                        className="pagination-btn" 
+                        disabled={currentPage === 1} 
+                        onClick={() => handlePageChange(currentPage - 1)}
+                    >
+                        <FontAwesomeIcon icon={faChevronLeft} />
+                    </button>
+                    
+                    {[...Array(totalPages)].map((_, index) => (
+                        <button 
+                            key={index + 1} 
+                            className={`pagination-btn ${currentPage === index + 1 ? 'active' : ''}`}
+                            onClick={() => handlePageChange(index + 1)}
+                        >
+                            {index + 1}
+                        </button>
+                    ))}
+
+                    <button 
+                        className="pagination-btn" 
+                        disabled={currentPage === totalPages} 
+                        onClick={() => handlePageChange(currentPage + 1)}
+                    >
+                        <FontAwesomeIcon icon={faChevronRight} />
+                    </button>
+                </div>
+            )}
         </div>
     );
 };

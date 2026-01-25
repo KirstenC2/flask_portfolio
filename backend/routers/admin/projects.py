@@ -20,7 +20,6 @@ def _project_to_dict(p: Project):
         'project_type': p.project_type,
         'date_created': p.date_created.isoformat() if p.date_created else None
     }
-
 @admin_bp.route('/projects', methods=['GET', 'OPTIONS'])
 @token_required
 def get_projects(current_admin):
@@ -42,6 +41,47 @@ def get_projects(current_admin):
             "description": p.description,
             "technologies": p.technologies,
             "image_url": p.image_url,
+            "project_type": p.project_type,
+            "date_created": p.date_created.isoformat(),
+            # 關鍵：嵌套抓取 dev_features
+            "dev_features": [
+                {
+                    "id": f.id,
+                    "title": f.title,
+                    "description": f.description,
+                    "tasks": [
+                        {
+                            "id": t.id,
+                            "content": t.content,
+                            "status": t.status,
+                            "priority": t.priority
+                        } for t in f.tasks # 遍歷 DevTask
+                    ]
+                } for f in p.dev_features # 遍歷 DevFeature
+            ]
+        }
+        result.append(project_data)
+        
+    return jsonify(result)
+
+
+@admin_bp.route('/projects/info/<int:project_id>', methods=['GET', 'OPTIONS'])
+@token_required
+def get_projects_info(current_admin, project_id):
+    
+    query = Project.query
+    if project_id:
+        query = query.filter_by(id=project_id)
+    
+    projects = query.all()
+    
+    result = []
+    for p in projects:
+        # 手動建構 Project 資料
+        project_data = {
+            "id": p.id,
+            "title": p.title,
+            "technologies": p.technologies,
             "project_type": p.project_type,
             "date_created": p.date_created.isoformat(),
             # 關鍵：嵌套抓取 dev_features

@@ -42,4 +42,4 @@ def token_required(f):
         return f(current_admin, *args, **kwargs)
     return decorated
 # Crucial: Import the routes AFTER defining admin_bp to avoid circular imports
-from . import auth, skills, education, life_events,study, projects, experience, message, expenses
+from . import auth, skills, education, life_events,study, projects, experience, message, expenses, dev_tasks

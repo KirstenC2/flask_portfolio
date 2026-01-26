@@ -18,12 +18,16 @@ export const taskApi = {
     },
     // 更新任務 (狀態, 內容, 優先級, 取消原因)
     update: async (taskId, fields) => {
+        const token = localStorage.getItem('adminToken');
         const res = await fetch(`${API_BASE}/tasks/${taskId}`, {
             method: 'PATCH',
-            headers: getHeaders(),
+            headers: { 
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}` 
+            },
             body: JSON.stringify(fields)
         });
-        return res.json();
+        return res; // 確保回傳原始 res 物件
     },
 
     // 刪除任務

@@ -114,3 +114,14 @@ def add_new_feature(current_admin, project_id):
     db.session.commit()
     
     return jsonify(_dev_feature_to_dict(feature))
+
+
+@admin_bp.route('/features/<int:feature_id>', methods=['DELETE','OPTIONS'])
+@token_required
+def delete_feature(current_admin, feature_id):
+    feature = DevFeature.query.get_or_404(feature_id)
+    
+    db.session.delete(feature)
+    db.session.commit()
+    
+    return jsonify({"message": "Feature deleted successfully"})

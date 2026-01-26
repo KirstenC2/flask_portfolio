@@ -3,11 +3,12 @@ import axios from 'axios';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
   faArrowLeft, faTasks, faSpinner,
-  faChevronDown, faChevronUp, faFilter, faPlus
+  faChevronDown, faChevronUp, faFilter, faPlus, faTrashAlt
 } from '@fortawesome/free-solid-svg-icons';
 import '../style/AdminProjectDetail.css';
 import TaskManager from './TaskManager';
 import FeatureForm from './FeatureForm';
+import { featureApi } from '../../../../services/featureApi';
 
 const AdminProjectDetail = ({ projectId, onBack }) => {
   const [project, setProject] = useState(null);
@@ -23,22 +24,48 @@ const AdminProjectDetail = ({ projectId, onBack }) => {
   const fetchProjectDetail = useCallback(async (isSilent = false) => {
     console.log("fetchProjectDetail triggered, isSilent:", isSilent); // 加上這行 Log
     if (!projectId) return;
-    
+
     try {
-        if (!isSilent) setLoading(true);
-        const token = localStorage.getItem('adminToken');
-        const response = await axios.get(`http://localhost:5001/api/admin/projects/info/${projectId}`, {
-            headers: { 'Authorization': `Bearer ${token}` }
-        });
-        
-        const projectData = Array.isArray(response.data) ? response.data[0] : response.data;
-        setProject({...projectData});
+      if (!isSilent) setLoading(true);
+      const token = localStorage.getItem('adminToken');
+      const response = await axios.get(`http://localhost:5001/api/admin/projects/info/${projectId}`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+
+      const projectData = Array.isArray(response.data) ? response.data[0] : response.data;
+      setProject({ ...projectData });
     } catch (err) {
-        setError(err.message);
+      setError(err.message);
     } finally {
-        setLoading(false); 
+      setLoading(false);
     }
-}, [projectId]);
+  }, [projectId]);
+  
+  const handleDeleteFeature = async (e, featureId) => {
+    e.stopPropagation();
+
+    if (!window.confirm("確定要刪除此 Feature 及其下所有任務嗎？")) return;
+
+    try {
+        console.log("Starting delete for featureId:", featureId);
+        const res = await featureApi.delete(featureId);
+        
+        console.log("Delete Response Status:", res.status);
+
+        if (res.ok) {
+            console.log("Delete success, refreshing project detail...");
+            await fetchProjectDetail(true); 
+        } else {
+            // 如果失敗，嘗試讀取後端的錯誤訊息
+            const errorText = await res.text();
+            console.error("Delete failed. Server response:", errorText);
+            alert(`刪除失敗 (${res.status}): ${errorText || '請檢查後端日誌'}`);
+        }
+    } catch (err) {
+        console.error("Network or execution error:", err);
+        alert("刪除過程發生網路錯誤");
+    }
+};
 
   useEffect(() => {
     fetchProjectDetail();
@@ -123,7 +150,18 @@ const AdminProjectDetail = ({ projectId, onBack }) => {
                 <div className="feature-info" onClick={() => toggleFeature(feature.id)} style={{ cursor: 'pointer' }}>
                   <div className="feature-title-row">
                     <h3><FontAwesomeIcon icon={faTasks} /> {feature.title}</h3>
-                    <FontAwesomeIcon icon={isExpanded ? faChevronUp : faChevronDown} />
+                    
+                    {/* 操作群組 */}
+                    <div className="feature-actions">
+                      <button 
+                        className="feature-del-btn"
+                        onClick={(e) => handleDeleteFeature(e, feature.id)}
+                        title="Delete Feature"
+                      >
+                        <FontAwesomeIcon icon={faTrashAlt} />
+                      </button>
+                      <FontAwesomeIcon icon={isExpanded ? faChevronUp : faChevronDown} className="toggle-icon" />
+                    </div>
                   </div>
                   <p>{feature.description}</p>
                 </div>

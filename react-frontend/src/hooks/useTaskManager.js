@@ -33,8 +33,20 @@ export const useTaskManager = (feature_id, tasks, onUpdate) => {
 
     // 3. API 操作封裝
     const handleUpdate = async (taskId, fields) => {
-        const res = await taskApi.update(taskId, fields);
-        if (res.ok) onUpdate();
+        try {
+            const res = await taskApi.update(taskId, fields);
+            
+            // 重要：判斷是否成功
+            if (res.ok) {
+                console.log("Update success, refreshing...");
+                // 呼叫父組件的 fetchProjectDetail，傳入 true 避免 Loading 閃爍
+                await onUpdate(true); 
+            } else {
+                console.error("Update failed with status:", res.status);
+            }
+        } catch (err) {
+            console.error("Update task error:", err);
+        }
     };
 
     const handleAdd = async (taskData) => {

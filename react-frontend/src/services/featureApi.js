@@ -12,5 +12,16 @@ export const featureApi = {
             },
             body: JSON.stringify(featureData)
         });
+    },
+    delete: async (featureId) => {
+        const token = localStorage.getItem('adminToken');
+        // 使用 fetch 時，不要直接回傳 .json()，否則 res.ok 會消失
+        const res = await fetch(`http://localhost:5001/api/admin/features/${featureId}`, {
+            method: 'DELETE',
+            headers: { 
+                'Authorization': `Bearer ${token}` 
+            }
+        });
+        return res; 
     }
 };

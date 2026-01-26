@@ -1,145 +1,203 @@
-/* 專案卡片容器 */
+/* --- Dashboard Layout --- */
 .work-manager-dashboard {
-  display: flex;
-  flex-direction: column;
-  gap: 24px;
-  padding: 10px 0;
+    padding: 24px;
+    background-color: #f4f5f7;
+    min-height: 100%;
 }
 
-.project-dev-card {
-  background: #ffffff;
-  border-radius: 12px;
-  border: 1px solid #e5e7eb;
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
-  overflow: hidden;
-}
-
-/* 專案頂部標題區 */
-.project-dev-header {
-  background: #f8fafc;
-  padding: 16px 20px;
-  border-bottom: 1px solid #e5e7eb;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.project-dev-header h4 {
-  margin: 0;
-  font-size: 1.2rem;
-  color: #1e293b;
-  font-weight: 700;
-}
-
-.tech-badge {
-  background: #dbeafe;
-  color: #1e40af;
-  font-size: 0.75rem;
-  padding: 4px 10px;
-  border-radius: 9999px;
-  font-weight: 600;
-}
-
-/* 功能模組區塊 (Feature Block) */
-.features-container {
-  padding: 20px;
-}
-
-.feature-block {
-  margin-bottom: 24px;
-}
-
-.feature-block:last-child {
-  margin-bottom: 0;
-}
-
-.feature-subtitle {
-  font-size: 0.95rem;
-  font-weight: 600;
-  color: #475569;
-  margin-bottom: 12px;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-/* 強制表格佈局 */
-.fixed-task-table {
-    width: 100%;
-    table-layout: fixed; /* 關鍵：強制分配寬度 */
-    border-collapse: collapse;
-    background: #fff;
-}
-
-.fixed-task-table th, 
-.fixed-task-table td {
-    border-bottom: 1px solid #f0f0f0;
-    padding: 10px;
-    text-align: left;
-    vertical-align: middle;
-    overflow: hidden; /* 防止文字溢出 */
-}
-
-/* 強制置中 */
-.cell-center {
-    text-align: center !important;
-}
-
-/* 確保內容文字換行 */
-.table-content-text {
-    word-break: break-word;
+/* --- Filter Bar --- */
+.work-filter-bar {
     display: flex;
-    flex-direction: column;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 24px;
+    background: white;
+    padding: 16px 20px;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
 }
 
-/* 操作按鈕群組：水平排列 */
-.table-action-group {
-    display: flex !important;
-    flex-direction: row !important; /* 強制水平 */
-    justify-content: center;
+.search-box {
+    position: relative;
+    width: 300px;
+}
+
+.search-icon {
+    position: absolute;
+    left: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #a5adba;
+}
+
+.search-box input {
+    width: 100%;
+    padding: 8px 12px 8px 36px;
+    border: 2px solid #dfe1e6;
+    border-radius: 8px;
+    outline: none;
+    transition: border-color 0.2s;
+}
+
+.search-box input:focus { border-color: #0052cc; }
+
+.filter-group {
+    display: flex;
+    align-items: center;
     gap: 12px;
 }
 
-/* 圖標按鈕樣式 */
-.action-icon-btn {
-    background: none;
-    border: none;
+.filter-options {
+    display: flex;
+    background: #ebecf0;
     padding: 4px;
+    border-radius: 8px;
+}
+
+.filter-options button {
+    border: none;
+    padding: 6px 16px;
+    border-radius: 6px;
     cursor: pointer;
-    color: #888;
-    font-size: 14px;
+    font-weight: 600;
+    color: #42526e;
+    background: transparent;
+    transition: all 0.2s;
+}
+
+.filter-options button.active {
+    background: white;
+    color: #0052cc;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+/* --- Project Grid --- */
+.project-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: 24px;
+}
+
+/* --- Project Card --- */
+.project-dev-card {
+    background: white;
+    border-radius: 12px;
+    padding: 20px;
+    border: 1px solid #e0e0e0;
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.project-dev-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 20px rgba(0,0,0,0.1);
+    border-color: #0052cc;
+}
+
+.project-dev-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 16px;
+}
+
+.title-area h4 {
+    margin: 0;
+    font-size: 1.1rem;
+    color: #172b4d;
+    font-weight: 700;
+}
+
+.type-tag {
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    padding: 2px 8px;
+    border-radius: 4px;
+    background: #f4f5f7;
+    color: #5e6c84;
+    font-weight: 800;
+    margin-top: 4px;
     display: inline-block;
 }
 
-.action-icon-btn:hover { color: #3498db; }
-.action-icon-btn.del:hover { color: #e74c3c; }
+.type-tag.work { background: #e3f2fd; color: #0052cc; }
 
-/* 狀態圖標 */
-.status-icon-btn { cursor: pointer; font-size: 16px; }
-.status-icon-btn.done { color: #2ecc71; }
-.status-icon-btn.canceled { color: #e74c3c; }
-.status-icon-btn.todo { color: #ccc; }
-
-/* 優先級標籤 */
-.p-badge {
-    padding: 2px 8px;
-    border-radius: 4px;
-    font-size: 12px;
-    font-weight: bold;
-}
-.p-1 { background: #fee2e2; color: #ef4444; }
-.p-4 { background: #f3f4f6; color: #9ca3af; }
-
-/* 輸入框 */
-.table-input-text {
-    width: 100%;
-    padding: 6px 10px;
-    border: 1px solid #ddd;
-    border-radius: 4px;
+.arrow-icon {
+    color: #dfe1e6;
+    transition: color 0.2s;
 }
 
-/* 取消/編輯模式的 inline 排版 */
-.table-inline-edit {
+.project-dev-card:hover .arrow-icon { color: #0052cc; }
+
+/* --- Features Preview --- */
+.features-preview {
+    flex: 1;
+    background: #fbfbfc;
+    padding: 12px;
+    border-radius: 8px;
+    margin-bottom: 16px;
+}
+
+.section-label {
+    font-size: 0.75rem;
+    color: #6b778c;
+    font-weight: 700;
+    margin-bottom: 8px;
+    text-transform: uppercase;
+}
+
+.feature-mini-item {
     display: flex;
-    gap: 8px;
-    width: 100%;
+    align-items: center;
+    gap: 10px;
+    padding: 6px 0;
+    border-bottom: 1px solid #f1f1f1;
+}
+
+.feature-title-text {
+    flex: 1;
+    font-size: 0.85rem;
+    color: #42526e;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.tasks-icon { color: #4c9aff; font-size: 0.8rem; }
+
+.task-pill {
+    background: #ebecf0;
+    font-size: 0.7rem;
+    padding: 2px 6px;
+    border-radius: 10px;
+    color: #172b4d;
+    font-weight: 700;
+}
+
+.no-features { font-size: 0.85rem; color: #a5adba; font-style: italic; }
+.more-count { font-size: 0.75rem; color: #a5adba; margin-top: 8px; }
+
+/* --- Card Footer --- */
+.card-footer {
+    border-top: 1px solid #f1f1f1;
+    padding-top: 12px;
+    text-align: right;
+}
+
+.view-detail-hint {
+    font-size: 0.85rem;
+    color: #0052cc;
+    font-weight: 600;
+}
+
+.loading-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 300px;
+    color: #0052cc;
+    gap: 16px;
 }

@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faPlus, faTimes, faSave } from '@fortawesome/free-solid-svg-icons';
 import { featureApi } from '../../../../services/featureApi';
-
+import '../style/FeatureForm.css';
 const FeatureForm = ({ projectId, onSuccess, onCancel }) => {
     const [formData, setFormData] = useState({ title: '', description: '' });
     const [isSubmitting, setIsSubmitting] = useState(false);
@@ -44,10 +44,10 @@ const FeatureForm = ({ projectId, onSuccess, onCancel }) => {
                 />
             </div>
             <div className="form-actions">
-                <button type="submit" className="btn-save" disabled={isSubmitting}>
+                <button type="submit" className="save-btn" disabled={isSubmitting}>
                     <FontAwesomeIcon icon={faSave} /> {isSubmitting ? '儲存中...' : '儲存 Feature'}
                 </button>
-                <button type="button" className="btn-cancel" onClick={onCancel}>
+                <button type="button" className="cancel-btn" onClick={onCancel}>
                     取消
                 </button>
             </div>

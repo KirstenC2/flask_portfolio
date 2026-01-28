@@ -15,7 +15,8 @@ import {
   faStar,
   faBlog,
   faMotorcycle,
-  faFileInvoiceDollar
+  faFileInvoiceDollar,
+  faHeart
 } from '@fortawesome/free-solid-svg-icons';
 import './Dashboard.css';
 import { Divider } from '@mui/material';
@@ -35,6 +36,7 @@ import FinancePanel from '../finance/FinancePanel';
 import MotorManagementPanel from '../motor_management/MotorManagementPanel';
 import WorkPanel from '../work/WorkPanel';
 import AdminProjectDetail from '../work/components/AdminProjectDetail';
+import HealthPanel from '../health/HealthPanel';
 const Dashboard = () => {
   const navigate = useNavigate();
   const [activeSection, setActiveSection] = useState('overview');
@@ -129,6 +131,8 @@ const Dashboard = () => {
       case 'work':
         // 將「選擇專案」的函式傳進 WorkPanel
         return <WorkPanel onProjectSelect={(id) => setSelectedProjectId(id)} />;
+      case 'health':
+        return <HealthPanel />;
       case 'overview':
       default:
         return (
@@ -288,6 +292,12 @@ const Dashboard = () => {
                     專案管理
                   </button>
                 </li>
+                <li className={activeSection === 'health' ? 'active' : ''}>
+                  <button onClick={() => setActiveSection('health')}>
+                    <FontAwesomeIcon icon={faHeart} />
+                    健康管理
+                  </button>
+                </li>
 
 
               </div>)}
@@ -323,6 +333,7 @@ const Dashboard = () => {
             {activeSection === 'finance' && 'Finance'}
             {activeSection === 'motor' && 'Motor Management'}
             {activeSection === 'work' && 'Project Management'}
+            {activeSection === 'health' && 'Health Management'}
           </h1>
         </div>
 

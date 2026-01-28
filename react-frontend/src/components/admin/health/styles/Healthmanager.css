@@ -1,0 +1,62 @@
+.health-container {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.health-card {
+    background: white;
+    padding: 20px;
+    border-radius: 12px;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+}
+
+.summary {
+    text-align: center;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+}
+
+.stats-display {
+    margin: 15px 0;
+}
+
+.big-number {
+    font-size: 3rem;
+    font-weight: bold;
+}
+
+.warning { color: #ff8787; font-weight: bold; }
+.safe { color: #b2f2bb; }
+
+.input-grid {
+    display: flex;
+    gap: 10px;
+    margin-top: 10px;
+}
+
+.input-grid input, .input-grid select {
+    padding: 10px;
+    border: 1px solid #dee2e6;
+    border-radius: 6px;
+    flex: 1;
+}
+
+.add-log-btn {
+    background: #4c6ef5;
+    color: white;
+    border: none;
+    padding: 0 20px;
+    border-radius: 6px;
+    cursor: pointer;
+}
+
+.log-item {
+    display: flex;
+    justify-content: space-between;
+    padding: 12px 0;
+    border-bottom: 1px solid #f1f3f5;
+}
+
+.log-item .time { color: #868e96; font-size: 0.9rem; }
+.log-item .grams { font-weight: bold; color: #4c6ef5; }

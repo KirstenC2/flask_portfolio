@@ -43,10 +43,10 @@ class DevTask(db.Model):
     __tablename__ = 'dev_tasks'
     id = db.Column(db.Integer, primary_key=True)
     content = db.Column(db.String(255), nullable=False)
-    status = db.Column(db.String(20), default='todo') 
+    status = db.Column(db.String(20), default='pending') 
     priority = db.Column(db.Integer, default=1)   
     cancel_reason = db.Column(db.String(255), nullable=True)
-    dev_feature_id = db.Column(db.Integer, db.ForeignKey('dev_features.id'), nullable=False)
+    dev_feature_id = db.Column(db.Integer, db.ForeignKey('dev_features.id'), nullable=True)
     date_created = db.Column(db.DateTime, default=datetime.utcnow)
 
 class Skill(db.Model):

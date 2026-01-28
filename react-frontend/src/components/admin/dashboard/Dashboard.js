@@ -285,7 +285,7 @@ const Dashboard = () => {
                 <li className={activeSection === 'work' ? 'active' : ''}>
                   <button onClick={() => setActiveSection('work')}>
                     <FontAwesomeIcon icon={faBriefcase} />
-                    工作管理
+                    專案管理
                   </button>
                 </li>
 
@@ -322,7 +322,7 @@ const Dashboard = () => {
             {activeSection === 'diary' && 'Diary'}
             {activeSection === 'finance' && 'Finance'}
             {activeSection === 'motor' && 'Motor Management'}
-            {activeSection === 'work' && 'Work Management'}
+            {activeSection === 'work' && 'Project Management'}
           </h1>
         </div>
 

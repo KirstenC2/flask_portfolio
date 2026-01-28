@@ -1,5 +1,4 @@
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
-import axios from 'axios';
+import { useState, useMemo } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
   faArrowLeft, faTasks, faSpinner,
@@ -9,73 +8,30 @@ import '../style/AdminProjectDetail.css';
 import '../../../../common/global.css'
 import TaskManager from './TaskManager';
 import FeatureForm from './FeatureForm';
-import { featureApi } from '../../../../services/featureApi';
+import { useProjectDetail } from '../../../../hooks/useProjectDetail';
 
 const AdminProjectDetail = ({ projectId, onBack }) => {
-  const [project, setProject] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+  // --- 1. 使用 Custom Hook 替代原本手寫的 State ---
+  const { project, loading, error, actions } = useProjectDetail(projectId);
 
-  // --- 重構關鍵 State ---
+  // --- 2. 僅保留 UI 專用的局部狀態 ---
   const [selectedFeatureId, setSelectedFeatureId] = useState(null);
   const [featureSearch, setFeatureSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [isAddingFeature, setIsAddingFeature] = useState(false);
 
-  const fetchProjectDetail = useCallback(async (isSilent = false) => {
-    if (!projectId) return;
-    try {
-      if (!isSilent) setLoading(true);
-      const token = localStorage.getItem('adminToken');
-      const response = await axios.get(`http://localhost:5001/api/admin/projects/info/${projectId}`, {
-        headers: { 'Authorization': `Bearer ${token}` }
-      });
-      const projectData = Array.isArray(response.data) ? response.data[0] : response.data;
-      setProject({ ...projectData });
-
-      // 自動選取第一個 Feature
-      if (!selectedFeatureId && projectData.dev_features?.length > 0) {
-        setSelectedFeatureId(projectData.dev_features[0].id);
-      }
-    } catch (err) {
-      setError(err.message);
-    } finally {
-      setLoading(false);
-    }
-  }, [projectId, selectedFeatureId]);
-
-  useEffect(() => {
-    fetchProjectDetail();
-  }, [fetchProjectDetail]);
-
-  const handleDeleteFeature = async (e, featureId) => {
-    e.stopPropagation();
-    if (!window.confirm("確定要刪除此 Feature 及其下所有任務嗎？")) return;
-    try {
-      const res = await featureApi.delete(featureId);
-      if (res.ok) {
-        if (selectedFeatureId === featureId) setSelectedFeatureId(null);
-        await fetchProjectDetail(true);
-      }
-    } catch (err) {
-      console.error("Delete error:", err);
-    }
-  };
-
-  // 取得左側導覽列表（支援搜尋）
+  // --- 3. 處理 Feature 列表過濾 ---
   const filteredNavList = useMemo(() => {
-    if (!project?.dev_features) return [];
-    return project.dev_features.filter(f => 
+    return project?.dev_features?.filter(f => 
       f.title.toLowerCase().includes(featureSearch.toLowerCase())
-    );
+    ) || [];
   }, [project, featureSearch]);
 
-  // 取得當前選中的 Feature 詳細資料
+  // --- 4. 處理當前選中的 Feature 及其任務過濾 ---
   const activeFeature = useMemo(() => {
     const feature = project?.dev_features?.find(f => f.id === selectedFeatureId);
     if (!feature) return null;
 
-    // 同時在這裡處理 Task 的狀態過濾
     const filteredTasks = (feature.tasks || []).filter(task => {
       if (statusFilter === 'all') return true;
       return task.status === statusFilter;
@@ -84,8 +40,28 @@ const AdminProjectDetail = ({ projectId, onBack }) => {
     return { ...feature, filteredTasks };
   }, [project, selectedFeatureId, statusFilter]);
 
-  if (loading && !project) return <div className="admin-loading"><FontAwesomeIcon icon={faSpinner} spin /> Loading...</div>;
-  if (error) return <div className="admin-error">Error: {error} <button onClick={() => fetchProjectDetail()}>Retry</button></div>;
+  // --- 5. 事件處理 (使用 Hook 提供的 actions) ---
+  const handleDeleteFeature = async (e, id) => {
+    e.stopPropagation();
+    if (window.confirm("確定要刪除此 Feature 及其下所有任務嗎？")) {
+      const success = await actions.removeFeature(id);
+      if (success && selectedFeatureId === id) {
+        setSelectedFeatureId(null);
+      }
+    }
+  };
+
+  if (loading && !project) return (
+    <div className="admin-loading">
+      <FontAwesomeIcon icon={faSpinner} spin /> Loading Project...
+    </div>
+  );
+
+  if (error) return (
+    <div className="admin-error">
+      Error: {error} <button onClick={() => actions.refresh()}>Retry</button>
+    </div>
+  );
 
   return (
     <div className="project-dashboard">
@@ -106,7 +82,7 @@ const AdminProjectDetail = ({ projectId, onBack }) => {
             <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)}>
               <option value="all">All Tasks</option>
               <option value="canceled">Canceled</option>
-              <option value="todo">To Do</option>
+              <option value="pending">To do</option>
               <option value="doing">In Progress</option>
               <option value="done">Completed</option>
             </select>
@@ -142,7 +118,10 @@ const AdminProjectDetail = ({ projectId, onBack }) => {
                   <span className="nav-title">{f.title}</span>
                   <span className="nav-count">{f.tasks?.length || 0} tasks</span>
                 </div>
-                <button className="nav-del-btn" onClick={(e) => handleDeleteFeature(e, f.id)}>
+                <button 
+                  className="nav-del-btn" 
+                  onClick={(e) => handleDeleteFeature(e, f.id)}
+                >
                   <FontAwesomeIcon icon={faTrashAlt} />
                 </button>
                 <FontAwesomeIcon icon={faChevronRight} className="active-arrow" />
@@ -161,7 +140,7 @@ const AdminProjectDetail = ({ projectId, onBack }) => {
               <FeatureForm
                 projectId={projectId}
                 onSuccess={() => {
-                  fetchProjectDetail(true);
+                  actions.refresh(true); // 靜默更新
                   setIsAddingFeature(false);
                 }}
                 onCancel={() => setIsAddingFeature(false)}
@@ -179,7 +158,7 @@ const AdminProjectDetail = ({ projectId, onBack }) => {
                 <TaskManager
                   feature_id={activeFeature.id}
                   tasks={activeFeature.filteredTasks}
-                  onUpdate={() => fetchProjectDetail(true)}
+                  onUpdate={() => actions.refresh(true)} // 靜默更新
                 />
               </div>
             </div>

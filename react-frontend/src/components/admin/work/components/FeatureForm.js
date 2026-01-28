@@ -1,7 +1,6 @@
-// src/components/FeatureForm.js
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faPlus, faTimes, faSave } from '@fortawesome/free-solid-svg-icons';
+import { faSave } from '@fortawesome/free-solid-svg-icons';
 import { featureApi } from '../../../../services/featureApi';
 import '../style/FeatureForm.css';
 const FeatureForm = ({ projectId, onSuccess, onCancel }) => {

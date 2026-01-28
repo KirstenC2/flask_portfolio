@@ -6,12 +6,13 @@ import {
 } from '@fortawesome/free-solid-svg-icons';
 import { useTaskManager } from '../../../../hooks/useTaskManager'; // 引入自定義 Hook
 import '../../../../common/filterBar.css';
+import '../../../../common/global.css';
 const TaskManager = ({ feature_id, tasks, onUpdate }) => {
     // 使用 Hook 取得所有邏輯與狀態
     const { tasks: tData, params, actions } = useTaskManager(feature_id, tasks, onUpdate);
 
     // 本地 UI 狀態（僅限於目前編輯中或新增中的資料）
-    const [newTask, setNewTask] = useState({ content: '', status: 'todo', priority: 4 });
+    const [newTask, setNewTask] = useState({ content: '', status: 'pending', priority: 4 });
     const [editingId, setEditingId] = useState(null);
     const [editData, setEditData] = useState({});
     const [cancelingId, setCancelingId] = useState(null);
@@ -19,7 +20,7 @@ const TaskManager = ({ feature_id, tasks, onUpdate }) => {
 
     const onAddClick = async () => {
         const success = await actions.handleAdd(newTask);
-        if (success) setNewTask({ content: '', status: 'todo', priority: 4 });
+        if (success) setNewTask({ content: '', status: 'pending', priority: 4 });
     };
 
     
@@ -71,7 +72,7 @@ const TaskManager = ({ feature_id, tasks, onUpdate }) => {
                                     <FontAwesomeIcon
                                         icon={task.status === 'done' ? faCheck : task.status === 'canceled' ? faRectangleXmark : faCircle}
                                         className={`status-icon-btn ${task.status}`}
-                                        onClick={() => actions.handleUpdate(task.id, { status: task.status === 'done' ? 'todo' : 'done' })}
+                                        onClick={() => actions.handleUpdate(task.id, { status: task.status === 'done' ? 'pending' : 'done' })}
                                     />
                                 </td>
                                 <td>
@@ -102,7 +103,7 @@ const TaskManager = ({ feature_id, tasks, onUpdate }) => {
                                     )}
                                 </td>
                                 <td className="cell-center">
-                                    <div className="table-action-group">
+                                    <div className="form-actions">
                                         {isEditing ? (
                                             <button className="action-icon-btn save" onClick={() => { actions.handleUpdate(task.id, editData); setEditingId(null); }}><FontAwesomeIcon icon={faSave} /></button>
                                         ) : !isCanceling ? (

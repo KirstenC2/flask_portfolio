@@ -6,7 +6,7 @@ import { faChevronRight, faTasks, faSearch, faFilter, faLayerGroup } from '@fort
 import '../style/WorkPanel.css';
 import '../../../../common/global.css';
 
-const WorkProjectManager = ({ onProjectClick }) => {
+const ProjectManager = ({ onProjectClick }) => {
     const [projects, setProjects] = useState([]);
     const [loading, setLoading] = useState(true);
     const [searchQuery, setSearchQuery] = useState('');
@@ -122,4 +122,4 @@ const WorkProjectManager = ({ onProjectClick }) => {
     );
 };
 
-export default WorkProjectManager;
+export default ProjectManager;

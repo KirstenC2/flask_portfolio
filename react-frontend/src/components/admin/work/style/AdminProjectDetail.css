@@ -146,6 +146,7 @@
 .sidebar-search-box input:focus { border-color: #4c9aff; }
 
 .feature-nav {
+  background-color: #fff;
   flex: 1;
   overflow-y: auto;
 }
@@ -164,7 +165,7 @@
 .nav-item:hover { background: #f4f5f7; }
 
 .nav-item.active {
-  background: #ebf5ff;
+  background: #bac6d2;
   color: #0052cc;
   font-weight: 600;
   box-shadow: inset 4px 0 0 #0052cc;
@@ -270,4 +271,28 @@
 .workspace-scroll-area::-webkit-scrollbar-thumb {
   background-color: #dfe1e6;
   border-radius: 10px;
+}
+
+.fixed-task-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 16px;
+}
+
+.fixed-task-table th,
+.fixed-task-table td {
+  padding: 12px 16px;
+  text-align: left;
+  border-bottom: 1px solid #f1f1f1;
+}
+
+.fixed-task-table th {
+  background-color: #f4f5f7;
+  font-weight: 600;
+  color: #172b4d;
+  font-size: 0.875rem;
+}
+
+.fixed-task-table tbody tr:hover {
+  background-color: #f4f5f7;
 }

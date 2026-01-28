@@ -32,6 +32,7 @@ def delete_dev_task(current_admin, task_id):
     db.session.delete(task)
     db.session.commit()
     return jsonify({'message': 'Task deleted successfully'})
+    
 
 @admin_bp.route('/tasks/<int:task_id>', methods=['PATCH','OPTIONS'])
 @token_required
@@ -51,10 +52,27 @@ def edit_dev_task(current_admin, task_id):
     return jsonify({'message': 'Task updated successfully'})
 
 
-@admin_bp.route('/dev-tasks', methods=['GET', 'OPTIONS'])
+@admin_bp.route('/quadrant/tasks', methods=['GET'])
 @token_required
 def get_admin_dev_tasks(current_admin):
-    dev_tasks = DevTask.query.join(DevFeature).order_by(DevTask.date_created.desc()).all()
+    project_id = request.args.get('project_id')
+    status = request.args.get('status', 'all')  # 預設為 all
+
+    query = DevTask.query.join(DevFeature)
+    
+    # 1. 專案篩選
+    if project_id and project_id != "":
+        query = query.filter(DevFeature.project_id == project_id)
+    
+    # 2. 狀態篩選：如果是 'all'，我們自動過濾掉 'done'
+    if status == 'all':
+        # 只顯示 pending 或 doing 等非完成狀態
+        query = query.filter(DevTask.status != 'done')
+    else:
+        # 如果使用者明確要看某個狀態（例如真的想看 done），才顯示該狀態
+        query = query.filter(DevTask.status == status)
+        
+    dev_tasks = query.order_by(DevTask.date_created.desc()).all()
     return jsonify([_dev_task_to_dict(dt) for dt in dev_tasks])
 
 @admin_bp.route('/dev-tasks/<int:feature_id>', methods=['GET'])
@@ -91,6 +109,22 @@ def add_new_dev_task(current_admin, feature_id):
         status=data.get('status'),
         priority=data.get('priority'),
         cancel_reason=data.get('cancel_reason')
+    )
+    
+    db.session.add(task)
+    db.session.commit()
+    
+    return jsonify(_dev_task_to_dict(task))
+
+@admin_bp.route('/task/new', methods=['POST','OPTIONS'])
+@token_required
+def add_new_todo_task(current_admin):
+    data = request.get_json()
+    
+    task = DevTask(
+        content=data.get('content'),
+        status='pending',
+        priority=data.get('priority')
     )
     
     db.session.add(task)

@@ -12,7 +12,7 @@ export const useTaskManager = (feature_id, tasks, onUpdate) => {
     const filteredTasks = useMemo(() => {
         let result = tasks || [];
         if (filterType === 'active') {
-            result = result.filter(t => t.status === 'todo' || t.status === 'doing');
+            result = result.filter(t => t.status === 'pending' || t.status === 'doing');
         } else if (filterType === 'done') {
             result = result.filter(t => t.status === 'done');
         } else if (filterType === 'canceled') {

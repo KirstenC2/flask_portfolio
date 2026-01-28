@@ -285,7 +285,7 @@ class DevTask(db.Model):
     __tablename__ = 'dev_tasks'
     id = db.Column(db.Integer, primary_key=True)
     content = db.Column(db.String(255), nullable=False)
-    status = db.Column(db.String(20), default='todo') # todo, doing, done
+    status = db.Column(db.String(20), default='pending') # todo, doing, done
     priority = db.Column(db.Integer, default=1)      # 優先級：1 (低), 2 (中), 3 (高)
-    dev_feature_id = db.Column(db.Integer, db.ForeignKey('dev_features.id'), nullable=False)
+    dev_feature_id = db.Column(db.Integer, db.ForeignKey('dev_features.id'), nullable=True) # null = todo general
     date_created = db.Column(db.DateTime, default=datetime.utcnow)

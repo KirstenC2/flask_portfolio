@@ -1,0 +1,54 @@
+/* 1. 左側容器：控制整體寬度與動畫 */
+.calendar-section {
+  position: relative;
+  width: 380px;            /* 展開時的寬度 */
+  min-width: 380px;
+  height: 100vh;
+  /* background-color: #fff; */
+  /* border-right: 1px solid #f2e1d7; */
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1); /* 順滑縮放的關鍵 */
+  padding: 20px;
+  overflow: visible;       /* 確保切換按鈕不會被切掉 */
+}
+
+/* 2. 當處於縮小狀態時 (isCollapsed === true) */
+.calendar-section.collapsed {
+  width: 0;
+  min-width: 0;
+  padding: 0;
+  margin: 0;
+  border-right: none;
+}
+
+/* 3. 縮小時隱藏內部的 calendar-card */
+.calendar-section.collapsed .calendar-card {
+  opacity: 0;
+  visibility: hidden;
+  transform: translateX(-20px); /* 輕微向左位移的消失感 */
+}
+
+/* 4. 原有的 calendar-card 加入 transition */
+.calendar-card {
+  /* ... 你原本的樣式 ... */
+  transition: opacity 0.3s, transform 0.3s;
+}
+
+/* 5. 摺疊切換按鈕 (漂浮在邊緣) */
+.calendar-toggle-btn {
+  position: absolute;
+  right: -15px; /* 一半在裡面，一半在外面 */
+  top: 30px;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background: #ff9a8b;
+  color: white;
+  border: 2px solid white;
+  cursor: pointer;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+

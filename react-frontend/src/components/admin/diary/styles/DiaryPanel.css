@@ -1,0 +1,197 @@
+:root {
+    --diary-bg: #f9f7f2;       /* 溫潤的米白色底 */
+    --diary-card: #ffffff;     /* 卡片純白 */
+    --diary-text: #5a544e;     /* 暖調深灰褐 */
+    --diary-helper: #9e948a;   /* 提示字淺褐色 */
+    --diary-primary: #d4a373;  /* 復古駝色 (主要色調) */
+    --diary-accent: #e6a27c;   /* 柔粉橘 (重點強調) */
+    --diary-border: #eee7de;   /* 淺米色邊框 */
+    --diary-shadow: 0 10px 30px rgba(212, 163, 115, 0.12); /* 柔和擴散影 */
+    --font-warm: 'Noto Sans TC', 'PingFang TC', sans-serif;
+}
+.content-container {
+  flex: 1; /* 這行讓它自動填滿剩餘空間 */
+  transition: padding 0.4s ease;
+  background-color: var(--warm-bg);
+  min-height: 100vh;
+  padding: 40px 20px;
+  font-family: 'PingFang TC', 'Microsoft JhengHei', sans-serif;
+  color: var(--text-brown);
+}
+
+
+/* 容器與卡片基礎 */
+.editor-sidepanel {
+    background: var(--diary-card);
+    border-radius: 28px;
+    padding: 35px;
+    box-shadow: var(--diary-shadow);
+    border: 1px solid var(--diary-border);
+    color: var(--diary-text);
+    font-family: var(--font-warm);
+    max-width: 850px;
+    line-height: 1.6;
+}
+
+/* 標題與日期 */
+.sidepanel-header h2 {
+    font-size: 1.6rem;
+    color: var(--diary-text);
+    margin-bottom: 5px;
+    font-weight: 700;
+}
+
+.diary-header h3 {
+    color: var(--diary-primary);
+    font-size: 1.4rem;
+    margin-bottom: 25px;
+    border-bottom: 2px solid var(--diary-bg);
+    display: inline-block;
+}
+
+/* 區塊引導文字樣式 */
+.detail-item h4 {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 1.1rem;
+    color: var(--diary-primary);
+    margin-bottom: 8px;
+}
+
+.detail-item p {
+    background: var(--diary-bg);
+    padding: 15px;
+    border-radius: 12px;
+    color: var(--diary-text);
+    font-size: 0.95rem;
+    margin-bottom: 20px;
+}
+
+/* 提示文字 (Helper Text) */
+
+
+/* 期待 vs 現實 對照組 (重點優化) */
+.comparison-box {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 15px;
+    margin: 25px 0;
+}
+
+.comparison-box .ideal, .comparison-box .real {
+    padding: 20px;
+    border-radius: 16px;
+    text-align: center;
+    transition: transform 0.2s;
+}
+
+.comparison-box .ideal {
+    background: #f0f4ef; /* 淡淡的草本綠 */
+    border: 1px solid #e0eadd;
+}
+
+.comparison-box .real {
+    background: #fdf2f0; /* 淡淡的蜜粉色 */
+    border: 1px solid #f9e2df;
+}
+
+.comparison-box strong {
+    display: block;
+    margin-bottom: 8px;
+    font-size: 1rem;
+}
+
+.comparison-box .ideal strong { color: #6a8d73; }
+.comparison-box .real strong { color: #c97c72; }
+
+/* 按鈕美化 */
+.diary-actions {
+    display: flex;
+    gap: 12px;
+    margin-top: 30px;
+}
+
+.btn-primary {
+    background: var(--diary-primary);
+    color: white;
+    border: none;
+    padding: 10px 24px;
+    border-radius: 10px;
+    font-weight: 600;
+    transition: all 0.3s;
+}
+
+.btn-primary:hover {
+    background: var(--diary-accent);
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(212, 163, 115, 0.3);
+}
+
+.btn-danger {
+    background: transparent;
+    color: #c97c72;
+    border: 1px solid #f9e2df;
+    padding: 10px 24px;
+    border-radius: 10px;
+}
+
+.btn-danger:hover {
+    background: #fdf2f0;
+}
+
+.mood-form label {
+    display: block;
+    font-weight: 600;
+    margin-top: 25px;
+    margin-bottom: 8px;
+    color: var(--warm-text);
+    font-size: 1.05rem;
+}
+
+.helper-text {
+    font-size: 0.88rem;
+    color: var(--warm-helper);
+    margin-bottom: 12px;
+    line-height: 1.4;
+    display: block;
+}
+
+/* 輸入框設計：呼吸感與軟圓角 */
+.mood-form input[type="text"],
+.mood-form input[type="date"],
+.mood-form textarea {
+    width: 100%;
+    background-color: var(--warm-secondary);
+    border: 1px solid transparent;
+    border-radius: 16px;
+    padding: 15px;
+    color: var(--warm-text);
+    font-size: 1rem;
+    transition: all 0.3s ease;
+    resize: none;
+}
+
+.mood-form textarea:focus {
+    background-color: #fff;
+    border-color: var(--warm-primary);
+    box-shadow: 0 0 0 4px rgba(230, 162, 124, 0.1);
+    outline: none;
+}
+
+/* 對照組盒 (Ideal vs Real) */
+.comparison-section {
+    display: column;
+    gap: 20px;
+    margin-top: 20px;
+}
+
+.comparison-box {
+    background: var(--warm-bg);
+    padding: 20px;
+    border-radius: 18px;
+    border: 1px dashed var(--warm-accent);
+}
+
+.ideal-title { color: #8a9a5b; font-weight: bold; } /* 柔和綠 */
+.real-title { color: #bc6c25; font-weight: bold; }  /* 柔和褐 */

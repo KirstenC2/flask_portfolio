@@ -2,6 +2,7 @@ from flask import Blueprint, request, jsonify
 from models import db, Diary
 from routers.admin import token_required
 from flask_cors import CORS
+from sqlalchemy import extract
 diary_bp = Blueprint("diary", __name__)
 CORS(diary_bp)
 
@@ -9,8 +10,9 @@ CORS(diary_bp)
 def diary():
     if request.method == "POST":
         diary_data = request.json
+        # 這裡建議確保傳入的 date 是正確格式，或是轉換為 datetime 物件
         new_diary = Diary(
-            date=diary_data.get("date", ""),
+            date=diary_data.get("date"), 
             weather=diary_data.get("weather", ""),
             emotion=diary_data.get("emotion", ""),
             content=diary_data.get("content", ""),
@@ -18,26 +20,39 @@ def diary():
         )
         db.session.add(new_diary)
         db.session.commit()
-        return jsonify({"success": True, "data": "Diary entry added successfully!"})
+        return jsonify({"success": True, "message": "Diary entry added successfully!"})
 
     elif request.method == "GET":
-        diaries = Diary.query.all()
-        return jsonify(
-            {
-                "success": True,
-                "data": [
-                    {
-                        "id": diary.id,
-                        "date": diary.date,
-                        "weather": diary.weather,
-                        "emotion": diary.emotion,
-                        "content": diary.content,
-                        "image_url": diary.image_url
-                    }
-                    for diary in diaries
-                ]
-            }
-        )
+        # 從 URL 參數獲取年月，如果沒有提供則預設為 None
+        year = request.args.get('year', type=int)
+        month = request.args.get('month', type=int)
+
+        query = Diary.query
+
+        # 如果有帶年月參數，則進行過濾
+        if year and month:
+            query = query.filter(
+                extract('year', Diary.date) == year,
+                extract('month', Diary.date) == month
+            )
+        
+        # 依照日期排序（由新到舊），讓日曆或列表顯示更合理
+        diaries = query.order_by(Diary.date.desc()).all()
+
+        return jsonify({
+            "success": True,
+            "data": [
+                {
+                    "id": diary.id,
+                    "date": diary.date.strftime('%Y-%m-%d') if hasattr(diary.date, 'strftime') else diary.date,
+                    "weather": diary.weather,
+                    "emotion": diary.emotion,
+                    "content": diary.content,
+                    "image_url": diary.image_url
+                }
+                for diary in diaries
+            ]
+        })
 
 @diary_bp.route("/api/diary/<int:id>", methods=['PUT'])
 def update_diary(id):

@@ -9,6 +9,8 @@ const HealthPanel = () => {
         switch (activeTab) {
             case 'alcoholic':
                 return <AlcoholManager />;
+            // case 'moody-diary':
+            //     return <MoodyDiary />;
             default:
                 return null;
         }
@@ -24,6 +26,12 @@ const HealthPanel = () => {
                 >
                     酒精攝取管理
                 </button>
+                {/* <button
+                    className={`nav-btn ${activeTab === 'moody-diary' ? 'active' : ''}`}
+                    onClick={() => setActiveTab('moody-diary')}
+                >
+                    情緒日記
+                </button> */}
             </div>
 
             {/* 主要內容顯示區 */}

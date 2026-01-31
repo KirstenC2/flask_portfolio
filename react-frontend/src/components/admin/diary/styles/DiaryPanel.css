@@ -1,14 +1,4 @@
-:root {
-    --diary-bg: #f9f7f2;       /* 溫潤的米白色底 */
-    --diary-card: #ffffff;     /* 卡片純白 */
-    --diary-text: #5a544e;     /* 暖調深灰褐 */
-    --diary-helper: #9e948a;   /* 提示字淺褐色 */
-    --diary-primary: #d4a373;  /* 復古駝色 (主要色調) */
-    --diary-accent: #e6a27c;   /* 柔粉橘 (重點強調) */
-    --diary-border: #eee7de;   /* 淺米色邊框 */
-    --diary-shadow: 0 10px 30px rgba(212, 163, 115, 0.12); /* 柔和擴散影 */
-    --font-warm: 'Noto Sans TC', 'PingFang TC', sans-serif;
-}
+
 .content-container {
   flex: 1; /* 這行讓它自動填滿剩餘空間 */
   transition: padding 0.4s ease;

@@ -1,4 +1,31 @@
+:root {
+    --health-bg: #f0f7f9;       /* 極淺藍底，清爽感 */
+    --health-card: #ffffff;     /* 卡片純白 */
+    --health-primary: #5ec2c2;  /* 薄荷綠 (主色，代表健康與平衡) */
+    --health-secondary: #e0f2f1;/* 淺薄荷綠 (背景輔助) */
+    --health-accent: #4a90e2;   /* 溫和藍 (代表數據與專業) */
+    --health-text: #2c3e50;     /* 深藍灰 (文字，比咖啡色更清晰) */
+    --health-helper: #7f8c8d;   /* 灰文字 */
+    --health-border: #d1e8e8;   /* 淺綠邊框 */
+    --health-shadow: 0 10px 25px rgba(94, 194, 194, 0.08);
+    --warn-orange: #ff9f43;     /* 警告用橘色 (比紅色溫和) */
 
+    --p1-color: #edc1c1;
+    --p1-bg: rgba(255, 107, 107, 0.1);
+    --p2-color: #9dd8c0;
+    --p2-bg: rgba(81, 207, 102, 0.1);
+    --p3-color: #c0dbf1;
+    --p3-bg: rgba(51, 154, 240, 0.1);
+    --p4-color: #868e96;
+    --p4-bg: rgba(134, 142, 150, 0.1);
+    
+    --bg-color: #f8f9fa;
+    --card-bg: #ffffff;
+    --text-primary: #212529;
+    --text-secondary: #868e96;
+    --shadow: 0 8px 30px rgba(0, 0, 0, 0.08);
+    --radius: 12px;
+}
 .form-group {
   display: flex;
   flex-direction: column;

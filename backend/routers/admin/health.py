@@ -87,26 +87,36 @@ def get_alcohol_logs(current_admin, interval):
         return jsonify({"error": str(e)}), 500
 
 # [UPDATE] 修改紀錄 (例如打錯容量)
-@admin_bp.route('/health/alcohol/<int:log_id>', methods=['PUT'])
+@admin_bp.route('/health/alcohol/<int:log_id>', methods=['PUT', 'DELETE'])
 @token_required
-def update_log(log_id):
+def manage_alcohol_log(current_admin, log_id):
+    # 尋找該筆紀錄
     log = AlcoholLogs.query.get_or_404(log_id)
-    data = request.json
-    log.volume_ml = data.get('volume_ml', log.volume_ml)
-    log.abv_percent = data.get('abv_percent', log.abv_percent)
-    log.alcohol_grams = float(log.volume_ml) * (float(log.abv_percent) / 100) * 0.8
-    db.session.commit()
-    return jsonify({"message": "更新成功"})
 
-# [DELETE] 刪除紀錄
-@admin_bp.route('/health/alcohol/<int:log_id>', methods=['DELETE'])
-@token_required
-def delete_log(log_id):
-    log = AlcoholLogs.query.get_or_404(log_id)
-    db.session.delete(log)
-    db.session.commit()
-    return jsonify({"message": "已刪除"})
+    if request.method == 'DELETE':
+        try:
+            db.session.delete(log)
+            db.session.commit()
+            return jsonify({"success": True, "message": "紀錄已刪除"}), 200
+        except Exception as e:
+            db.session.rollback()
+            return jsonify({"success": False, "error": str(e)}), 500
 
+    if request.method == 'PUT':
+        data = request.get_json()
+        try:
+            log.drink_name = data.get('drink_name', log.drink_name)
+            log.volume_ml = data.get('volume_ml', log.volume_ml)
+            log.abv_percent = data.get('abv_percent', log.abv_percent)
+            
+            # 重新計算酒精克數 (公式: ml * abv% * 0.8)
+            log.grams = float(log.volume_ml) * (float(log.abv_percent) / 100) * 0.8
+            
+            db.session.commit()
+            return jsonify({"success": True, "message": "紀錄已更新"}), 200
+        except Exception as e:
+            db.session.rollback()
+            return jsonify({"success": False, "error": str(e)}), 500
 
 
 @admin_bp.route('/health/mood', methods=['POST'])

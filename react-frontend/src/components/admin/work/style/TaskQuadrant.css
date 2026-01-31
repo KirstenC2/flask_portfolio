@@ -1,20 +1,4 @@
-:root {
-  --p1-color: #edc1c1;
-  --p1-bg: rgba(255, 107, 107, 0.1);
-  --p2-color: #9dd8c0;
-  --p2-bg: rgba(81, 207, 102, 0.1);
-  --p3-color: #c0dbf1;
-  --p3-bg: rgba(51, 154, 240, 0.1);
-  --p4-color: #868e96;
-  --p4-bg: rgba(134, 142, 150, 0.1);
-  
-  --bg-color: #f8f9fa;
-  --card-bg: #ffffff;
-  --text-primary: #212529;
-  --text-secondary: #868e96;
-  --shadow: 0 8px 30px rgba(0, 0, 0, 0.08);
-  --radius: 12px;
-}
+
 
 body {
   background-color: var(--bg-color);

@@ -1,5 +1,7 @@
 import React, { useEffect, useState, useMemo } from 'react';
 import '../styles/Healthmanager.css';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faCheck, faTimes, faEdit, faTrash } from '@fortawesome/free-solid-svg-icons';
 
 const AlcoholManager = () => {
     const API_BASE_URL = 'http://localhost:5001/api/admin';
@@ -10,7 +12,7 @@ const AlcoholManager = () => {
     const [drinkType, setDrinkType] = useState('beer');
     const [volume, setVolume] = useState('');
     const [abv, setAbv] = useState('5');
-
+    const [editingId, setEditingId] = useState(null); // 追蹤正在編輯哪一筆紀錄
     const drinkPresets = {
         beer: { name: '啤酒', abv: 5 },
         wine: { name: '紅酒', abv: 12 },
@@ -49,17 +51,52 @@ const AlcoholManager = () => {
         fetchLogs(newMode);
     };
 
-    const handleAddLog = async () => {
-        if (!volume || !abv) return alert("請輸入飲用量與濃度");
+
+    const handleDelete = async (id) => {
+        if (!window.confirm("確定要刪除這筆飲酒紀錄嗎？")) return;
+        try {
+            const res = await fetch(`${API_BASE_URL}/health/alcohol/${id}`, {
+                method: 'DELETE',
+                headers: { 'Authorization': `Bearer ${getToken()}` }
+            });
+            if (res.ok) fetchLogs(viewMode);
+        } catch (err) { alert("刪除失敗"); }
+    };
+
+    // 進入編輯模式：將紀錄資料填回輸入框
+    const startEdit = (log) => {
+        setEditingId(log.id);
+        setDrinkType('custom'); // 編輯時通常切換到自定義
+        setVolume(log.volume);
+        setAbv(log.abv);
+        window.scrollTo({ top: 0, behavior: 'smooth' }); // 捲動到上方輸入區
+    };
+
+    const cancelEdit = () => {
+        setEditingId(null);
+        setVolume('');
+        setAbv('5');
+    };
+
+    // 送出（新增或更新）
+    const handleSave = async () => {
+        if (!volume || !abv) return alert("請輸入完整數據");
+
         const payload = {
-            drink_name: drinkPresets[drinkType].name,
+            drink_name: drinkType === 'custom' ? '自定義' : drinkPresets[drinkType].name,
             volume_ml: volume,
             abv_percent: abv
         };
 
-        const res = await fetch(`${API_BASE_URL}/health/alcohol`, {
-            method: 'POST',
-            headers: { 
+        const url = editingId
+            ? `${API_BASE_URL}/health/alcohol/${editingId}`
+            : `${API_BASE_URL}/health/alcohol`;
+
+        const method = editingId ? 'PUT' : 'POST';
+
+        const res = await fetch(url, {
+            method: method,
+            headers: {
                 'Content-Type': 'application/json',
                 'Authorization': `Bearer ${getToken()}`
             },
@@ -67,8 +104,8 @@ const AlcoholManager = () => {
         });
 
         if (res.ok) {
-            setVolume('');
-            fetchLogs(viewMode); // 保持在目前的檢視模式
+            cancelEdit();
+            fetchLogs(viewMode);
         }
     };
 
@@ -95,9 +132,9 @@ const AlcoholManager = () => {
                 </div>
             </div>
 
-            {/* 新增紀錄區塊 */}
-            <div className="health-card input-section">
-                <h3>新增飲酒紀錄</h3>
+            {/* 修改：新增紀錄區塊（加入動態標題與取消按鈕） */}
+            <div className={`health-card input-section ${editingId ? 'editing-highlight' : ''}`}>
+                <h3>{editingId ? '修改紀錄' : '新增飲酒紀錄'}</h3>
                 <div className="input-grid">
                     <select value={drinkType} onChange={(e) => {
                         setDrinkType(e.target.value);
@@ -109,7 +146,17 @@ const AlcoholManager = () => {
                     </select>
                     <input type="number" placeholder="ml" value={volume} onChange={(e) => setVolume(e.target.value)} />
                     <input type="number" placeholder="%" value={abv} onChange={(e) => setAbv(e.target.value)} />
-                    <button className="add-log-btn" onClick={handleAddLog}>紀錄</button>
+
+                    <div className="action-btns">
+                        <button className="add-log-btn" onClick={handleSave}>
+                            {editingId ? <FontAwesomeIcon icon={faCheck} /> : '紀錄'}
+                        </button>
+                        {editingId && (
+                            <button className="cancel-btn" onClick={cancelEdit}>
+                                <FontAwesomeIcon icon={faTimes} />
+                            </button>
+                        )}
+                    </div>
                 </div>
             </div>
 
@@ -117,8 +164,8 @@ const AlcoholManager = () => {
             <div className="health-card list-section">
                 <div className="list-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px' }}>
                     <h3>{viewMode === 'daily' ? '今日' : '本月'}紀錄清單</h3>
-                    <select 
-                        value={viewMode} 
+                    <select
+                        value={viewMode}
                         onChange={handleModeChange}
                         style={{ padding: '5px 10px', borderRadius: '5px', border: '1px solid #ddd' }}
                     >
@@ -130,10 +177,24 @@ const AlcoholManager = () => {
                 <div className="log-list">
                     {logs.length > 0 ? logs.map(log => (
                         <div key={log.id} className="log-item">
-                            <span className="time">{log.time}</span>
-                            <span className="type">{log.type}</span>
-                            <span className="detail">{log.volume}ml / {log.abv}%</span>
-                            <span className="grams">{log.grams}g</span>
+                            <div className="log-info">
+                                <span className="time">{log.time}</span>
+                                <span className="type">{log.type}</span>
+                                <span className="detail">{log.volume}ml / {log.abv}%</span>
+                            </div>
+                            <div className="log-stats">
+                                <span className="grams">{log.grams}g</span>
+
+                            </div>
+                            <div className="item-actions">
+                                <button onClick={() => startEdit(log)} className="btn-icon edit">
+                                    <FontAwesomeIcon icon={faEdit} />
+                                </button>
+                                <button onClick={() => handleDelete(log.id)} className="btn-icon delete">
+                                    <FontAwesomeIcon icon={faTrash} />
+                                </button>
+                            </div>
+
                         </div>
                     )) : <p className="empty">尚無紀錄</p>}
                 </div>

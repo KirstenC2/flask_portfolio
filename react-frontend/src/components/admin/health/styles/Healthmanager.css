@@ -2,61 +2,138 @@
     display: flex;
     flex-direction: column;
     gap: 20px;
-}
-
-.health-card {
-    background: white;
+    background-color: var(--health-bg);
     padding: 20px;
-    border-radius: 12px;
-    box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+    color: var(--health-text);
+    font-family: 'Segoe UI', system-ui, sans-serif;
 }
 
+/* 統計卡片：使用呼吸感漸層 */
 .summary {
     text-align: center;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    color: white;
-}
-
-.stats-display {
-    margin: 15px 0;
+    background: linear-gradient(135deg, #5ec2c2 0%, #4a90e2 100%);
+    color: rgba(1, 25, 109, 0.555);
+    border: none;
+    border-radius: 24px;
 }
 
 .big-number {
-    font-size: 3rem;
-    font-weight: bold;
+    font-size: 3.5rem;
+    font-weight: 800;
+    text-shadow: 0 2px 10px rgba(0,0,0,0.1);
 }
 
-.warning { color: #ff8787; font-weight: bold; }
-.safe { color: #b2f2bb; }
+/* 輸入區塊：專業整潔 */
+.health-card {
+    background: var(--health-card);
+    padding: 25px;
+    border-radius: 20px;
+    box-shadow: var(--health-shadow);
+    border: 1px solid var(--health-border);
+}
+
+
+
+.input-grid input, 
+.input-grid select {
+    background-color: #f8fcfc;
+    border: 1.5px solid var(--health-border);
+    border-radius: 12px;
+    padding: 12px;
+    color: var(--health-text);
+    transition: all 0.2s ease;
+}
+
+.input-grid input:focus {
+    border-color: var(--health-primary);
+    background-color: white;
+    box-shadow: 0 0 0 4px rgba(94, 194, 194, 0.15);
+}
 
 .input-grid {
     display: flex;
-    gap: 10px;
-    margin-top: 10px;
+    align-items: center; /* 確保所有元件垂直居中對齊 */
+    gap: 12px;           /* 元件之間的間距 */
+    width: 100%;
 }
 
-.input-grid input, .input-grid select {
-    padding: 10px;
-    border: 1px solid #dee2e6;
-    border-radius: 6px;
-    flex: 1;
+.input-grid select {
+    flex: 1.5;           /* 下拉選單稍微寬一點點 */
+    min-width: 100px;
 }
 
+.input-grid input {
+    flex: 1;             /* 數字輸入框等寬 */
+    min-width: 70px;     /* 防止縮小到看不見 */
+    text-align: center;
+}
+
+/* 針對行動裝置或小螢幕的處理：如果太擠才換行 */
+@media (max-width: 600px) {
+    .input-grid {
+        flex-wrap: wrap;
+    }
+    .add-log-btn {
+        width: 100%;    /* 手機版按鈕撐滿一行 */
+        padding: 12px;
+    }
+}
+
+/* 確保按鈕高度與輸入框一致 */
 .add-log-btn {
-    background: #4c6ef5;
+    height: 46px;       /* 根據你的 padding 12px 調整的高度 */
+    background: var(--health-primary);
     color: white;
     border: none;
-    padding: 0 20px;
-    border-radius: 6px;
+    padding: 0 25px;
+    border-radius: 12px;
+    font-weight: 700;
     cursor: pointer;
+    white-space: nowrap; /* 防止按鈕文字換行 */
+    transition: all 0.2s ease;
 }
 
+/* 取消編輯按鈕的間距修正 */
+.action-btns {
+    display: flex;
+    gap: 8px;
+    height: 46px;
+}
+
+/* 紀錄清單項目 */
 .log-item {
     display: flex;
     justify-content: space-between;
-    padding: 12px 0;
-    border-bottom: 1px solid #f1f3f5;
+    align-items: center;
+    padding: 18px;
+    background: white;
+    border-radius: 16px;
+    margin-bottom: 12px;
+    border-left: 5px solid var(--health-primary); /* 左側重點線 */
+    box-shadow: 0 2px 8px rgba(0,0,0,0.02);
 }
 
-.log-item .time { color: #868e96; font-size: 0.9rem; }
-.log-item .grams { font-weight: bold; color: #4c6ef5; }
+.type {
+    font-weight: 700;
+    color: var(--health-accent);
+}
+
+.grams {
+    background: var(--health-secondary);
+    color: var(--health-primary);
+    padding: 5px 15px;
+    border-radius: 50px;
+    font-weight: 700;
+}
+
+.item-actions {
+    display: flex;
+    gap: 8px;
+}
+ 
+
+.btn-icon.edit { color: var(--health-primary); }
+.btn-icon.delete { color: #ec7063; }
+
+/* 警告色調 */
+.warning { color: var(--warn-orange); }

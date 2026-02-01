@@ -56,27 +56,27 @@ def create_expense_category(current_admin):
 # Expenses CRUD
 # ----------------------
 
-@admin_bp.route('/expenses', methods=['GET', 'OPTIONS'])
+@admin_bp.route('/expenses', methods=['GET'])
 @token_required
-def get_admin_expenses(current_admin):
-    try:
-        # 從 URL 參數獲取年份 (例如: /api/admin/expenses?year=2026)
-        year_param = request.args.get('year', type=int)
-
-        query = Expense.query
-
-        # 如果有傳入年份，則進行過濾
-        if year_param:
-            query = query.filter(extract('year', Expense.expense_date) == year_param)
-
-        # 按照日期排序（最新的在前）
-        expenses = query.order_by(Expense.expense_date.desc()).all()
+def get_expenses(current_admin):
+    # 獲取參數
+    year = request.args.get('year', type=int)
+    month = request.args.get('month', type=int)
+    
+    query = Expense.query
+    
+    # 如果有傳入年月，則過濾
+    if year and month:
+        # 假設你的日期欄位是 expense_date
+        query = query.filter(
+            extract('year', Expense.expense_date) == year,
+            extract('month', Expense.expense_date) == month
+        )
+    
+    expenses = query.order_by(Expense.expense_date.desc()).all()
         
-        return jsonify([_expense_to_dict(e) for e in expenses])
-    except Exception as e:
-        print(f"Error fetching expenses: {str(e)}")
-        return jsonify({'message': '獲取支出列表失敗', 'error': str(e)}), 500
-
+    return jsonify([_expense_to_dict(e) for e in expenses])
+   
 @admin_bp.route('/expenses', methods=['POST', 'OPTIONS'])
 @token_required
 def create_admin_expense(current_admin):

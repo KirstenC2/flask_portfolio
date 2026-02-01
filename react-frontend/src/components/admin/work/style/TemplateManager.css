@@ -1,0 +1,45 @@
+
+/* 側邊欄刪除按鈕 */
+.item-actions {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.btn-icon-delete {
+    background: transparent;
+    border: none;
+    color: #ff8787;
+    cursor: pointer;
+    opacity: 0;
+    transition: opacity 0.2s;
+}
+
+.template-item:hover .btn-icon-delete {
+    opacity: 1;
+}
+
+/* 編輯區輸入框強化 */
+.step-inputs input {
+    width: 100%;
+    margin-bottom: 5px;
+    border: 1px solid #e0e0e0;
+    padding: 10px;
+    border-radius: 8px;
+    font-size: 0.9rem;
+}
+
+.input-title { font-weight: bold; border-color: var(--health-border) !important; }
+.input-prompt { color: #666; font-style: italic; }
+
+/* 載入中狀態 */
+.loading-spinner {
+    text-align: center;
+    padding: 20px;
+    color: var(--health-primary);
+}
+
+.btn-save-full:disabled {
+    background: #ccc;
+    cursor: not-allowed;
+}

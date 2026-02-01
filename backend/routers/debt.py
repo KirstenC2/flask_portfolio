@@ -4,6 +4,7 @@ from flask_cors import CORS
 from models import db, DebtRecord, PaymentLog
 from decimal import Decimal
 from datetime import datetime
+from sqlalchemy import func
 
 debt_bp = Blueprint('debt', __name__)
 

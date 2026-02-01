@@ -197,4 +197,3 @@ class Resume(db.Model):
     file_name = db.Column(db.String(255), nullable=False) # 存儲在 MinIO 的 unique_filename
     is_active = db.Column(db.Boolean, default=False) # 是否為當前網站下載使用的版本
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
-

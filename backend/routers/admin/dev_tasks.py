@@ -159,3 +159,44 @@ def delete_feature(current_admin, feature_id):
     db.session.commit()
     
     return jsonify({"message": "Feature deleted successfully"})
+
+@admin_bp.route('/features/<int:feature_id>', methods=['PATCH', 'OPTIONS'])
+@token_required
+def update_feature(current_admin, feature_id):
+    # 1. 查找目標 Feature，若不存在回傳 404
+    feature = DevFeature.query.get_or_404(feature_id)
+    
+    # 處理 OPTIONS 請求（如果跨域設定需要）
+    if request.method == 'OPTIONS':
+        return '', 204
+        
+    data = request.get_json()
+    if not data:
+        return jsonify({"message": "No data provided"}), 400
+
+    try:
+        # 2. 動態更新欄位 (Partial Update)
+        # 只針對傳入的 Key 進行更新，沒傳的不動
+        if 'title' in data:
+            if not data['title'].strip():
+                return jsonify({"message": "Title cannot be empty"}), 400
+            feature.title = data['title']
+            
+        if 'description' in data:
+            feature.description = data['description']
+        
+        # 3. 提交變更到資料庫
+        db.session.commit()
+        
+        return jsonify({
+            "message": "Feature updated successfully",
+            "feature": {
+                "id": feature.id,
+                "title": feature.title,
+                "description": feature.description
+            }
+        }), 200
+
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"message": "Update failed", "error": str(e)}), 500

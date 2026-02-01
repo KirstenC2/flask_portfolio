@@ -1,31 +1,51 @@
 :root {
-    --health-bg: #f0f7f9;       /* 極淺藍底，清爽感 */
-    --health-card: #ffffff;     /* 卡片純白 */
-    --health-primary: #5ec2c2;  /* 薄荷綠 (主色，代表健康與平衡) */
-    --health-secondary: #e0f2f1;/* 淺薄荷綠 (背景輔助) */
-    --health-accent: #4a90e2;   /* 溫和藍 (代表數據與專業) */
-    --health-text: #2c3e50;     /* 深藍灰 (文字，比咖啡色更清晰) */
-    --health-helper: #7f8c8d;   /* 灰文字 */
-    --health-border: #d1e8e8;   /* 淺綠邊框 */
-    --health-shadow: 0 10px 25px rgba(94, 194, 194, 0.08);
-    --warn-orange: #ff9f43;     /* 警告用橘色 (比紅色溫和) */
+  --health-bg: #f0f7f9;
+  /* 極淺藍底，清爽感 */
+  --health-card: #ffffff;
+  /* 卡片純白 */
+  --health-primary: #5ec2c2;
+  /* 薄荷綠 (主色，代表健康與平衡) */
+  --health-secondary: #e0f2f1;
+  /* 淺薄荷綠 (背景輔助) */
+  --health-accent: #4a90e2;
+  /* 溫和藍 (代表數據與專業) */
+  --health-text: #2c3e50;
+  /* 深藍灰 (文字，比咖啡色更清晰) */
+  --health-helper: #7f8c8d;
+  /* 灰文字 */
+  --health-border: #d1e8e8;
+  /* 淺綠邊框 */
+  --health-shadow: 0 10px 25px rgba(94, 194, 194, 0.08);
+  --warn-orange: #ff9f43;
+  /* 警告用橘色 (比紅色溫和) */
 
-    --p1-color: #edc1c1;
-    --p1-bg: rgba(255, 107, 107, 0.1);
-    --p2-color: #9dd8c0;
-    --p2-bg: rgba(81, 207, 102, 0.1);
-    --p3-color: #c0dbf1;
-    --p3-bg: rgba(51, 154, 240, 0.1);
-    --p4-color: #868e96;
-    --p4-bg: rgba(134, 142, 150, 0.1);
-    
-    --bg-color: #f8f9fa;
-    --card-bg: #ffffff;
-    --text-primary: #212529;
-    --text-secondary: #868e96;
-    --shadow: 0 8px 30px rgba(0, 0, 0, 0.08);
-    --radius: 12px;
+  --p1-color: #edc1c1;
+  --p1-bg: rgba(255, 107, 107, 0.1);
+  --p2-color: #9dd8c0;
+  --p2-bg: rgba(81, 207, 102, 0.1);
+  --p3-color: #c0dbf1;
+  --p3-bg: rgba(51, 154, 240, 0.1);
+  --p4-color: #868e96;
+  --p4-bg: rgba(134, 142, 150, 0.1);
+
+  --bg-color: #f8f9fa;
+  --card-bg: #ffffff;
+  --text-primary: #212529;
+  --text-secondary: #868e96;
+  --shadow: 0 8px 30px rgba(0, 0, 0, 0.08);
+  --radius: 12px;
+
+  --sidebar-width: 260px;
+  --primary-color: #5ec2c2;
+  --primary-hover: #4ba8a8;
+  --bg-subtle: #f8fafc;
+  --text-main: #334155;
+  --text-muted: #64748b;
+  --glass-bg: rgba(255, 255, 255, 0.95);
+  --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.05);
 }
+
+
 .form-group {
   display: flex;
   flex-direction: column;
@@ -56,7 +76,8 @@
   font-weight: 500;
 }
 
-.form-group input, .form-group textarea {
+.form-group input,
+.form-group textarea {
   padding: 0.8rem;
   border: 1px solid #ddd;
   border-radius: 4px;
@@ -64,7 +85,8 @@
   font-family: inherit;
 }
 
-.form-group input:focus, .form-group textarea:focus {
+.form-group input:focus,
+.form-group textarea:focus {
   outline: none;
   border-color: #3498db;
   box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.1);
@@ -96,7 +118,8 @@
 
 
 
-.edit-btn, .delete-btn {
+/* .edit-btn,
+.delete-btn {
   display: flex;
   align-items: center;
   justify-content: center;
@@ -106,10 +129,11 @@
   border-radius: 4px;
   cursor: pointer;
   font-size: 0.9rem;
-}
+} */
 
 .edit-btn {
-  background-color: #007bff;
+  /* background-color: #007bff; */
+  background-color: var(--primary-color);
   color: white;
 }
 
@@ -118,7 +142,9 @@
   color: white;
 }
 
-.save-btn, .cancel-btn, .add-btn {
+.save-btn,
+.cancel-btn,
+.add-btn {
   padding: 0.7rem 1.5rem;
   border: none;
   border-radius: 4px;
@@ -172,14 +198,18 @@
   background: white;
   padding: 24px;
   border-radius: 12px;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  
+
   /* --- Added for Scrolling --- */
-  max-height: 80vh;      /* Keep this */
-  overflow-y: auto;      /* Enable vertical scroll */
-  display: flex;         /* Use flex to manage inner content */
-  flex-direction: column;/* Stack children vertically */
+  max-height: 80vh;
+  /* Keep this */
+  overflow-y: auto;
+  /* Enable vertical scroll */
+  display: flex;
+  /* Use flex to manage inner content */
+  flex-direction: column;
+  /* Stack children vertically */
 }
 
 /* Optional: Make the scrollbar look "Prettier" for your White-based theme */
@@ -192,7 +222,8 @@
 }
 
 .list-section::-webkit-scrollbar-thumb {
-  background: #e2e8f0; /* Soft gray */
+  background: #e2e8f0;
+  /* Soft gray */
   border-radius: 10px;
 }
 
@@ -221,164 +252,180 @@
 
 /* Container Wrapper */
 .calendar-card {
-    background: #ffffff;
-    border-radius: 24px;
-    padding: 30px;
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.04);
-    border: 1px solid #f1f5f9;
-    max-width: 400px; /* Optional: adjust based on your layout */
+  background: #ffffff;
+  border-radius: 24px;
+  padding: 30px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.04);
+  border: 1px solid #f1f5f9;
+  max-width: 400px;
+  /* Optional: adjust based on your layout */
 }
 
 /* Remove those heavy black borders from the library defaults */
-.react-calendar, 
+.react-calendar,
 .react-calendar__tile,
 .react-calendar__navigation button {
-    border: none !important;
-    outline: none !important;
+  border: none !important;
+  outline: none !important;
 }
 
 /* Header Navigation */
 .react-calendar__navigation {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    margin-bottom: 25px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 25px;
 }
 
 .react-calendar__navigation__label {
-    font-weight: 800;
-    font-size: 1.2rem;
-    color: #1e293b;
-    order: 1; /* Center the month name */
+  font-weight: 800;
+  font-size: 1.2rem;
+  color: #1e293b;
+  order: 1;
+  /* Center the month name */
 }
 
 .react-calendar__navigation__prev-button,
 .react-calendar__navigation__next-button {
-    background: #f8fafc !important;
-    border-radius: 12px !important;
-    width: 40px;
-    height: 40px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: #6366f1 !important;
-    font-size: 1.2rem;
-    transition: all 0.2s;
+  background: #f8fafc !important;
+  border-radius: 12px !important;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #6366f1 !important;
+  font-size: 1.2rem;
+  transition: all 0.2s;
 }
 
 .react-calendar__navigation__prev-button:hover,
 .react-calendar__navigation__next-button:hover {
-    background: #6366f1 !important;
-    color: white !important;
+  background: #6366f1 !important;
+  color: white !important;
 }
 
 /* Weekday Labels (M T W...) */
 .react-calendar__month-view__weekdays {
-    text-align: center;
-    font-weight: 700;
-    font-size: 0.75rem;
-    color: #94a3b8;
-    text-transform: uppercase;
-    margin-bottom: 15px;
+  text-align: center;
+  font-weight: 700;
+  font-size: 0.75rem;
+  color: #94a3b8;
+  text-transform: uppercase;
+  margin-bottom: 15px;
 }
 
 .react-calendar__month-view__weekdays__weekday abbr {
-    text-decoration: none;
+  text-decoration: none;
 }
 
 /* Day Tiles */
 .react-calendar__tile {
-    aspect-ratio: 1 / 1; /* Makes days perfectly square */
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    background: transparent;
-    font-weight: 500;
-    color: #475569;
-    border-radius: 16px !important; /* Rounded corners instead of ovals */
-    margin: 4px 0;
-    transition: all 0.2s;
+  aspect-ratio: 1 / 1;
+  /* Makes days perfectly square */
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  font-weight: 500;
+  color: #475569;
+  border-radius: 16px !important;
+  /* Rounded corners instead of ovals */
+  margin: 4px 0;
+  transition: all 0.2s;
 }
 
 .react-calendar__tile:hover {
-    background-color: #f1f5f9 !important;
-    color: #6366f1;
+  background-color: #f1f5f9 !important;
+  color: #6366f1;
 }
 
 /* Active/Selected Day */
 .react-calendar__tile--active {
-    background: #6366f1 !important;
-    color: white !important;
-    font-weight: 700;
-    box-shadow: 0 8px 16px rgba(99, 102, 241, 0.25);
+  background: #6366f1 !important;
+  color: white !important;
+  font-weight: 700;
+  box-shadow: 0 8px 16px rgba(99, 102, 241, 0.25);
 }
 
 /* Indicator Dot (The Red Mark) */
 .dot-container {
-    height: 6px;
-    display: flex;
-    justify-content: center;
-    margin-top: 4px;
+  height: 6px;
+  display: flex;
+  justify-content: center;
+  margin-top: 4px;
 }
 
 .status-dot-red {
-    width: 5px;
-    height: 5px;
-    background: #ef4444;
-    border-radius: 50%;
+  width: 5px;
+  height: 5px;
+  background: #ef4444;
+  border-radius: 50%;
 }
 
 .react-calendar__tile--active .status-dot-red {
-    background: #ffffff; /* Dot turns white on the selected day */
+  background: #ffffff;
+  /* Dot turns white on the selected day */
 }
 
 /* Neighboring Month Days (Grey out days not in current month) */
 .react-calendar__month-view__days__day--neighboringMonth {
-    color: #cbd5e1 !important;
+  color: #cbd5e1 !important;
 }
+
 /* Container for the X */
 .chalk-marker {
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    width: 100%;
-    height: 100%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    pointer-events: none;
-    z-index: 5; /* Ensure it stays above the number */
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+  z-index: 5;
+  /* Ensure it stays above the number */
 }
 
 .chalk-x {
-    /* Slightly increase size and reduce opacity to keep number readable */
-    font-size: 2rem;
-    opacity: 0.5; 
-    color: #ef4444;
-    line-height: 1;
+  /* Slightly increase size and reduce opacity to keep number readable */
+  font-size: 2rem;
+  opacity: 0.5;
+  color: #ef4444;
+  line-height: 1;
 }
 
 /* Make sure the number is still visible behind the X */
 .react-calendar__tile {
-    position: relative !important;
-    overflow: visible !important;
+  position: relative !important;
+  overflow: visible !important;
 }
 
 .react-calendar__tile abbr {
-    position: relative;
-    z-index: 2; /* Keeps number above the marker if you want, or 0 if you want X on top */
+  position: relative;
+  z-index: 2;
+  /* Keeps number above the marker if you want, or 0 if you want X on top */
 }
 
 /* Effect when the day is selected */
 .react-calendar__tile--active .chalk-x {
-    color: #ffffff; /* Turn white so it pops on the indigo background */
-    opacity: 0.9;
-    text-shadow: none;
+  color: #ffffff;
+  /* Turn white so it pops on the indigo background */
+  opacity: 0.9;
+  text-shadow: none;
 }
 
 @keyframes slideIn {
-  from { opacity: 0; transform: translateX(30px); }
-  to { opacity: 1; transform: translateX(0); }
+  from {
+    opacity: 0;
+    transform: translateX(30px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
 }

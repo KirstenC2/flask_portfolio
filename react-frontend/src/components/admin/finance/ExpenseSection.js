@@ -1,62 +1,119 @@
-import React, { useState } from 'react';
-import { History, DollarSign, Calendar, ChevronLeft, ChevronRight, BarChart3 } from 'lucide-react';
+import React, { useState, useEffect, useCallback } from 'react';
+import { History, DollarSign, BarChart3 } from 'lucide-react';
 import {
     BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip,
     ResponsiveContainer, Cell, LabelList
 } from 'recharts';
+import { Card, Table, Tag, Typography, DatePicker, Space, Row, Col, Spin } from 'antd';
+import dayjs from 'dayjs';
 import { StatRow } from './StatRow';
-import './ExpenseSection.css';
+import { financeApi } from '../../../services/financeApi';
+import './styles/ExpenseSection.css';
 import '../../../common/global.css';
+
+const { Text, Title } = Typography;
+
 const ExpenseSection = ({
-    expenses = [],
     categories = [],
-    stats = { monthly: [], daily: [] },
-    selectedYear,
-    setSelectedYear,
-    newExpense = { title: '', amount: '', category_id: '', expense_date: '' },
+    stats = { monthly: [] },
+    newExpense,
     setNewExpense,
     onCreate
 }) => {
-const [currentPage, setCurrentPage] = useState(1);
-    const itemsPerPage = 10;
+    // 1. 內部 State 管理
+    const [currentViewDate, setCurrentViewDate] = useState(dayjs());
+    const [expenses, setExpenses] = useState([]);
+    const [loading, setLoading] = useState(false);
 
-    // 二次防禦：確保 stats 結構完整
-    const safeStats = {
-        monthly: Array.isArray(stats?.monthly) ? stats.monthly : [],
-        daily: Array.isArray(stats?.daily) ? stats.daily : []
-    };
+    // 2. 獲取數據的邏輯 - 使用 useCallback 避免不必要的重渲染
+    const fetchMonthlyData = useCallback(async (date) => {
+        setLoading(true);
+        try {
+            const year = date.year();
+            const month = date.month() + 1;
+            // 呼叫 API：確保 financeApi.getExpenses 支援傳入 year, month
+            const response = await financeApi.getExpenses(year, month);
+            // 這裡根據你 API 回傳的格式調整，通常是 response.data 或 response
+            setExpenses(Array.isArray(response) ? response : response.data || []);
+        } catch (error) {
+            console.error("Failed to fetch expenses:", error);
+        } finally {
+            setLoading(false);
+        }
+    }, []);
 
-    const safeExpenses = Array.isArray(expenses) ? expenses : [];
-    const chartData = safeStats.monthly;
-    console.log(chartData);
-    // 取得在地月份標籤 (如: "2026-01")
-    const now = new Date();
-    const currentLabel = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+    // 3. 當日期改變或組件加載時觸發
+    useEffect(() => {
+        fetchMonthlyData(currentViewDate);
+    }, [currentViewDate, fetchMonthlyData]);
 
-    // 比對當月資料
-    const thisMonthData = chartData.find(item => item.month === currentLabel);
-    const currentMonthTotal = thisMonthData ? thisMonthData.total : 0;
+    // 4. 當外部新增成功後，需要提供一個方法讓外部觸發重新整理
+    // 在本例中，如果 onCreate 執行完畢，父組件應該要能通知這裡 refresh
+    // 但更簡單的做法是：讓 onCreate 成功後直接在父層透過某些方式觸發更新，
+    // 這裡我們假設 onCreate 完後會手動點擊或自動更新 viewDate
 
-    // 分頁邏輯
-    const totalPages = Math.ceil(safeExpenses.length / itemsPerPage);
-    const currentItems = safeExpenses.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
-
-    // 累積總支出
-    const totalExpense = safeExpenses.reduce((acc, e) => acc + (parseFloat(e.amount) || 0), 0);
-
-    const statItems = [
-        { icon: History, label: "項目總計", value: safeExpenses.length, unit: "筆", colorStyle: { background: '#fdf2f8', color: '#ec4899' } },
-        { icon: DollarSign, label: "累積支出", value: totalExpense, unit: "元", colorStyle: { background: '#fdf2f8', color: '#ec4899' } },
-        { icon: Calendar, label: "本月支出", value: currentMonthTotal, unit: "元", colorStyle: { background: '#fff7ed', color: '#ea580c' } }
+    // Table 欄位定義
+    const columns = [
+        {
+            title: '日期',
+            dataIndex: 'expense_date',
+            key: 'date',
+            width: 120,
+            render: (text) => <Text type="secondary">{text?.split('T')[0]}</Text>,
+            sorter: (a, b) => new Date(a.expense_date) - new Date(b.expense_date),
+        },
+        {
+            title: '分類',
+            dataIndex: 'category_name',
+            key: 'category',
+            width: 120,
+            render: (text) => <Tag color="pink">{text || '未分類'}</Tag>,
+        },
+        {
+            title: '項目名稱',
+            dataIndex: 'title',
+            key: 'title',
+            ellipsis: true,
+        },
+        {
+            title: '金額',
+            dataIndex: 'amount',
+            key: 'amount',
+            align: 'right',
+            width: 120,
+            render: (val) => (
+                <Text strong style={{ color: '#e11d48' }}>
+                    ${(parseFloat(val) || 0).toLocaleString()}
+                </Text>
+            ),
+        }
     ];
 
-    const currentYear = new Date().getFullYear();
-    const years = Array.from({ length: 5 }, (_, i) => currentYear - i);
+    const chartData = stats?.monthly || [];
 
     return (
         <section>
+            {/* Header 與 月份切換 */}
             <div className="expense-header-section">
-                <h1>日常支出紀錄</h1>
+                <Row justify="space-between" align="middle" style={{ marginBottom: '20px' }}>
+                    <Col>
+                        <Title level={2} style={{ margin: 0 }}>日常支出紀錄</Title>
+                    </Col>
+                    <Col>
+                        <Space align="center">
+                            <Text strong>檢視月份：</Text>
+                            <DatePicker
+                                picker="month"
+                                value={currentViewDate}
+                                onChange={(date) => date && setCurrentViewDate(date)}
+                                allowClear={false}
+                                inputReadOnly // 避免手機端跳出鍵盤
+                            />
+                        </Space>
+                    </Col>
+                </Row>
+
+                {/* 新增表單 (保留你原本的 CSS 結構，但建議未來也可改為 Antd Form) */}
                 <form onSubmit={onCreate} className="expense-form-inline">
                     <div className="form-row">
                         <select
@@ -93,116 +150,100 @@ const [currentPage, setCurrentPage] = useState(1);
                 </form>
             </div>
 
-            {safeExpenses.length > 0 && <StatRow items={statItems} />}
+            {/* 統計數值 - 根據目前抓到的 expenses 即時計算 */}
+            <Spin spinning={loading}>
+                <StatRow items={[
+                    {
+                        icon: History,
+                        label: `${currentViewDate.format('M')}月項目數`,
+                        value: expenses.length,
+                        unit: "筆",
+                        colorStyle: { background: '#fdf2f8', color: '#ec4899' }
+                    },
+                    {
+                        icon: DollarSign,
+                        label: `${currentViewDate.format('M')}月總金額`,
+                        value: expenses.reduce((acc, e) => acc + (parseFloat(e.amount) || 0), 0),
+                        unit: "元",
+                        colorStyle: { background: '#fdf2f8', color: '#ec4899' }
+                    }
+                ]} />
+            </Spin>
 
-            {/* 月份對比圖表 */}
-            <div className="chart-container" style={{ minHeight: '350px' }}>
-                <div className="chart-header">
-                    <BarChart3 size={18} />
-                    <h3>每月支出趨勢對比</h3>
-                    {/* 年份切換選單 */}
-                    <div className="year-filter">
-                        <select 
-                            value={selectedYear} 
-                            onChange={(e) => setSelectedYear(parseInt(e.target.value))}
-                            style={{
-                                padding: '4px 12px',
-                                borderRadius: '8px',
-                                border: '1px solid #e2e8f0',
-                                outline: 'none',
-                                cursor: 'pointer',
-                                fontSize: '14px',
-                                color: '#475569'
-                            }}
+            {/* 圖表 */}
+            {/* <Card title={<Space><BarChart3 size={18} /> 年度每月趨勢</Space>} style={{ marginBottom: '24px', borderRadius: '12px' }}> */}
+            {/* 圖表區塊 - 修正後的 CSS */}
+            <div className="chart-container" style={{
+                background: '#fff',
+                padding: '24px',
+                marginBottom: '24px',
+                borderRadius: '12px',
+                boxShadow: '0 2px 8px rgba(0,0,0,0.05)',
+                minHeight: '350px' // 確保加載時高度不會塌陷
+            }}>
+                <div className="chart-header" style={{ marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <BarChart3 size={18} style={{ color: '#ec4899' }} />
+                    <h3 style={{ margin: 0, fontSize: '16px', fontWeight: 600 }}>每月支出趨勢對比</h3>
+                </div>
+
+                <div style={{ width: '100%', height: 300 }}>
+                    <ResponsiveContainer width="100%" height="100%">
+                        <BarChart
+                            data={chartData}
+                            margin={{ top: 20, right: 10, left: 10, bottom: 0 }}
                         >
-                            {years.map(y => <option key={y} value={y}>{y} 年</option>)}
-                        </select>
-                    </div>
-                </div>
-                {chartData.length > 0 ? (
-                    <div style={{ width: '100%', height: 300 }}>
-                        <ResponsiveContainer width="100%" height="100%">
-                            <BarChart data={chartData} margin={{ top: 20, right: 30, left: 10, bottom: 5 }}>
-                                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
-                                <XAxis
-                                    dataKey="month"
-                                    axisLine={false}
-                                    tickLine={false}
-                                    tick={{ fill: '#64748b', fontSize: 12 }}
-                                />
-                                <YAxis hide domain={[0, 'auto']} />
-                                <Tooltip
-                                    cursor={{ fill: '#fdf2f8' }}
-                                    contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1)' }}
-                                />
-                                <Bar dataKey="total" radius={[6, 6, 0, 0]} barSize={40}>
-                                    {chartData.map((entry, index) => (
-                                        <Cell
-                                            key={`cell-${index}`}
-                                            fill={index === chartData.length - 1 ? '#ec4899' : '#fbcfe8'}
-                                        />
-                                    ))}
-                                    <LabelList
-                                        dataKey="total"
-                                        position="top"
-                                        formatter={(val) => `$${val.toLocaleString()}`}
-                                        style={{ fill: '#be185d', fontSize: 11, fontWeight: 600 }}
+                            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
+                            <XAxis
+                                dataKey="month"
+                                axisLine={false}
+                                tickLine={false}
+                                tick={{ fill: '#64748b', fontSize: 12 }}
+                                dy={10} // 微調標籤位移
+                            />
+                            <YAxis hide domain={[0, 'auto']} />
+                            <Tooltip
+                                cursor={{ fill: '#fdf2f8' }}
+                                contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1)' }}
+                            />
+                            <Bar dataKey="total" radius={[6, 6, 0, 0]} barSize={40}>
+                                {chartData.map((entry, index) => (
+                                    <Cell
+                                        key={`cell-${index}`}
+                                        fill={entry.month === currentViewDate.format('YYYY-MM') ? '#ec4899' : '#fbcfe8'}
                                     />
-                                </Bar>
-                            </BarChart>
-                        </ResponsiveContainer>
-                    </div>
-                ) : (
-                    <div className="chart-empty-state">
-                        <p>尚無月份統計資料，請新增支出以生成圖表。</p>
-                    </div>
-                )}
-            </div>
-
-            {/* 表格內容 */}
-            <div className="table-wrapper">
-                <table className="expense-table">
-                    <thead>
-                        <tr>
-                            <th>日期</th>
-                            <th>分類</th>
-                            <th>項目名稱</th>
-                            <th className="text-right">金額</th>
-                            <th className="text-center">備註</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {currentItems.map((exp) => (
-                            <tr key={exp.id}>
-                                <td className="text-muted">{exp.expense_date?.split('T')[0]}</td>
-                                <td>
-                                    <span className="status-tag" style={{ background: '#fce7f3', color: '#be185d', border: 'none' }}>
-                                        {exp.category_name || '未分類'}
-                                    </span>
-                                </td>
-                                <td className="col-title">{exp.title}</td>
-                                <td className="text-right" style={{ fontWeight: '600', color: '#e11d48' }}>
-                                    ${(parseFloat(exp.amount) || 0).toLocaleString()}
-                                </td>
-                                <td className="text-center text-muted" style={{ fontSize: '0.85rem' }}>{exp.note || '-'}</td>
-                            </tr>
-                        ))}
-                    </tbody>
-                </table>
-            </div>
-
-            {/* 分頁按鈕 */}
-            {totalPages > 1 && (
-                <div className="pagination-controls">
-                    <button onClick={() => setCurrentPage(p => Math.max(p - 1, 1))} disabled={currentPage === 1} className="pagination-btn">
-                        <ChevronLeft size={18} /> 上一頁
-                    </button>
-                    <span className="pagination-info">第 <strong>{currentPage}</strong> 頁，共 {totalPages} 頁</span>
-                    <button onClick={() => setCurrentPage(p => Math.min(p + 1, totalPages))} disabled={currentPage === totalPages} className="pagination-btn">
-                        下一頁 <ChevronRight size={18} />
-                    </button>
+                                ))}
+                                <LabelList
+                                    dataKey="total"
+                                    position="top"
+                                    formatter={(val) => `$${val.toLocaleString()}`}
+                                    style={{ fill: '#be185d', fontSize: 11, fontWeight: 600 }}
+                                />
+                            </Bar>
+                        </BarChart>
+                    </ResponsiveContainer>
                 </div>
-            )}
+            </div>
+
+            {/* 表格明細 */}
+            <Card
+                title={`${currentViewDate.format('YYYY年MM月')} 支出明細`}
+                size="small"
+                style={{
+                    borderRadius: '12px',
+                    boxShadow: '0 2px 8px rgba(0,0,0,0.05)',
+                    marginTop: '20px',
+                    height: '100%'
+                }}
+            >
+                <Table
+                    dataSource={expenses}
+                    columns={columns}
+                    rowKey="id"
+                    loading={loading}
+                    pagination={{ pageSize: 5, position: ['bottomCenter'] }}
+                    scroll={{ x: 'max-content' }}
+                />
+            </Card>
         </section>
     );
 };

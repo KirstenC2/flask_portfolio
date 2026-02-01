@@ -20,7 +20,7 @@ export const financeApi = {
     }),
 
     // 支出相關
-    getExpenses: (year) => fetch(`${API_BASE}/admin/expenses?year=${year}`, { headers: getHeaders() }).then(res => res.json()),
+    getExpenses: (year, month) => fetch(`${API_BASE}/admin/expenses?year=${year}&month=${month}`, { headers: getHeaders() }).then(res => res.json()),
     // 獲取月份與每日統計
     getExpenseStats: (year) => 
     fetch(`${API_BASE}/admin/expenses/stats?year=${year}`, { headers: getHeaders() }).then(res => res.json()),

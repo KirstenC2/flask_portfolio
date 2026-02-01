@@ -1,0 +1,212 @@
+.mckinsey-page {
+    background-color: var(--health-bg);
+    min-height: 100vh;
+    padding: 40px 20px;
+    font-family: 'Segoe UI', system-ui, sans-serif;
+    color: var(--health-text);
+}
+
+.mckinsey-header {
+    text-align: center;
+    margin-bottom: 40px;
+}
+
+.mckinsey-header h1 {
+    font-size: 2rem;
+    color: var(--health-accent);
+    margin-bottom: 10px;
+}
+
+/* 步驟導覽列 */
+.step-nav {
+    display: flex;
+    justify-content: space-between;
+    max-width: 900px;
+    margin: 0 auto 40px;
+    position: relative;
+}
+
+.step-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    flex: 1;
+    cursor: pointer;
+    z-index: 1;
+}
+
+.step-circle {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: white;
+    border: 2px solid var(--health-border);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    color: var(--health-helper);
+    transition: all 0.3s ease;
+}
+
+.step-item.active .step-circle {
+    background: var(--health-primary);
+    border-color: var(--health-primary);
+    color: white;
+    transform: scale(1.2);
+}
+
+.step-item.completed .step-circle {
+    background: var(--health-accent);
+    border-color: var(--health-accent);
+    color: white;
+}
+
+.step-label {
+    font-size: 0.8rem;
+    margin-top: 8px;
+    color: var(--health-helper);
+}
+
+/* 內容卡片 */
+.mckinsey-card {
+    background: white;
+    max-width: 900px;
+    margin: 0 auto;
+    border-radius: 24px;
+    padding: 40px;
+    box-shadow: var(--health-shadow);
+    border: 1px solid var(--health-border);
+}
+
+.card-header {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    margin-bottom: 25px;
+}
+
+.icon-wrap {
+    width: 60px;
+    height: 60px;
+    background: var(--health-secondary);
+    border-radius: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    color: var(--health-primary);
+}
+
+.step-number {
+    font-size: 0.9rem;
+    color: var(--health-primary);
+    font-weight: bold;
+    text-transform: uppercase;
+}
+
+.prompt-box {
+    background: #f8fcfc;
+    border-left: 4px solid var(--health-primary);
+    padding: 15px 20px;
+    border-radius: 0 12px 12px 0;
+    margin-bottom: 25px;
+}
+
+.mckinsey-textarea {
+    width: 100%;
+    border: 1.5px solid var(--health-border);
+    border-radius: 16px;
+    padding: 20px;
+    font-size: 1.05rem;
+    line-height: 1.6;
+    resize: none;
+    transition: all 0.2s ease;
+    background-color: #fbfdfd;
+}
+
+.mckinsey-textarea:focus {
+    outline: none;
+    border-color: var(--health-primary);
+    background-color: white;
+    box-shadow: 0 0 0 5px rgba(94, 194, 194, 0.1);
+}
+
+.card-footer {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 30px;
+}
+
+/* 按鈕樣式 */
+.btn-primary, .btn-secondary, .btn-success {
+    padding: 12px 25px;
+    border-radius: 12px;
+    font-weight: 700;
+    cursor: pointer;
+    border: none;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    transition: all 0.2s;
+}
+
+.btn-primary { background: var(--health-primary); color: white; }
+.btn-secondary { background: #eee; color: #666; }
+.btn-success { background: var(--health-accent); color: white; }
+
+.btn-primary:hover, .btn-success:hover {
+    transform: translateY(-2px);
+    filter: brightness(1.1);
+}
+
+/* 類別標籤樣式 */
+.cat-tag {
+    font-size: 0.7rem;
+    background: var(--health-secondary);
+    color: var(--health-primary);
+    padding: 2px 8px;
+    border-radius: 4px;
+    text-transform: uppercase;
+    font-weight: bold;
+}
+
+/* 總覽 Dashboard 樣式 */
+.dashboard-view {
+    display: flex;
+    flex-direction: column;
+    gap: 30px;
+}
+
+.stats-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+}
+
+.stat-card {
+    background: white;
+    padding: 30px;
+    border-radius: 20px;
+    text-align: center;
+    box-shadow: var(--health-shadow);
+    border: 1px solid var(--health-border);
+}
+
+.stat-card h3 { font-size: 2.5rem; color: var(--health-accent); margin: 10px 0; }
+.stat-card svg { font-size: 1.5rem; color: var(--health-primary); }
+
+.guide-content {
+    background: #fff;
+    padding: 30px;
+    border-radius: 20px;
+    border: 1px dashed var(--health-border);
+}
+
+.guide-content ul {
+    margin-top: 15px;
+    padding-left: 20px;
+    color: #666;
+}
+
+.guide-content li { margin-bottom: 10px; }

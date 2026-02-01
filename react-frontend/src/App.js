@@ -22,7 +22,7 @@ import AdminProjectDetail from './components/admin/work/components/AdminProjectD
 
 // Admin Components
 import LoginPage from './components/admin/auth/LoginPage';
-import Dashboard from './components/admin/dashboard/Dashboard';
+import Sidebar from './components/admin/sidebar/Sidebar';
 
 // Private Route component to protect admin routes
 const PrivateRoute = ({ children }) => {
@@ -45,7 +45,7 @@ function App() {
           path="/admin/dashboard" 
           element={
             <PrivateRoute>
-              <Dashboard />
+              <Sidebar />
             </PrivateRoute>
           } 
         />
@@ -53,7 +53,7 @@ function App() {
           path="/admin/*" 
           element={
             <PrivateRoute>
-              <Dashboard />
+              <Sidebar />
             </PrivateRoute>
           } 
         />

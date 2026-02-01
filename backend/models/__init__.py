@@ -6,3 +6,4 @@ from .models import Project, Skill, Experience, Education, Study, Message, Admin
 from .asset_models import MotorRecord
 from .tools import Diary, Post
 from .health_models import AlcoholLogs
+from .template_models import ThinkingTemplate, TemplateStep, ThinkingProject, ProjectContent

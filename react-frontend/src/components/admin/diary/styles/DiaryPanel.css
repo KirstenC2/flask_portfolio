@@ -102,33 +102,6 @@
     margin-top: 30px;
 }
 
-.btn-primary {
-    background: var(--diary-primary);
-    color: white;
-    border: none;
-    padding: 10px 24px;
-    border-radius: 10px;
-    font-weight: 600;
-    transition: all 0.3s;
-}
-
-.btn-primary:hover {
-    background: var(--diary-accent);
-    transform: translateY(-2px);
-    box-shadow: 0 5px 15px rgba(212, 163, 115, 0.3);
-}
-
-.btn-danger {
-    background: transparent;
-    color: #c97c72;
-    border: 1px solid #f9e2df;
-    padding: 10px 24px;
-    border-radius: 10px;
-}
-
-.btn-danger:hover {
-    background: #fdf2f0;
-}
 
 .mood-form label {
     display: block;

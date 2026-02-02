@@ -54,37 +54,37 @@ const MotorManagementPanel = () => {
     };
 
     const calculateRemainingDays = () => {
-    // 1. 安全檢查：如果 records 還沒抓到或長度為 0，回傳 null
-    if (!records || records.length === 0 || !records[0].maintenance_date) {
-        return null;
-    }
+        // 1. 安全檢查：如果 records 還沒抓到或長度為 0，回傳 null
+        if (!records || records.length === 0 || !records[0].maintenance_date) {
+            return null;
+        }
 
-    try {
-        // 2. 取得最近一次保養日期
-        const lastDate = new Date(records[0].maintenance_date);
-        
-        // 檢查日期是否有效
-        if (isNaN(lastDate.getTime())) return null;
+        try {
+            // 2. 取得最近一次保養日期
+            const lastDate = new Date(records[0].maintenance_date);
 
-        // 3. 推算 3 個月後
-        const nextMaintenanceDate = new Date(lastDate);
-        nextMaintenanceDate.setMonth(nextMaintenanceDate.getMonth() + 3); // 修正這裡：不要寫 nextDate.setMonth(nextDate.setMonth() + 3)
+            // 檢查日期是否有效
+            if (isNaN(lastDate.getTime())) return null;
 
-        // 4. 取得今天並重設時間為 00:00:00 確保計算天數精確
-        const today = new Date();
-        today.setHours(0, 0, 0, 0);
-        nextMaintenanceDate.setHours(0, 0, 0, 0);
+            // 3. 推算 3 個月後
+            const nextMaintenanceDate = new Date(lastDate);
+            nextMaintenanceDate.setMonth(nextMaintenanceDate.getMonth() + 3); // 修正這裡：不要寫 nextDate.setMonth(nextDate.setMonth() + 3)
 
-        // 5. 計算天數差
-        const diffTime = nextMaintenanceDate - today;
-        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+            // 4. 取得今天並重設時間為 00:00:00 確保計算天數精確
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            nextMaintenanceDate.setHours(0, 0, 0, 0);
 
-        return diffDays;
-    } catch (error) {
-        console.error("計算天數出錯:", error);
-        return null;
-    }
-};
+            // 5. 計算天數差
+            const diffTime = nextMaintenanceDate - today;
+            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+            return diffDays;
+        } catch (error) {
+            console.error("計算天數出錯:", error);
+            return null;
+        }
+    };
 
     const remainingDays = calculateRemainingDays();
 
@@ -117,31 +117,30 @@ const MotorManagementPanel = () => {
                     <button type="submit" className="btn-add-main">新增紀錄</button>
                 </form>
             </div>
-            {records.length > 0 && (
-                <div className="status-grid">
-                    {/* 日期提醒 */}
-                    <div className={`status-card ${status.shouldChange ? 'status-danger' : 'status-safe'}`}>
-                        <div className="status-label">上次保養至今</div>
-                        <div className="status-value">{status.days} 天</div>
-                        <div className="status-hint">
-                            {status.shouldChange ? "⚠️ 已超過 3 個月，建議更換" : "✅ 狀態良好"}
-                        </div>
-                    </div>
-                    <div className={`stat-item-card ${isOverdue ? 'border-danger' : ''}`}>
-                        <div className="stat-content">
-                            <div className="status-label">預計下次保養</div>
-                            <div className="stat-value">
-                            {remainingDays} 天
+            <div className="motor-content">
+                <img src="/motor.png" alt="my motor" />
+                {records.length > 0 && (
+                    <div className="status-grid">
+                        {/* 日期提醒 */}
+                        <div className={`status-card ${status.shouldChange ? 'status-danger' : 'status-safe'}`}>
+                            <div className="status-label">上次保養至今</div>
+                            <div className="status-value">{status.days} 天</div>
+                            <div className="status-hint">
+                                {status.shouldChange ? "⚠️ 已超過 3 個月，建議更換" : "✅ 狀態良好"}
                             </div>
-                            <p className={`stat-value ${isOverdue ? 'text-red' : ''}`}>
-                                日期： {nextMaintenance}
-                            </p>
-                            {isOverdue && <span className="error-text">⚠️ 已過期</span>}
+                        </div>
+                        <div className={`stat-item-card ${isOverdue ? 'border-danger' : 'status-safe'}`}>
+                            <div className="status-label">預計下次保養</div>
+                            <div className="status-value">{remainingDays} 天</div>
+                            <div className={`status-hint ${isOverdue ? 'text-red' : ''}`}>
+                                日期：{nextMaintenance}
+                                {isOverdue && <span className="error-text">⚠️ 已過期</span>}
+                            </div>
                         </div>
                     </div>
-                </div>
 
-            )}
+                )}
+            </div>
 
             <div className="table-wrapper">
                 <table className="motor-table">

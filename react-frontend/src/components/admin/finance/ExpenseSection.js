@@ -93,12 +93,11 @@ const ExpenseSection = ({
 
     return (
         <section>
+            <Title level={2} style={{ margin: 0, padding: '20px 0px 20px 0px' }}>日常支出紀錄</Title>
             {/* Header 與 月份切換 */}
             <div className="expense-header-section">
+                
                 <Row justify="space-between" align="middle" style={{ marginBottom: '20px' }}>
-                    <Col>
-                        <Title level={2} style={{ margin: 0 }}>日常支出紀錄</Title>
-                    </Col>
                     <Col>
                         <Space align="center">
                             <Text strong>檢視月份：</Text>
@@ -113,7 +112,7 @@ const ExpenseSection = ({
                     </Col>
                 </Row>
 
-                {/* 新增表單 (保留你原本的 CSS 結構，但建議未來也可改為 Antd Form) */}
+                {/* 新增表單 */}
                 <form onSubmit={onCreate} className="expense-form-inline">
                     <div className="form-row">
                         <select

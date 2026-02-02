@@ -18,7 +18,6 @@ import ContactPage from './components/contact/ContactPage';
 import ExperiencePage from './components/experience/ExperiencePage';
 import BlogSplitView from './components/blog/BlogSplitView';
 import BlogEditor from './components/blog/BlogEditor';
-import AdminProjectDetail from './components/admin/work/components/AdminProjectDetail';
 
 // Admin Components
 import LoginPage from './components/admin/auth/LoginPage';

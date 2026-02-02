@@ -26,6 +26,10 @@ class ThinkingProject(db.Model):
     __tablename__ = 'thinking_projects'
     id = db.Column(db.Integer, primary_key=True)
     template_id = db.Column(db.Integer, db.ForeignKey('thinking_templates.id'))
+
+    ref_id = db.Column(db.Integer, nullable=True) 
+    ref_type = db.Column(db.String(50), nullable=True) # 例如 'finance', 'career', 'health'
+
     title = db.Column(db.String(255), nullable=False) # 使用者自訂專案標題
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     
@@ -37,5 +41,5 @@ class ProjectContent(db.Model):
     __tablename__ = 'project_contents'
     id = db.Column(db.Integer, primary_key=True)
     project_id = db.Column(db.Integer, db.ForeignKey('thinking_projects.id'))
-    step_order = db.Column(db.Integer) # 對應 TemplateStep 的 order
-    content = db.Column(db.Text)       # 使用者寫的答案
+    step_id = db.Column(db.Integer, db.ForeignKey('template_steps.id'))
+    content = db.Column(db.Text)       # 使用者寫的答案 

@@ -7,7 +7,7 @@ import {
 import { useTaskManager } from '../../../../hooks/useTaskManager'; // 引入自定義 Hook
 import '../../../../common/filterBar.css';
 import '../../../../common/global.css';
-const TaskManager = ({ feature_id, tasks, onUpdate }) => {
+const TaskBoard = ({ feature_id, tasks, onUpdate }) => {
     // 使用 Hook 取得所有邏輯與狀態
     const { tasks: tData, params, actions } = useTaskManager(feature_id, tasks, onUpdate);
 
@@ -153,4 +153,4 @@ const TaskManager = ({ feature_id, tasks, onUpdate }) => {
     );
 };
 
-export default TaskManager;
+export default TaskBoard;

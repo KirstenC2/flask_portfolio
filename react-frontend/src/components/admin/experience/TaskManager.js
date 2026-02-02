@@ -5,7 +5,7 @@ import {
   faCheck, faTimes, faChevronLeft, faChevronRight, faFilter 
 } from '@fortawesome/free-solid-svg-icons';
 
-const TaskManager = ({ experienceId, tasks, onRefresh }) => {
+const TaskBoard = ({ experienceId, tasks, onRefresh }) => {
   const [isEditing, setIsEditing] = useState(false);
   const [showAddRow, setShowAddRow] = useState(false);
   const [newTask, setNewTask] = useState({ category: 'General', version_name: 'Standard', content: '' });
@@ -182,4 +182,4 @@ const TaskManager = ({ experienceId, tasks, onRefresh }) => {
   );
 };
 
-export default TaskManager;
+export default TaskBoard;

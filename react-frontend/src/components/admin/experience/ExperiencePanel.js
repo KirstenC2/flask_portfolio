@@ -197,7 +197,7 @@ const ExperiencePanel = () => {
               </div>
 
               {/* 詳情模式下也顯示管理表格，方便快速切換 Active */}
-              <TaskManager 
+              <TaskManager
                 experienceId={currentExperience.id} 
                 tasks={currentExperience.tasks || []} 
                 onRefresh={fetchExperience} 

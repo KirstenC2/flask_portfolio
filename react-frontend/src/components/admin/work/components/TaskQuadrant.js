@@ -211,11 +211,6 @@ const TaskQuadrant = () => {
 
   return (
     <div className="app">
-      <header className="header">
-        <h1>四象限任務管理</h1>
-        <p className="subtitle">高效專案與研發任務追蹤</p>
-      </header>
-
       <div className="main-container">
         <div className="control-bar">
           <div className="filter-group">

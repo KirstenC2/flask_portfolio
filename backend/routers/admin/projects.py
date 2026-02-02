@@ -1,6 +1,6 @@
 from . import admin_bp, token_required
 from flask import request, jsonify
-from models import db, Project
+from models import db, Project, ThinkingProject
 
 # ----------------------
 # Projects CRUD (Admin)
@@ -68,7 +68,7 @@ def get_projects(current_admin):
 @admin_bp.route('/projects/info/<int:project_id>', methods=['GET', 'OPTIONS'])
 @token_required
 def get_projects_info(current_admin, project_id):
-    
+    # 這裡的邏輯原本回傳的是列表，我們維持結構
     query = Project.query
     if project_id:
         query = query.filter_by(id=project_id)
@@ -77,14 +77,30 @@ def get_projects_info(current_admin, project_id):
     
     result = []
     for p in projects:
-        # 手動建構 Project 資料
+        # 1. 額外查詢屬於這個專案的戰略分析紀錄
+        # 假設你的 ThinkingProject 模型中 ref_id 是存專案 ID
+        analyses = ThinkingProject.query.filter_by(
+            ref_id=p.id, 
+            ref_type='project'
+        ).all()
+
         project_data = {
             "id": p.id,
             "title": p.title,
             "technologies": p.technologies,
             "project_type": p.project_type,
             "date_created": p.date_created.isoformat(),
-            # 關鍵：嵌套抓取 dev_features
+            
+            # 2. 注入歷史分析紀錄列表
+            "thinking_analyses": [
+                {
+                    "id": a.id,
+                    "title": a.title,
+                    "template_id": a.template_id,
+                    "created_at": a.created_at.isoformat() if a.created_at else None
+                } for a in analyses
+            ],
+
             "dev_features": [
                 {
                     "id": f.id,

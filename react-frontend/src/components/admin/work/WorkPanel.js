@@ -6,8 +6,8 @@ import {
 } from '@ant-design/icons';
 import ProjectManager from './components/ProjectManager';
 import TaskQuadrant from './components/TaskQuadrant';
-import McKinseyForm from './components/McKinseyForm';
-import TemplateManagementPage from './components/TemplateManagementPage';
+import ThinkingProjectForm from './components/ThinkingProjectForm';
+import TemplateManagementPage from './pages/TemplateManagementPage';
 
 const WorkPanel = ({ onProjectSelect }) => {
     const [activeTab, setActiveTab] = useState('dev-progress');
@@ -84,7 +84,7 @@ const WorkPanel = ({ onProjectSelect }) => {
         const components = {
             'dev-progress': <ProjectManager onProjectClick={onProjectSelect} />,
             'task-quadrant': <TaskQuadrant />,
-            'dynamic-thinking-form': <McKinseyForm templateId={selectedTemplateId} key={selectedTemplateId} />,
+            'dynamic-thinking-form': <ThinkingProjectForm templateId={selectedTemplateId} key={selectedTemplateId} />,
             'template-manager': <TemplateManagementPage />,
         };
         // 統一使用 activeTab 即可

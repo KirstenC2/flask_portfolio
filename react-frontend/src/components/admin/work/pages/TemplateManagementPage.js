@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import TemplateGallery from './TemplateGallery';
-import TemplateEditor from './TemplateEditor';
+import TemplateGallery from '../components/TemplateGallery';
+import TemplateEditor from '../components/TemplateEditor';
 
 const TemplateManagementPage = () => {
     const [drawerVisible, setDrawerVisible] = useState(false);

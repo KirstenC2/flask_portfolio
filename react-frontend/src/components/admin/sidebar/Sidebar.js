@@ -35,7 +35,7 @@ import ResumePanel from '../resume/ResumePanel';
 import FinancePanel from '../finance/FinancePanel';
 import MotorManagementPanel from '../motor_management/MotorManagementPanel';
 import WorkPanel from '../work/WorkPanel';
-import AdminProjectDetail from '../work/components/AdminProjectDetail';
+import ProjectBoard from '../work/components/ProjectBoard';
 import HealthPanel from '../health/HealthPanel';
 import Overview from '../overview/Overview';
 
@@ -100,7 +100,7 @@ const SideNavbar = () => {
   const renderContent = () => {
     if (activeSection === 'work' && selectedProjectId) {
       return (
-        <AdminProjectDetail
+        <ProjectBoard
           projectId={selectedProjectId}
           onBack={() => setSelectedProjectId(null)} // 清除 ID 即回到列表
         />

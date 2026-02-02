@@ -28,16 +28,33 @@ export const useProjectDetail = (projectId) => {
         }
     }, [projectId, token]);
 
-    // 更新 Feature 邏輯 (修正 axios 語法)
+    const deleteThinkingProject = async (analysisId) => {
+        try {
+            // 注意：這裡路徑建議根據你的後端 API 設計調整，假設是 /thinking/:id
+            const response = await axios.delete(`${API_BASE}/thinking-projects/${analysisId}`, {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            
+            if (response.status === 200 || response.status === 204) {
+                await fetchProjectDetail(true); // 靜默更新，讓側邊欄清單同步
+                return true;
+            }
+            return false;
+        } catch (err) {
+            console.error("Delete thinking project error:", err);
+            return false;
+        }
+    };
+
+    // 更新 Feature 邏輯
     const updateFeature = async (featureId, data) => {
         try {
-            // axios.patch(url, data, config)
             const response = await axios.patch(`${API_BASE}/features/${featureId}`, data, {
                 headers: { 'Authorization': `Bearer ${token}` }
             });
             
             if (response.status === 200 || response.status === 204) {
-                await fetchProjectDetail(true); // 靜默更新數據
+                await fetchProjectDetail(true); 
                 return true;
             }
             return false;
@@ -60,8 +77,7 @@ export const useProjectDetail = (projectId) => {
             console.error("Delete feature error:", err);
             return false;
         }
-    };
-
+    }
     useEffect(() => {
         fetchProjectDetail();
     }, [fetchProjectDetail]);
@@ -73,7 +89,8 @@ export const useProjectDetail = (projectId) => {
         actions: {
             refresh: fetchProjectDetail,
             removeFeature,
-            updateFeature
+            updateFeature,
+            deleteThinkingProject
         }
     };
 };

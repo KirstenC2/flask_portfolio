@@ -129,7 +129,7 @@ def update_project_content(current_admin, id):
     db.session.commit()
     return jsonify({"message": "Progress saved"})
 
-@admin_bp.route('/thinking-projects/<int:id>', methods=['DELETE'])
+@admin_bp.route('/thinking-projects/<int:id>', methods=['DELETE','OPTIONS'])
 @token_required
 def delete_thinking_project(current_admin, id):
     project = ThinkingProject.query.get_or_404(id)

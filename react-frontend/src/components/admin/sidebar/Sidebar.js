@@ -35,11 +35,11 @@ import ResumePanel from '../resume/ResumePanel';
 import FinancePanel from '../finance/FinancePanel';
 import MotorManagementPanel from '../motor_management/MotorManagementPanel';
 import WorkPanel from '../work/WorkPanel';
-import ProjectBoard from '../work/components/ProjectBoard';
+import ProjectBoard from '../work/pages/ProjectBoard';
 import HealthPanel from '../health/HealthPanel';
 import Overview from '../overview/Overview';
 
-import { Sidebar } from 'lucide-react';
+
 const SideNavbar = () => {
   const navigate = useNavigate();
   const [activeSection, setActiveSection] = useState('overview');

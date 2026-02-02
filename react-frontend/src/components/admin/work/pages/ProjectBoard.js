@@ -1,16 +1,17 @@
 import React, { useState, useMemo } from 'react';
 import {
   Layout, List, Input, Select, Button, Tag,
-  Empty, Spin, Modal, Space, Typography, Tooltip, Divider
+  Empty, Spin, Modal, Space, Typography, Tooltip, Divider, message
 } from 'antd';
 import {
   ArrowLeftOutlined, PlusOutlined, DeleteOutlined,
   SearchOutlined, FilterOutlined, HighlightOutlined,
   ProjectOutlined, RocketOutlined, FileTextOutlined
 } from '@ant-design/icons';
-import TaskBoard from './TaskBoard';
-import FeatureForm from './FeatureForm';
-import ThinkingProjectForm from './ThinkingProjectForm'; // 確保路徑正確
+import TaskBoard from '../components/TaskBoard';
+import FeatureForm from '../components/FeatureForm';
+import ThinkingProjectForm from '../components/ThinkingProjectForm'; // 確保路徑正確
+import ThinkingProjectDetail from '../components/ThinkingProjectDetail'; // 確保路徑正確
 import '../../../../common/global.css';
 import '../style/AdminProjectDetail.css';
 import { useProjectDetail } from '../../../../hooks/useProjectDetail';
@@ -54,11 +55,12 @@ const ProjectBoard = ({ projectId, onBack }) => {
   // 處理：點擊「建立新分析」
   const handleCreateNewThinking = (templateId) => {
     setSelectedTemplateId(templateId);
-    setCurrentAnalysisId(null); // 清空 ID，讓右側顯示「請輸入標題」的初始化畫面
+    setCurrentAnalysisId(null); // 這裡現在會讓右側顯示「Landing Page 介紹頁」
     setViewMode('thinking');
     setSelectedFeatureId(null);
     setIsAddingFeature(false);
   };
+
 
   // 處理：點擊「歷史分析紀錄」
   const handleSelectExistingThinking = (analysisId) => {
@@ -67,6 +69,31 @@ const ProjectBoard = ({ projectId, onBack }) => {
     setSelectedFeatureId(null);
     setIsAddingFeature(false);
   };
+
+  // 處理：刪除歷史分析紀錄
+  const handleDeleteThinking = (analysis) => {
+  Modal.confirm({
+    title: '確定要刪除此分析嗎？',
+    icon: <DeleteOutlined style={{ color: '#ff4d4f' }} />,
+    content: `戰略分析「${analysis.title}」刪除後將無法復原。`,
+    okText: '確定刪除',
+    okType: 'danger',
+    cancelText: '取消',
+    onOk: async () => {
+      // 呼叫 Hook 裡的 deleteThinkingProject
+      const success = await actions.deleteThinkingProject(analysis.id);
+      if (success) {
+        message.success('分析已刪除');
+        // 如果目前右側正開著這一筆，就清空 ID 回到 Landing Page
+        if (currentAnalysisId === analysis.id) {
+          setCurrentAnalysisId(null);
+        }
+      } else {
+        message.error('刪除失敗，請檢查網路連線');
+      }
+    },
+  });
+};
 
   // 切換至 Feature
   const handleFeatureSelect = (id) => {
@@ -146,9 +173,9 @@ const ProjectBoard = ({ projectId, onBack }) => {
       <Layout>
         {/* 左側 Sidebar */}
 
-       {/* 左側 Sidebar */}
+        {/* 左側 Sidebar */}
         <Sider width={280} theme="light" style={{ borderRight: '1px solid #f0f0f0', overflowY: 'auto' }}>
-          
+
           {/* 戰略分析區塊 */}
           <div style={{ padding: '16px' }}>
             <Text type="secondary" style={{ fontSize: '12px', fontWeight: 600 }}>戰略思考</Text>
@@ -167,6 +194,7 @@ const ProjectBoard = ({ projectId, onBack }) => {
             </Button>
 
             {/* Listing: 歷史分析紀錄 */}
+            {/* Listing: 歷史分析紀錄 */}
             {project?.thinking_analyses?.length > 0 && (
               <List
                 size="small"
@@ -174,16 +202,41 @@ const ProjectBoard = ({ projectId, onBack }) => {
                 dataSource={project.thinking_analyses}
                 renderItem={item => (
                   <List.Item
+                    className="thinking-nav-item"
                     onClick={() => handleSelectExistingThinking(item.id)}
                     style={{
                       cursor: 'pointer', border: 'none', padding: '8px 12px', borderRadius: '6px',
                       background: currentAnalysisId === item.id ? '#f0f9ff' : 'transparent',
-                      color: currentAnalysisId === item.id ? '#1890ff' : 'inherit'
+                      transition: 'all 0.3s'
                     }}
+                    // --- 在這裡加入右側動作按鈕 ---
+                    actions={[
+                      <Tooltip title="刪除此分析">
+                        <Button
+                          type="text"
+                          size="small"
+                          icon={<DeleteOutlined style={{ fontSize: '12px' }} />}
+                          danger
+                          onClick={(e) => {
+                            e.stopPropagation(); // 關鍵：防止觸發 List.Item 的 onClick (切換分析)
+                            handleDeleteThinking(item);
+                          }}
+                        />
+                      </Tooltip>
+                    ]}
                   >
                     <Space size="small">
-                      <FileTextOutlined />
-                      <Text ellipsis style={{ width: 150, color: 'inherit' }}>{item.title}</Text>
+                      <FileTextOutlined style={{ color: currentAnalysisId === item.id ? '#1890ff' : '#8c8c8c' }} />
+                      <Text
+                        ellipsis
+                        style={{
+                          width: 130, // 稍微縮減寬度以騰出空間給刪除鈕
+                          color: currentAnalysisId === item.id ? '#1890ff' : 'inherit',
+                          fontWeight: currentAnalysisId === item.id ? 500 : 400
+                        }}
+                      >
+                        {item.title}
+                      </Text>
                     </Space>
                   </List.Item>
                 )}
@@ -224,14 +277,27 @@ const ProjectBoard = ({ projectId, onBack }) => {
         <Content style={{ padding: '24px', background: '#fafafa', overflowY: 'auto', display: 'flex', flexDirection: 'column' }}>
           {viewMode === 'thinking' ? (
             <div style={{ background: '#fff', padding: '40px 24px', borderRadius: '12px', minHeight: '100%', boxShadow: '0 2px 8px rgba(0,0,0,0.05)' }}>
-              <ThinkingProjectForm
-                projectIdFromContext={projectId} // 專案 ID
-                existingAnalysisId={currentAnalysisId} // 歷史紀錄 ID
-                templateId={selectedTemplateId}
-                key={`thinking-${currentAnalysisId || 'new'}`}
-              />
+              {currentAnalysisId ? (
+                /* 模式 A：編輯詳情模式 - 點擊歷史紀錄或建立成功後進入 */
+                <ThinkingProjectDetail
+                  key={`detail-${currentAnalysisId}`}
+                  analysisId={currentAnalysisId}
+                />
+              ) : (
+                /* 模式 B：建立模式 - 顯示 Landing Page 與標題輸入 */
+                <ThinkingProjectForm
+                  key="new-thinking"
+                  projectIdFromContext={projectId}
+                  templateId={selectedTemplateId}
+                  onCreated={(newId) => {
+                    actions.refresh(true);        // 重新整理左側 Sidebar 的歷史清單
+                    setCurrentAnalysisId(newId);  // 自動切換到 Detail 模式
+                  }}
+                />
+              )}
             </div>
           ) : isAddingFeature ? (
+            /* --- 新增 Feature 介面 --- */
             <div style={{ maxWidth: 800, margin: '0 auto', background: '#fff', padding: '32px', borderRadius: '8px', width: '100%' }}>
               <Title level={3}>新增功能模組</Title>
               <FeatureForm
@@ -241,32 +307,18 @@ const ProjectBoard = ({ projectId, onBack }) => {
               />
             </div>
           ) : activeFeature ? (
+            /* --- Feature 任務看板模式 --- */
             <div style={{ display: 'flex', flexDirection: 'column', height: '100%', width: '100%' }}>
-              {/* 標題與描述編輯區 */}
               <div style={{ marginBottom: '24px', padding: '16px', background: '#fff', borderRadius: '8px', border: '1px solid #f0f0f0' }}>
-                <Title
-                  level={3}
-                  style={{ margin: 0 }}
-                  editable={{
-                    icon: <HighlightOutlined />,
-                    onChange: (val) => handleUpdateFeature('title', val)
-                  }}
-                >
+                <Title level={3} style={{ margin: 0 }} editable={{ onChange: (val) => handleUpdateFeature('title', val) }}>
                   {activeFeature.title}
                 </Title>
                 <div style={{ marginTop: '8px' }}>
-                  <Text
-                    type="secondary"
-                    editable={{
-                      onChange: (val) => handleUpdateFeature('description', val)
-                    }}
-                  >
+                  <Text type="secondary" editable={{ onChange: (val) => handleUpdateFeature('description', val) }}>
                     {activeFeature.description || "暫無描述，點擊新增..."}
                   </Text>
                 </div>
               </div>
-
-              {/* 任務管理區 */}
               <div style={{ flex: 1 }}>
                 <TaskBoard
                   feature_id={activeFeature.id}
@@ -276,11 +328,8 @@ const ProjectBoard = ({ projectId, onBack }) => {
               </div>
             </div>
           ) : (
-            <Empty
-              image={Empty.PRESENTED_IMAGE_SIMPLE}
-              description="選擇功能模組或戰略工具以開始"
-              style={{ marginTop: '100px' }}
-            >
+            /* --- 預設空白狀態 --- */
+            <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="選擇功能模組或戰略工具以開始" style={{ marginTop: '100px' }}>
               <Button type="dashed" icon={<PlusOutlined />} onClick={() => { setViewMode('feature'); setIsAddingFeature(true); }}>
                 立即新增一個 Feature
               </Button>

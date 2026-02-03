@@ -2,7 +2,7 @@ from . import admin_bp, token_required
 from flask import request, jsonify
 from models.health_models import db, AlcoholLogs, MoodDiary
 from flask_cors import CORS
-from datetime import datetime, timezone, timedelta
+from datetime import datetime, timezone, timedelta, date
 from sqlalchemy import func, extract
 
 CORS(admin_bp, 
@@ -254,3 +254,38 @@ def delete_diary(current_admin, diary_id):
     except Exception as e:
         db.session.rollback()
         return jsonify({"success": False, "error": str(e)}), 500
+
+@admin_bp.route('/health/sobriety-status', methods=['GET'])
+@token_required
+def get_sobriety_status(current_admin):
+    # 1. 抓取「最後一筆」喝酒紀錄
+    latest_log = AlcoholLogs.query.order_by(AlcoholLogs.logged_at.desc()).first()
+    
+    today = date.today()
+    
+    if not latest_log:
+        return jsonify({"days_count": 0, "message": "開始紀錄你的第一天吧！"})
+
+    last_drink_date = latest_log.logged_at.date()
+    
+    # 2. 計算差距
+    delta = today - last_drink_date
+    days_count = delta.days
+    
+    # 重點修正邏輯：
+    # 如果 delta.days == 0 -> 今天喝過 -> 清醒 0 天
+    # 如果 delta.days == 1 -> 昨天喝過 -> 清醒 0 天 (因為今天才剛開始)
+    # 只有當 delta.days > 1，才代表你完整跳過了某些日子
+    
+    # 但通常直觀的算法是：
+    if days_count <= 1:
+        # 只要昨天或今天有紀錄，連續天數就該斷掉
+        actual_sobriety_days = 0 
+    else:
+        # 如果最後一次是 3 天前，那代表你清醒了 2 天
+        actual_sobriety_days = days_count - 1
+
+    return jsonify({
+        "days_count": actual_sobriety_days,
+        "last_log_date": last_drink_date.isoformat()
+    })

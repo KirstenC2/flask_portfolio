@@ -6,6 +6,7 @@ import {
 } from '@ant-design/icons';
 import AlcoholManager from './components/AlcoholManager';
 import '../../../common/global.css';
+import SobrietyMilestones from './components/SobrietyMilestone';
 
 const HealthPanel = () => {
     const [activeTab, setActiveTab] = useState('alcoholic');
@@ -22,7 +23,12 @@ const HealthPanel = () => {
 
     // 2. 內容組件對照表 (唯一來源控制)
     const tabComponents = {
-        'alcoholic': <AlcoholManager />,
+        'alcoholic': <div>
+            {/* 這裡假設你有從後端抓到的連續未飲酒天數 */}
+            <SobrietyMilestones daysCount={3} /> 
+            <AlcoholManager />
+        </div>,
+        
         // 'health-config': <div>這裡放健康設定內容...</div>, // 預留空間
         // 'moody-diary': <div>這裡放情緒日記內容...</div>,
     };

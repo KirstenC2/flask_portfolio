@@ -9,7 +9,6 @@ import TaskQuadrant from './components/TaskQuadrant';
 import ThinkingProjectForm from './components/forms/ThinkingProjectForm';
 import TemplateManagementPage from './pages/TemplateManagementPage';
 import WarBoardPage from './pages/WarBoardPage';
-import ReportFormPage from './components/forms/ReportFormPage';
 
 const WorkPanel = ({ onProjectSelect }) => {
     const [activeTab, setActiveTab] = useState('dev-progress');
@@ -87,15 +86,6 @@ const WorkPanel = ({ onProjectSelect }) => {
                     週報板
                 </span>
             ),
-        },
-        {
-            key: 'report',
-            label: (
-                <span>
-                    <AppstoreOutlined />
-                    匯報
-                </span>
-            ),
         }
     ];
 
@@ -106,8 +96,7 @@ const WorkPanel = ({ onProjectSelect }) => {
             'task-quadrant': <TaskQuadrant />,
             'dynamic-thinking-form': <ThinkingProjectForm templateId={selectedTemplateId} key={selectedTemplateId} />,
             'template-manager': <TemplateManagementPage />,
-            'war-board': <WarBoardPage />,
-            'report': <ReportFormPage />,
+            'war-board': <WarBoardPage />
         };
         // 統一使用 activeTab 即可
         return components[activeTab];

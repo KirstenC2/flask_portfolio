@@ -28,6 +28,7 @@ class ThinkingProject(db.Model):
     template_id = db.Column(db.Integer, db.ForeignKey('thinking_templates.id'))
 
     ref_id = db.Column(db.Integer, nullable=True) 
+    ref_tag = db.Column(db.String(50), nullable=True) 
     ref_type = db.Column(db.String(50), nullable=True) # 例如 'finance', 'career', 'health'
 
     title = db.Column(db.String(255), nullable=False) # 使用者自訂專案標題

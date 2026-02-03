@@ -1,6 +1,7 @@
 from . import admin_bp, token_required
 from flask import request, jsonify
 from models import db, DevTask, DevFeature
+from datetime import datetime
 
 def _dev_task_to_dict(dt: DevTask):
     return {
@@ -41,13 +42,23 @@ def edit_dev_task(current_admin, task_id):
     data = request.get_json()
     
     if 'status' in data:
-        task.status = data['status']
+        new_status = data['status']
+        # 邏輯：如果狀態變為 done，紀錄完成時間
+        if new_status == 'done' and task.status != 'done':
+            task.date_completed = datetime.utcnow()
+        # 邏輯：如果從 done 改回 pending，清空完成時間
+        elif new_status != 'done':
+            task.date_completed = None
+            
+        task.status = new_status
+
     if 'content' in data:
         task.content = data['content']
     if 'cancel_reason' in data:
         task.cancel_reason = data['cancel_reason']
     if 'priority' in data:
         task.priority = data['priority']
+
     db.session.commit()
     return jsonify({'message': 'Task updated successfully'})
 

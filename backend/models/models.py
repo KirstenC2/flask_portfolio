@@ -1,5 +1,5 @@
 
-from datetime import datetime
+from datetime import datetime,timedelta
 from werkzeug.security import generate_password_hash, check_password_hash
 from . import db
 
@@ -17,6 +17,22 @@ class Project(db.Model):
     date_created = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
 
     dev_features = db.relationship('DevFeature', backref='project', lazy=True)
+
+    @property
+    def progress_stats(self):
+        all_tasks = [t for f in self.dev_features for t in f.tasks]
+        total = len(all_tasks)
+        done = [t for t in all_tasks if t.status == 'completed']
+        
+        # 篩選過去 7 天完成的任務
+        one_week_ago = datetime.utcnow() - timedelta(days=7)
+        weekly_done_count = len([t for t in done if t.date_completed and t.date_completed >= one_week_ago])
+
+        return {
+            "percent": round((len(done) / total * 100)) if total > 0 else 0,
+            "remaining": total - len(done),
+            "weekly_done_count": weekly_done_count
+        }
 
     def __repr__(self):
         return f"Project('{self.title}', '{self.technologies}')"
@@ -48,6 +64,7 @@ class DevTask(db.Model):
     cancel_reason = db.Column(db.String(255), nullable=True)
     dev_feature_id = db.Column(db.Integer, db.ForeignKey('dev_features.id'), nullable=True)
     date_created = db.Column(db.DateTime, default=datetime.utcnow)
+    date_completed = db.Column(db.DateTime, nullable=True)
 
 class Skill(db.Model):
     id = db.Column(db.Integer, primary_key=True)

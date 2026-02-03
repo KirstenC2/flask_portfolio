@@ -1,7 +1,7 @@
 from . import admin_bp, token_required
 from flask import request, jsonify
-from models import db, Project, ThinkingProject
-
+from models import db, Project, ThinkingProject, DevFeature
+from datetime import datetime, timedelta
 # ----------------------
 # Projects CRUD (Admin)
 # ----------------------
@@ -20,13 +20,19 @@ def _project_to_dict(p: Project):
         'project_type': p.project_type,
         'date_created': p.date_created.isoformat() if p.date_created else None
     }
+
+from sqlalchemy.orm import joinedload
+
 @admin_bp.route('/projects', methods=['GET', 'OPTIONS'])
 @token_required
 def get_projects(current_admin):
-    # 獲取 query parameter 中的 type (e.g., ?type=work)
     project_type = request.args.get('type')
     
-    query = Project.query
+    # 1. 效能優化：使用 joinedload 一次性抓取所有關聯層級
+    query = Project.query.options(
+        joinedload(Project.dev_features).joinedload(DevFeature.tasks)
+    )
+    
     if project_type:
         query = query.filter_by(project_type=project_type)
     
@@ -34,7 +40,9 @@ def get_projects(current_admin):
     
     result = []
     for p in projects:
-        # 手動建構 Project 資料
+        # 2. 調用我們在 Model 定義的 @property
+        stats = p.progress_stats 
+        
         project_data = {
             "id": p.id,
             "title": p.title,
@@ -43,7 +51,8 @@ def get_projects(current_admin):
             "image_url": p.image_url,
             "project_type": p.project_type,
             "date_created": p.date_created.isoformat(),
-            # 關鍵：嵌套抓取 dev_features
+            # 3. 戰情室所需的關鍵統計
+            "stats": stats, 
             "dev_features": [
                 {
                     "id": f.id,
@@ -57,12 +66,68 @@ def get_projects(current_admin):
                             "priority": t.priority
                         } for t in sorted(f.tasks, key=lambda x: x.priority)
                     ]
-                } for f in p.dev_features # 遍歷 DevFeature
+                } for f in p.dev_features
             ]
         }
         result.append(project_data)
         
     return jsonify(result)
+
+
+
+@admin_bp.route('/projects/warboard-stats', methods=['GET', 'OPTIONS'])
+@token_required
+def get_warboard_stats(current_admin):
+    projects = Project.query.all()
+    output = []
+    
+    # 用於全局統計
+    total_remaining = 0
+    active_projects = 0
+    
+    # 準備匯報文字內容 (本週完成的任務)
+    last_7_days = datetime.utcnow() - timedelta(days=7)
+    weekly_achievements = []
+
+    for p in projects:
+        stats = p.progress_stats 
+        output.append({
+            'key': p.id,
+            'name': p.title,
+            'progress': stats['percent'],
+            'remaining': stats['remaining'],
+            'status': 'Delayed' if stats['has_delay'] else ('Completed' if stats['percent'] == 100 else 'Normal'),
+            'type': p.project_type
+        })
+        
+        if stats['percent'] < 100:
+            active_projects += 1
+            total_remaining += stats['remaining']
+
+        # 搜尋本週完成的任務 (假設你有 date_completed 欄位)
+        # 如果還沒加欄位，這部分可以先註解掉
+        for feature in p.dev_features:
+            done_tasks = [t.content for t in feature.tasks 
+                         if t.status == 'completed' and 
+                         (t.date_completed and t.date_completed >= last_7_days)]
+            if done_tasks:
+                weekly_achievements.append(f"{p.title}: {', '.join(done_tasks)}")
+
+    # 組裝 Markdown 匯報範本
+    report_md = f"## 本週工作匯報 ({datetime.now().strftime('%Y-%m-%d')})\n"
+    report_md += f"- **進行中專案**：{active_projects} 個\n"
+    report_md += f"- **總待辦任務**：{total_remaining} 項\n\n"
+    report_md += "### 重點達成：\n"
+    report_md += "\n".join([f"- {item}" for item in weekly_achievements]) if weekly_achievements else "- 本週主要進行架構調整與維護。"
+
+    return jsonify({
+        "projects": output,
+        "summary": {
+            "total_remaining": total_remaining,
+            "active_projects": active_projects,
+            "report_template": report_md
+        }
+    })
 
 
 @admin_bp.route('/projects/info/<int:project_id>', methods=['GET', 'OPTIONS'])

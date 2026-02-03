@@ -1,8 +1,8 @@
 import { useState } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faSave } from '@fortawesome/free-solid-svg-icons';
-import { featureApi } from '../../../../services/featureApi';
-import '../style/FeatureForm.css';
+import { featureApi } from '../../../../../services/featureApi';
+import '../../style/FeatureForm.css';
 const FeatureForm = ({ projectId, onSuccess, onCancel }) => {
     const [formData, setFormData] = useState({ title: '', description: '' });
     const [isSubmitting, setIsSubmitting] = useState(false);

@@ -1,0 +1,30 @@
+/* 自定義 Antd Table 懸停效果 */
+.ant-table-row:hover {
+  background-color: #f0f7ff !important;
+  cursor: pointer;
+}
+
+/* 讓統計卡片有淡淡的陰影感 */
+.ant-card {
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  border-radius: 12px;
+}
+
+/* 針對匯報區 Pre 標籤的滾動條優化 */
+pre {
+  white-space: pre-wrap;
+  word-wrap: break-word;
+  padding: 10px;
+  line-height: 1.6;
+}
+
+/* 響應式調整 */
+@media (max-width: 768px) {
+  .ant-row {
+    flex-direction: column;
+  }
+  .ant-col {
+    max-width: 100% !important;
+    margin-bottom: 16px;
+  }
+}

@@ -136,3 +136,103 @@ def delete_thinking_project(current_admin, id):
     db.session.delete(project)
     db.session.commit()
     return jsonify({"message": "Project deleted"})
+
+@admin_bp.route('/thinking/templates', methods=['GET'])
+def get_report_templates():
+    templates = ThinkingTemplate.query.all()
+    return jsonify([{'id': t.id, 'name': t.name, 'category': t.category} for t in templates])
+
+@admin_bp.route('/thinking/templates/<int:tid>', methods=['GET'])
+def get_report_template_detail(tid):
+    template = ThinkingTemplate.query.get_or_404(tid)
+    steps = sorted(template.default_steps, key=lambda x: x.order)
+    return jsonify({
+        'id': template.id,
+        'name': template.name,
+        'steps': [{
+            'id': s.id,
+            'title': s.title,
+            'prompt': s.prompt,
+            'placeholder': s.placeholder,
+            'order': s.order
+        } for s in steps]
+    })
+
+@admin_bp.route('/thinking/projects', methods=['POST'])
+@token_required
+def create_report(current_admin):
+    data = request.get_json()
+    
+    # 建立專案主表
+    new_project = ThinkingProject(
+        template_id=data['template_id'],
+        title=data['title'],
+        ref_type=data.get('ref_type'),
+        ref_id=data.get('ref_id')
+    )
+    db.session.add(new_project)
+    db.session.flush() # 取得新專案 ID
+
+    # 儲存每一格的內容
+    for step_id, content in data['contents'].items():
+        new_content = ProjectContent(
+            project_id=new_project.id,
+            step_id=int(step_id),
+            content=content
+        )
+        db.session.add(new_content)
+    
+    db.session.commit()
+    return jsonify({'message': 'Report saved successfully!', 'id': new_project.id})
+
+@admin_bp.route('/thinking/weekly-reports', methods=['GET'])
+@token_required
+def get_weekly_reports(current_admin):
+    # 1. 篩選 ref_type 為 weekly_report
+    # 2. 按照建立時間倒序排列（最新的在最上面）
+    reports = ThinkingProject.query.filter_by(ref_type='weekly_report')\
+                .order_by(ThinkingProject.created_at.desc()).all()
+    
+    result = []
+    for r in reports:
+        # 取得關聯模板的資訊
+        template = ThinkingTemplate.query.get(r.template_id)
+        
+        result.append({
+            'id': r.id,
+            'title': r.title,
+            'template_name': template.name if template else "未知模板",
+            'category': template.category if template else "N/A",
+            'ref_tag': r.ref_tag, # 儲存日期的欄位
+            'created_at': r.created_at.isoformat(),
+            'step_count': len(r.step_contents)
+        })
+    
+    return jsonify(result)
+
+@admin_bp.route('/thinking/projects/<int:pid>', methods=['GET'])
+@token_required
+def get_report_detail(current_admin, pid):
+    project = ThinkingProject.query.get_or_404(pid)
+    template = ThinkingTemplate.query.get(project.template_id)
+    
+    # 取得所有內容，並關聯對應的步驟標題
+    contents = []
+    for content in project.step_contents:
+        step = TemplateStep.query.get(content.step_id)
+        contents.append({
+            'title': step.title if step else "未知步驟",
+            'content': content.content,
+            'order': step.order if step else 0
+        })
+    
+    # 按順序排列
+    contents.sort(key=lambda x: x['order'])
+    
+    return jsonify({
+        'title': project.title,
+        'template_name': template.name if template else "未知模板",
+        'created_at': project.created_at.isoformat(),
+        'ref_tag': project.ref_tag,
+        'contents': contents
+    })

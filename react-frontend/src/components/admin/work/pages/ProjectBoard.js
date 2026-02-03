@@ -1,16 +1,15 @@
 import React, { useState, useMemo } from 'react';
 import {
-  Layout, List, Input, Select, Button, Tag,
+  Layout, List, Select, Button,
   Empty, Spin, Modal, Space, Typography, Tooltip, Divider, message
 } from 'antd';
 import {
   ArrowLeftOutlined, PlusOutlined, DeleteOutlined,
-  SearchOutlined, FilterOutlined, HighlightOutlined,
-  ProjectOutlined, RocketOutlined, FileTextOutlined
+  FilterOutlined, RocketOutlined, FileTextOutlined
 } from '@ant-design/icons';
 import TaskBoard from '../components/TaskBoard';
-import FeatureForm from '../components/FeatureForm';
-import ThinkingProjectForm from '../components/ThinkingProjectForm'; // 確保路徑正確
+import FeatureForm from '../components/forms/FeatureForm';
+import ThinkingProjectForm from '../components/forms/ThinkingProjectForm';// 確保路徑正確
 import ThinkingProjectDetail from '../components/ThinkingProjectDetail'; // 確保路徑正確
 import '../../../../common/global.css';
 import '../style/AdminProjectDetail.css';
@@ -136,7 +135,13 @@ const ProjectBoard = ({ projectId, onBack }) => {
   );
 
   return (
-    <Layout style={{ minHeight: '80vh', background: '#fff', borderRadius: '12px', overflow: 'hidden' }}>
+    <Layout style={{ 
+      minHeight: '80vh', 
+      background: '#fff', 
+      borderRadius: '12px', 
+      padding: '24px',
+      overflow: 'hidden' 
+    }}>
       <Header style={{
         background: '#fff',
         padding: '0 24px',
@@ -244,8 +249,9 @@ const ProjectBoard = ({ projectId, onBack }) => {
             )}
           </div>
           <Divider style={{ margin: '0 0 8px 0' }} />
-
+          
           <div style={{ height: 'calc(100% - 130px)', overflowY: 'auto' }}>
+            <Text type="secondary" style={{ padding: '16px', fontSize: '12px', fontWeight: 600 }}>專案工項</Text>
             <List
               dataSource={filteredNavList}
               renderItem={item => (

@@ -1,10 +1,10 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Card, Input, Typography, Space, Spin, message, Progress, Tag, Button, Divider } from 'antd';
-import { SaveOutlined, BulbOutlined, RocketOutlined, CheckCircleOutlined, InfoCircleOutlined, ArrowRightOutlined } from '@ant-design/icons';
+import { SaveOutlined, BulbOutlined, RocketOutlined, CheckCircleOutlined } from '@ant-design/icons';
 import _ from 'lodash';
-import { thinkingApi } from '../../../../services/thinkingApi';
+import { thinkingApi } from '../../../../../services/thinkingApi';
 
-const { Title, Paragraph, Text } = Typography;
+const { Title, Text } = Typography;
 const { TextArea } = Input;
 
 const ThinkingProjectForm = ({ projectIdFromContext, templateId, existingAnalysisId, onCreated }) => {

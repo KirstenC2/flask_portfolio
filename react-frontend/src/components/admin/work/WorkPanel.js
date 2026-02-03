@@ -1,13 +1,15 @@
 import React, { useState, useEffect } from 'react';
-import { Dropdown, Space, Divider, Tabs, Button, Card } from 'antd';
+import { Dropdown, Tabs } from 'antd';
 import {
     DownOutlined, SettingOutlined, BulbOutlined,
     FileTextOutlined, ProjectOutlined, AppstoreOutlined
 } from '@ant-design/icons';
 import ProjectManager from './components/ProjectManager';
 import TaskQuadrant from './components/TaskQuadrant';
-import ThinkingProjectForm from './components/ThinkingProjectForm';
+import ThinkingProjectForm from './components/forms/ThinkingProjectForm';
 import TemplateManagementPage from './pages/TemplateManagementPage';
+import WarBoardPage from './pages/WarBoardPage';
+import ReportFormPage from './components/forms/ReportFormPage';
 
 const WorkPanel = ({ onProjectSelect }) => {
     const [activeTab, setActiveTab] = useState('dev-progress');
@@ -77,6 +79,24 @@ const WorkPanel = ({ onProjectSelect }) => {
                 </span>
             ),
         },
+        {
+            key: 'war-board',
+            label: (
+                <span>
+                    <AppstoreOutlined />
+                    週報板
+                </span>
+            ),
+        },
+        {
+            key: 'report',
+            label: (
+                <span>
+                    <AppstoreOutlined />
+                    匯報
+                </span>
+            ),
+        }
     ];
 
     // 內容渲染邏輯 (簡化為物件映射)
@@ -86,13 +106,15 @@ const WorkPanel = ({ onProjectSelect }) => {
             'task-quadrant': <TaskQuadrant />,
             'dynamic-thinking-form': <ThinkingProjectForm templateId={selectedTemplateId} key={selectedTemplateId} />,
             'template-manager': <TemplateManagementPage />,
+            'war-board': <WarBoardPage />,
+            'report': <ReportFormPage />,
         };
         // 統一使用 activeTab 即可
         return components[activeTab];
     };
 
     // 處理當點擊思考引擎選單時，Tab 可能不在列隊中的標籤高亮問題
-    const currentTab = ['dev-progress', 'task-quadrant'].includes(activeTab) ? activeTab : null;
+    const currentTab = ['dev-progress', 'task-quadrant','war-board'].includes(activeTab) ? activeTab : null;
 
     return (
         <div className="container" style={{ padding: '20px' }}>
@@ -103,7 +125,7 @@ const WorkPanel = ({ onProjectSelect }) => {
                 boxShadow: '0 2px 8px rgba(0,0,0,0.05)'
             }}>
                 <Tabs
-                    activeKey={['dev-progress', 'task-quadrant'].includes(activeTab) ? activeTab : null}
+                    activeKey={currentTab}
                     onChange={(key) => setActiveTab(key)}
                     items={tabItems} // 你定義的 '專案開發進度' 和 '任務象限圖'
                     size="large"

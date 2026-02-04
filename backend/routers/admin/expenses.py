@@ -118,6 +118,35 @@ def update_admin_expense(current_admin, expense_id):
     db.session.commit()
     return jsonify(_expense_to_dict(e))
 
+@admin_bp.route('/expenses/daily-summary', methods=['GET'])
+@token_required
+def get_expense_daily_summary(current_admin):
+    # 獲取參數，預設為當前年月
+    year = request.args.get('year', type=int)
+    month = request.args.get('month', type=int)
+    
+    if not year or not month:
+        return jsonify({"error": "Year and Month are required"}), 400
+
+    # 執行聚合查詢：按日期分組並加總金額
+    summary = db.session.query(
+        func.date(Expense.expense_date).label('date'),
+        func.sum(Expense.amount).label('daily_total')
+    ).filter(
+        func.extract('year', Expense.expense_date) == year,
+        func.extract('month', Expense.expense_date) == month
+    ).group_by(
+        func.date(Expense.expense_date)
+    ).all()
+
+    # 格式化輸出
+    result = [
+        {"date": str(s.date), "daily_total": float(s.daily_total)} 
+        for s in summary
+    ]
+    
+    return jsonify(result)
+
 @admin_bp.route('/expenses/<int:expense_id>', methods=['DELETE', 'OPTIONS'])
 @token_required
 def delete_admin_expense(current_admin, expense_id):

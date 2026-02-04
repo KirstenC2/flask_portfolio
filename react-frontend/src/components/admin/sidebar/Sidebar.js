@@ -2,26 +2,15 @@ import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
-  faHome,
-  faProjectDiagram,
-  faCode,
-  faBook,
-  faBriefcase,
-  faGraduationCap,
-  faEnvelope,
-  faSignOutAlt,
-  faTachometerAlt,
-  faUserCircle,
-  faStar,
-  faBlog,
-  faMotorcycle,
-  faFileInvoiceDollar,
-  faHeart
+  faHome, faProjectDiagram, faCode, faBook, faBriefcase,
+  faGraduationCap, faEnvelope, faSignOutAlt, faTachometerAlt,
+  faUserCircle, faStar, faBlog, faMotorcycle, faFileInvoiceDollar,
+  faHeart, faBars, faChevronLeft, faChevronRight
 } from '@fortawesome/free-solid-svg-icons';
 import './Sidebar.css';
-import { Divider } from '@mui/material';
+import { Divider, Tooltip } from '@mui/material';
 
-// Import admin components
+// --- Panels Import 保持不變 ---
 import MessagesPanel from '../messages/MessagesPanel';
 import ProjectsPanel from '../projects/ProjectsPanel';
 import SkillsPanel from '../skills/SkillsPanel';
@@ -39,36 +28,35 @@ import ProjectBoard from '../work/pages/ProjectBoard';
 import HealthPanel from '../health/HealthPanel';
 import Overview from '../overview/Overview';
 
-
 const SideNavbar = () => {
   const navigate = useNavigate();
   const [activeSection, setActiveSection] = useState('overview');
   const [adminUser, setAdminUser] = useState(null);
   const [unreadMessages, setUnreadMessages] = useState(0);
   const [selectedProjectId, setSelectedProjectId] = useState(null);
+  
+  // 新增：Sidebar 整體收納狀態
+  const [isCollapsed, setIsCollapsed] = useState(false);
+  
   const [expandedSections, setExpandedSections] = useState({
     journey: true,
     content: true
   });
+
+  const toggleSidebar = () => setIsCollapsed(!isCollapsed);
   const toggleSection = (section) => {
-    setExpandedSections(prev => ({
-      ...prev,
-      [section]: !prev[section]
-    }));
+    if (isCollapsed) setIsCollapsed(false); // 點擊選單時自動展開
+    setExpandedSections(prev => ({ ...prev, [section]: !prev[section] }));
   };
+
   useEffect(() => {
-    // Check if user is logged in
     const storedUser = localStorage.getItem('adminUser');
     const token = localStorage.getItem('adminToken');
-
     if (!storedUser || !token) {
       navigate('/admin/login');
       return;
     }
-
     setAdminUser(JSON.parse(storedUser));
-
-    // Fetch unread messages count
     fetchUnreadMessagesCount();
   }, [navigate]);
 
@@ -76,19 +64,13 @@ const SideNavbar = () => {
     try {
       const token = localStorage.getItem('adminToken');
       const response = await fetch('http://localhost:5001/api/admin/messages', {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
+        headers: { 'Authorization': `Bearer ${token}` }
       });
-
       if (response.ok) {
         const messages = await response.json();
-        const unread = messages.filter(msg => !msg.read).length;
-        setUnreadMessages(unread);
+        setUnreadMessages(messages.filter(msg => !msg.read).length);
       }
-    } catch (error) {
-      console.error('Error fetching messages:', error);
-    }
+    } catch (error) { console.error('Error:', error); }
   };
 
   const handleLogout = () => {
@@ -99,211 +81,121 @@ const SideNavbar = () => {
 
   const renderContent = () => {
     if (activeSection === 'work' && selectedProjectId) {
-      return (
-        <ProjectBoard
-          projectId={selectedProjectId}
-          onBack={() => setSelectedProjectId(null)} // 清除 ID 即回到列表
-        />
-      );
+      return <ProjectBoard projectId={selectedProjectId} onBack={() => setSelectedProjectId(null)} />;
     }
-    switch (activeSection) {
-      case 'messages':
-        return <MessagesPanel onMessageRead={fetchUnreadMessagesCount} />;
-      case 'projects':
-        return <ProjectsPanel />;
-      case 'skills':
-        return <SkillsPanel />;
-      case 'education':
-        return <EducationPanel />;
-      case 'experience':
-        return <ExperiencePanel />;
-      case 'studies':
-        return <StudiesPanel />;
-      case 'life':
-        return <LifeEventsPanel />;
-      case 'blog':
-        return <BlogPanel />;
-      case 'diary':
-        return <DiaryPanel />;
-      case 'resume':
-        return <ResumePanel />;
-      case 'finance':
-        return <FinancePanel />;
-      case 'motor':
-        return <MotorManagementPanel />;
-      case 'work':
-        // 將「選擇專案」的函式傳進 WorkPanel
-        return <WorkPanel onProjectSelect={(id) => setSelectedProjectId(id)} />;
-      case 'health':
-        return <HealthPanel />;
-      case 'overview':
-      default:
-        return <Overview unreadMessages={unreadMessages} />;
-    }
+    const panels = {
+      messages: <MessagesPanel onMessageRead={fetchUnreadMessagesCount} />,
+      projects: <ProjectsPanel />,
+      skills: <SkillsPanel />,
+      education: <EducationPanel />,
+      experience: <ExperiencePanel />,
+      studies: <StudiesPanel />,
+      life: <LifeEventsPanel />,
+      blog: <BlogPanel />,
+      diary: <DiaryPanel />,
+      resume: <ResumePanel />,
+      finance: <FinancePanel />,
+      motor: <MotorManagementPanel />,
+      work: <WorkPanel onProjectSelect={setSelectedProjectId} />,
+      health: <HealthPanel />,
+      overview: <Overview unreadMessages={unreadMessages} />
+    };
+    return panels[activeSection] || <Overview unreadMessages={unreadMessages} />;
   };
 
+  // 封裝導覽按鈕，加入 Tooltip 處理收納時的顯示
+  const NavButton = ({ id, icon, label, badge }) => (
+    <li className={activeSection === id ? 'active' : ''}>
+      <Tooltip title={isCollapsed ? label : ""} placement="right">
+        <button onClick={() => setActiveSection(id)}>
+          <FontAwesomeIcon icon={icon} />
+          {!isCollapsed && <span>{label}</span>}
+          {!isCollapsed && badge > 0 && <span className="badge">{badge}</span>}
+        </button>
+      </Tooltip>
+    </li>
+  );
+
   return (
-    <div className="admin-dashboard">
+    <div className={`admin-dashboard ${isCollapsed ? 'sidebar-collapsed' : ''}`}>
       <div className="dashboard-sidebar">
         <div className="sidebar-header">
-          <h2>Portfolio Admin</h2>
+          {!isCollapsed && <h2>Admin Panel</h2>}
+          <button className="collapse-toggle-btn" onClick={toggleSidebar}>
+            <FontAwesomeIcon icon={isCollapsed ? faBars : faChevronLeft} />
+          </button>
         </div>
 
         <div className="admin-info">
           <FontAwesomeIcon icon={faUserCircle} className="admin-avatar" />
-          <div className="admin-details">
-            <p className="admin-name">{adminUser?.username || 'Admin'}</p>
-            <p className="admin-email">{adminUser?.email || 'admin@example.com'}</p>
-          </div>
+          {!isCollapsed && (
+            <div className="admin-details">
+              <p className="admin-name">{adminUser?.username || 'Admin'}</p>
+              <p className="admin-email">{adminUser?.email || 'admin@email.com'}</p>
+            </div>
+          )}
         </div>
 
         <nav className="sidebar-nav">
           <ul>
-            <li className={activeSection === 'resume' ? 'active' : ''}>
-              <button onClick={() => setActiveSection('resume')}>
-                <FontAwesomeIcon icon={faGraduationCap} /> Resume
-              </button>
-            </li>
-            <li className={activeSection === 'overview' ? 'active' : ''}>
-              <button onClick={() => setActiveSection('overview')}>
-                <FontAwesomeIcon icon={faTachometerAlt} /> Dashboard
-              </button>
-            </li>
-            <li className={activeSection === 'messages' ? 'active' : ''}>
-              <button onClick={() => setActiveSection('messages')}>
-                <FontAwesomeIcon icon={faEnvelope} /> Messages
-                {unreadMessages > 0 && <span className="badge">{unreadMessages}</span>}
-              </button>
-            </li>
-            {/* GROUP 1: MY JOURNEY */}
+            <NavButton id="resume" icon={faGraduationCap} label="Resume" />
+            <NavButton id="overview" icon={faTachometerAlt} label="Dashboard" />
+            <NavButton id="messages" icon={faEnvelope} label="Messages" badge={unreadMessages} />
+
+            <Divider component="li" style={{ backgroundColor: 'rgba(255,255,255,0.1)', margin: '10px 0' }} />
+
             <li className="sidebar-subheader" onClick={() => toggleSection('journey')}>
-              <h3>My Journey</h3>
-              <span className={`chevron ${expandedSections.journey ? 'open' : ''}`}>▼</span>
+              {!isCollapsed ? (
+                <><h3>My Journey</h3><span className={`chevron ${expandedSections.journey ? 'open' : ''}`}>▼</span></>
+              ) : <div className="dot-divider" />}
             </li>
-            {expandedSections.journey && (
+
+            {(expandedSections.journey || isCollapsed) && (
               <div className="collapsible-group">
+                <NavButton id="projects" icon={faProjectDiagram} label="Projects" />
+                <NavButton id="skills" icon={faCode} label="Skills" />
+                <NavButton id="studies" icon={faBook} label="Studies" />
+                <NavButton id="experience" icon={faBriefcase} label="Experience" />
+                <NavButton id="education" icon={faGraduationCap} label="Education" />
+                <NavButton id="life" icon={faStar} label="Life Events" />
+              </div>
+            )}
 
-                <li className={activeSection === 'projects' ? 'active' : ''}>
-                  <button onClick={() => setActiveSection('projects')}>
-                    <FontAwesomeIcon icon={faProjectDiagram} />
-                    Projects
-                  </button>
-                </li>
-                <li className={activeSection === 'skills' ? 'active' : ''}>
-                  <button onClick={() => setActiveSection('skills')}>
-                    <FontAwesomeIcon icon={faCode} />
-                    Skills
-                  </button>
-                </li>
-                <li className={activeSection === 'studies' ? 'active' : ''}>
-                  <button onClick={() => setActiveSection('studies')}>
-                    <FontAwesomeIcon icon={faBook} />
-                    Studies
-                  </button>
-                </li>
-                <li className={activeSection === 'experience' ? 'active' : ''}>
-                  <button onClick={() => setActiveSection('experience')}>
-                    <FontAwesomeIcon icon={faBriefcase} />
-                    Experience
-                  </button>
-                </li>
-                <li className={activeSection === 'education' ? 'active' : ''}>
-                  <button onClick={() => setActiveSection('education')}>
-                    <FontAwesomeIcon icon={faGraduationCap} />
-                    Education
-                  </button>
-                </li>
-                <li className={activeSection === 'life' ? 'active' : ''}>
-                  <button onClick={() => setActiveSection('life')}>
-                    <FontAwesomeIcon icon={faStar} />
-                    Life Events
-                  </button>
-                </li>
-              </div>)}
-
-            <Divider component="li" />
-            {/* GROUP 2: MY CONTENT */}
             <li className="sidebar-subheader" onClick={() => toggleSection('content')}>
-              <h3>我的小工具</h3>
-              <span className={`chevron ${expandedSections.content ? 'open' : ''}`}>▼</span>
+              {!isCollapsed ? (
+                <><h3>My Tools</h3><span className={`chevron ${expandedSections.content ? 'open' : ''}`}>▼</span></>
+              ) : <div className="dot-divider" />}
             </li>
-            {expandedSections.content && (
+
+            {(expandedSections.content || isCollapsed) && (
               <div className="collapsible-group">
-                <li className={activeSection === 'blog' ? 'active' : ''}>
-                  <button onClick={() => setActiveSection('blog')}>
-                    <FontAwesomeIcon icon={faBlog} />
-                    部落客
-                  </button>
-                </li>
-                <li className={activeSection === 'diary' ? 'active' : ''}>
-                  <button onClick={() => setActiveSection('diary')}>
-                    <FontAwesomeIcon icon={faBook} />
-                    日記
-                  </button>
-                </li>
-                <li className={activeSection === 'finance' ? 'active' : ''}>
-                  <button onClick={() => setActiveSection('finance')}>
-                    <FontAwesomeIcon icon={faFileInvoiceDollar} />
-                    金錢管理
-                  </button>
-                </li>
-                <li className={activeSection === 'motor' ? 'active' : ''}>
-                  <button onClick={() => setActiveSection('motor')}>
-                    <FontAwesomeIcon icon={faMotorcycle} />
-                    機車管理
-                  </button>
-                </li>
-                <li className={activeSection === 'work' ? 'active' : ''}>
-                  <button onClick={() => setActiveSection('work')}>
-                    <FontAwesomeIcon icon={faBriefcase} />
-                    專案管理
-                  </button>
-                </li>
-                <li className={activeSection === 'health' ? 'active' : ''}>
-                  <button onClick={() => setActiveSection('health')}>
-                    <FontAwesomeIcon icon={faHeart} />
-                    健康管理
-                  </button>
-                </li>
-
-
-              </div>)}
+                <NavButton id="blog" icon={faBlog} label="Blog" />
+                <NavButton id="diary" icon={faBook} label="Diary" />
+                <NavButton id="finance" icon={faFileInvoiceDollar} label="Finance" />
+                <NavButton id="motor" icon={faMotorcycle} label="Motor" />
+                <NavButton id="work" icon={faBriefcase} label="Work" />
+                <NavButton id="health" icon={faHeart} label="Health" />
+              </div>
+            )}
           </ul>
         </nav>
 
         <div className="sidebar-footer">
           <Link to="/" className="view-site">
             <FontAwesomeIcon icon={faHome} />
-            View Site
+            {!isCollapsed && <span>View Site</span>}
           </Link>
           <button className="logout-button" onClick={handleLogout}>
             <FontAwesomeIcon icon={faSignOutAlt} />
-            Logout
+            {!isCollapsed && <span>Logout</span>}
           </button>
         </div>
       </div>
 
       <div className="dashboard-content">
         <div className="content-header">
-          <h1>
-            {activeSection === 'overview' && 'Dashboard Overview'}
-            {activeSection === 'messages' && 'Messages'}
-            {activeSection === 'projects' && 'Projects'}
-            {activeSection === 'resume' && 'Resume'}
-            {activeSection === 'skills' && 'Skills'}
-            {activeSection === 'studies' && 'Studies'}
-            {activeSection === 'experience' && 'Experience'}
-            {activeSection === 'education' && 'Education'}
-            {activeSection === 'life' && 'Life Events'}
-            {activeSection === 'blog' && 'Blog'}
-            {activeSection === 'diary' && 'Diary'}
-            {activeSection === 'finance' && 'Finance'}
-            {activeSection === 'motor' && 'Motor Management'}
-            {activeSection === 'work' && 'Project Management'}
-            {activeSection === 'health' && 'Health Management'}
-          </h1>
+          <h1>{activeSection.toUpperCase()}</h1>
         </div>
-
         <div className="content-body">
           {renderContent()}
         </div>

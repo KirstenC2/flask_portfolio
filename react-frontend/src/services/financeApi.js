@@ -30,4 +30,7 @@ export const financeApi = {
         headers: getHeaders(),
         body: JSON.stringify(data),
     }),
+    getDailySummary: (year, month) => 
+        fetch(`${API_BASE}/admin/expenses/daily-summary?year=${year}&month=${month}`, { headers: getHeaders() })
+             .then(res => res.json()),
 };

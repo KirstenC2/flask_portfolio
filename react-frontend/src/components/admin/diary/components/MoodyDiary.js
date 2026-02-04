@@ -136,7 +136,7 @@ const MoodyDiary = () => {
     };
 
     return (
-        <div className="diary-main-container" style={{ padding: '30px' }}>
+        <div className="diary-main-container" style={{ padding: '20px' }}>
             <Card bordered={false} className="full-calendar-card" style={{ height: '100%' }}>
                 <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
                     <div>

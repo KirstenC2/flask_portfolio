@@ -50,7 +50,7 @@ const DebtSection = ({ debts = [], newDebt, setNewDebt, onCreate, onAddPayment, 
     };
 
     return (
-        <div className="debt-page-container" style={{ padding: '20px' }}>
+        <div className="debt-page-container">
 
             {/* 頂部新增與統計列 */}
             <Card bordered={false} style={{ marginBottom: 20, borderRadius: 12 }}>

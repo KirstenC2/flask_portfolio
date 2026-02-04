@@ -35,7 +35,8 @@
   --shadow: 0 8px 30px rgba(0, 0, 0, 0.08);
   --radius: 12px;
 
-  --sidebar-width: 300px;
+  --sidebar-width: 260px;
+  
   --primary-color: #5ec2c2;
   --primary-hover: #4ba8a8;
   --bg-subtle: #f8fafc;

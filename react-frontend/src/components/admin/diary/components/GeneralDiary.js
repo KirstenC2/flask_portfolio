@@ -72,7 +72,7 @@ const Diary = () => {
     useEffect(() => { fetchDiaries(); }, []);
 
     // --- API: 獲取圖片預覽連結 ---
-    const fetchImageUrl = async (path) => {
+    const fetchImageUrl = useCallback(async (path) => {
         if (!path || displayUrls[path] || path === 'undefined') return;
         const parts = path.split('/');
         try {
@@ -80,7 +80,11 @@ const Diary = () => {
             const data = await response.json();
             if (data.url) setDisplayUrls(prev => ({ ...prev, [path]: data.url }));
         } catch (err) { console.error("圖片加載失敗", err); }
-    };
+    }, [displayUrls]); // 依賴 displayUrls
+
+    useEffect(() => {
+        if (currentDiary?.image_url) fetchImageUrl(currentDiary.image_url);
+    }, [currentDiary, fetchImageUrl]); // 加上 fetchImageUrl
 
     useEffect(() => {
         if (currentDiary?.image_url) fetchImageUrl(currentDiary.image_url);
@@ -159,23 +163,23 @@ const Diary = () => {
     return (
         <div className="diary-page-container" style={{ padding: '20px' }}>
             <Card bordered={false} className="full-calendar-card" style={{ height: '100%' }}>
-            <div style={{ marginBottom: '16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <h2>My Diary Calendar</h2>
-                <Button type="primary" icon={<FontAwesomeIcon icon={faPlus} />} onClick={() => handleDateClick(new Date())}>
-                    New Entry
-                </Button>
-            </div>
+                <div style={{ marginBottom: '16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <h2>My Diary Calendar</h2>
+                    <Button type="primary" icon={<FontAwesomeIcon icon={faPlus} />} onClick={() => handleDateClick(new Date())}>
+                        New Entry
+                    </Button>
+                </div>
 
-            <Spin spinning={loading}>
-                <DiaryCalendar
-                    diaries={diaries}
-                    onDateClick={handleDateClick}
-                    activeDate={activeDate}
-                    onActiveStartDateChange={({ activeStartDate }) => {
-                        fetchDiaries(activeStartDate.getFullYear(), activeStartDate.getMonth() + 1);
-                    }}
-                />
-            </Spin>
+                <Spin spinning={loading}>
+                    <DiaryCalendar
+                        diaries={diaries}
+                        onDateClick={handleDateClick}
+                        activeDate={activeDate}
+                        onActiveStartDateChange={({ activeStartDate }) => {
+                            fetchDiaries(activeStartDate.getFullYear(), activeStartDate.getMonth() + 1);
+                        }}
+                    />
+                </Spin>
             </Card>
             {/* Diary Modal */}
             <Modal

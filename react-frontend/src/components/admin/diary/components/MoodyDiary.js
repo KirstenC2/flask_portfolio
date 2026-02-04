@@ -57,7 +57,9 @@ const MoodyDiary = () => {
         }
     }, [activeDate]);
 
-    useEffect(() => { fetchDiaries(); }, [fetchDiaries]);
+    useEffect(() => { 
+    fetchDiaries(); 
+}, [fetchDiaries]);
 
     // --- Handle: 點擊日期 ---
     const handleDateClick = (date) => {
@@ -78,6 +80,8 @@ const MoodyDiary = () => {
         }
         setIsModalOpen(true);
     };
+
+    
 
     // --- Handle: 提交表單 ---
     const handleSubmit = async () => {

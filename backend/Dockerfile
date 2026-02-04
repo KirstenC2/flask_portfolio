@@ -12,7 +12,8 @@ RUN pip install --no-cache-dir \
     pyjwt==2.8.0 \
     werkzeug==2.3.7 \
     psycopg2-binary==2.9.9 \
-    minio==7.0.0
+    minio==7.0.0 \
+    flask-migrate==4.0.7
 
 # Copy the application code
 COPY . .

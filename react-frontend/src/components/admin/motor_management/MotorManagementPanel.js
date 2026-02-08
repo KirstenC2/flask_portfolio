@@ -1,171 +1,225 @@
-import React, { useState, useEffect } from 'react';
-import './MotorManagementPanel.css'; // 複用 DebtPanel 的風格
+import React, { useState, useEffect, useCallback } from 'react';
+import { 
+    Form, Input, Button, message, Popconfirm, Space, 
+    Modal, Table, Typography, Card, Row, Col, Tag, DatePicker, InputNumber 
+} from 'antd';
+import { EditOutlined, DeleteOutlined, PlusOutlined, HistoryOutlined } from '@ant-design/icons';
+import dayjs from 'dayjs';  
+import './MotorManagementPanel.css';
 import '../../../common/global.css';
+
+const { Title, Text } = Typography;
+const API_URL = "http://localhost:5001/api/motor";
+
 const MotorManagementPanel = () => {
     const [records, setRecords] = useState([]);
-    const [formData, setFormData] = useState({
-        item_name: '換機油',
-        mileage: '',
-        price: '',
-        date: new Date().toISOString().split('T')[0],
-        note: ''
-    });
+    const [loading, setLoading] = useState(false);
+    const [isModalOpen, setIsModalOpen] = useState(false);
+    const [editingRecord, setEditingRecord] = useState(null);
+    const [form] = Form.useForm();
 
-    const fetchRecords = async () => {
-        const res = await fetch("http://localhost:5001/api/motor");
-        const data = await res.json();
-        setRecords(data);
-    };
+    const fetchRecords = useCallback(async () => {
+        setLoading(true);
+        try {
+            const res = await fetch(API_URL);
+            const data = await res.json();
+            // 排序：最新日期在前
+            const sortedData = data.sort((a, b) => dayjs(b.maintenance_date).unix() - dayjs(a.maintenance_date).unix());
+            setRecords(sortedData);
+        } catch (error) {
+            message.error("獲取紀錄失敗");
+        } finally {
+            setLoading(false);
+        }
+    }, []);
 
-    // 在 MotorPanel 組件內部
-    const checkMaintenanceStatus = () => {
-        if (records.length === 0) return { shouldChange: false, days: 0 };
+    useEffect(() => { fetchRecords(); }, [fetchRecords]);
 
-        const lastDate = new Date(records[0].maintenance_date);
-        const today = new Date();
-
-        // 計算相差的毫秒數
-        const diffTime = Math.abs(today - lastDate);
-        // 轉換為天數
-        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-
-        // 超過 90 天 (約 3 個月) 則回傳需要更換
+    // --- 邏輯計算區 ---
+    const getMetrics = () => {
+        if (records.length === 0) return { daysSince: 0, remaining: 0, nextDate: 'N/A', isOverdue: false };
+        
+        const lastDate = dayjs(records[0].maintenance_date);
+        const today = dayjs().startOf('day');
+        const nextDate = lastDate.add(3, 'month');
+        
         return {
-            shouldChange: diffDays >= 90,
-            days: diffDays
+            daysSince: today.diff(lastDate, 'day'),
+            remaining: nextDate.diff(today, 'day'),
+            nextDate: nextDate.format('YYYY-MM-DD'),
+            isOverdue: today.isAfter(nextDate)
         };
     };
-    const calculateNextMaintenanceDate = () => {
-        if (records.length === 0) return "尚無紀錄";
 
-        // 取得最近一次保養日期 (假設 records[0] 是最新的一筆)
-        const lastDate = new Date(records[0].maintenance_date);
+    const metrics = getMetrics();
 
-        // 加上 3 個月
-        const nextDate = new Date(lastDate);
-        nextDate.setMonth(nextDate.getMonth() + 3);
-
-        // 格式化為 YYYY-MM-DD
-        const yyyy = nextDate.getFullYear();
-        const mm = String(nextDate.getMonth() + 1).padStart(2, '0');
-        const dd = String(nextDate.getDate()).padStart(2, '0');
-
-        return `${yyyy}-${mm}-${dd}`;
+    // --- 操作處理區 ---
+    const handleOpenModal = (record = null) => {
+        setEditingRecord(record);
+        if (record) {
+            form.setFieldsValue({
+                ...record,
+                maintenance_date: dayjs(record.maintenance_date)
+            });
+        } else {
+            form.resetFields();
+            form.setFieldsValue({ maintenance_date: dayjs() });
+        }
+        setIsModalOpen(true);
     };
 
-    const calculateRemainingDays = () => {
-        // 1. 安全檢查：如果 records 還沒抓到或長度為 0，回傳 null
-        if (!records || records.length === 0 || !records[0].maintenance_date) {
-            return null;
-        }
+    const handleFinish = async (values) => {
+        const payload = {
+            ...values,
+            maintenance_date: values.maintenance_date.format('YYYY-MM-DD'),
+            item_name: '換機油' 
+        };
+
+        const method = editingRecord ? 'PUT' : 'POST';
+        const url = editingRecord ? `${API_URL}/record/${editingRecord.id}` : `${API_URL}/record`;
 
         try {
-            // 2. 取得最近一次保養日期
-            const lastDate = new Date(records[0].maintenance_date);
-
-            // 檢查日期是否有效
-            if (isNaN(lastDate.getTime())) return null;
-
-            // 3. 推算 3 個月後
-            const nextMaintenanceDate = new Date(lastDate);
-            nextMaintenanceDate.setMonth(nextMaintenanceDate.getMonth() + 3); // 修正這裡：不要寫 nextDate.setMonth(nextDate.setMonth() + 3)
-
-            // 4. 取得今天並重設時間為 00:00:00 確保計算天數精確
-            const today = new Date();
-            today.setHours(0, 0, 0, 0);
-            nextMaintenanceDate.setHours(0, 0, 0, 0);
-
-            // 5. 計算天數差
-            const diffTime = nextMaintenanceDate - today;
-            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-
-            return diffDays;
+            const res = await fetch(url, {
+                method,
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload),
+            });
+            if (res.ok) {
+                message.success(editingRecord ? "修改成功" : "新增紀錄成功");
+                setIsModalOpen(false);
+                fetchRecords();
+            }
         } catch (error) {
-            console.error("計算天數出錯:", error);
-            return null;
+            message.error("提交失敗");
         }
     };
 
-    const remainingDays = calculateRemainingDays();
-
-    const status = checkMaintenanceStatus();
-    const nextMaintenance = calculateNextMaintenanceDate();
-    const isOverdue = new Date() > new Date(nextMaintenance);
-    useEffect(() => { fetchRecords(); }, []);
-
-    const handleSubmit = async (e) => {
-        e.preventDefault();
-        await fetch("http://localhost:5001/api/motor", {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(formData),
-        });
-        setFormData({ ...formData, mileage: '', price: '', note: '' });
-        fetchRecords();
+    const handleDelete = async (id) => {
+        try {
+            const res = await fetch(`${API_URL}/record/${id}`, { method: 'DELETE' });
+            if (res.ok) {
+                message.success("紀錄已刪除");
+                fetchRecords();
+            }
+        } catch (error) {
+            message.error("刪除失敗");
+        }
     };
 
+    const columns = [
+        {
+            title: '日期',
+            dataIndex: 'maintenance_date',
+            key: 'maintenance_date',
+            sorter: (a, b) => dayjs(a.maintenance_date).unix() - dayjs(b.maintenance_date).unix(),
+        },
+        { title: '項目', dataIndex: 'item_name', key: 'item_name' },
+        { 
+            title: '里程數', 
+            dataIndex: 'mileage', 
+            key: 'mileage', 
+            render: (val) => `${val?.toLocaleString()} KM` 
+        },
+        { 
+            title: '價格', 
+            dataIndex: 'price', 
+            key: 'price', 
+            render: (val) => <Text style={{ color: '#cf1322', fontWeight: 'bold' }}>${val?.toLocaleString()}</Text> 
+        },
+        { title: '備註', dataIndex: 'note', key: 'note', ellipsis: true },
+        {
+            title: '操作',
+            key: 'action',
+            render: (_, record) => (
+                <Space>
+                    <Button type="link" icon={<EditOutlined />} onClick={() => handleOpenModal(record)} />
+                    <Popconfirm title="確定刪除此紀錄？" onConfirm={() => handleDelete(record.id)} okText="確定" cancelText="取消">
+                        <Button type="link" danger icon={<DeleteOutlined />} />
+                    </Popconfirm>
+                </Space>
+            ),
+        },
+    ];
+
     return (
-        <div className="motor-container">
+        <div className="motor-container" style={{ padding: '24px' }}>
+            <Card bordered={false} className="main-glass-card">
+                <Row justify="space-between" align="middle" style={{ marginBottom: 24 }}>
+                    <Col>
+                        <Title level={2} style={{ margin: 0 }}>
+                            <HistoryOutlined style={{ marginRight: 12, color: '#ec4899' }} />
+                            機車保養管理
+                        </Title>
+                    </Col>
+                    <Col>
+                        <Button 
+                            type="primary" 
+                            icon={<PlusOutlined />} 
+                            onClick={() => handleOpenModal()}
+                            style={{ background: '#ec4899', borderColor: '#ec4899' }}
+                            size="large"
+                        >
+                            新增紀錄
+                        </Button>
+                    </Col>
+                </Row>
 
-            <div className="motor-header-section">
-                <h1>機車管理紀錄</h1>
-                <form onSubmit={handleSubmit} className="motor-form">
-                    <input type="date" value={formData.date} onChange={e => setFormData({ ...formData, date: e.target.value })} />
-                    <input type="number" placeholder="當前里程 (KM)" value={formData.mileage} onChange={e => setFormData({ ...formData, mileage: e.target.value })} required />
-                    <input type="number" placeholder="價格" value={formData.price} onChange={e => setFormData({ ...formData, price: e.target.value })} required />
-                    <input type="text" placeholder="備註 (機油型號)" value={formData.note} onChange={e => setFormData({ ...formData, note: e.target.value })} />
-                    <button type="submit" className="btn-add-main">新增紀錄</button>
-                </form>
-            </div>
-            <div className="motor-content">
-                <img src="/motor.png" alt="my motor" />
-                {records.length > 0 && (
-                    <div className="status-grid">
-                        {/* 日期提醒 */}
-                        <div className={`status-card ${status.shouldChange ? 'status-danger' : 'status-safe'}`}>
-                            <div className="status-label">上次保養至今</div>
-                            <div className="status-value">{status.days} 天</div>
-                            <div className="status-hint">
-                                {status.shouldChange ? "⚠️ 已超過 3 個月，建議更換" : "✅ 狀態良好"}
-                            </div>
+                <Row gutter={[16, 16]} style={{ marginBottom: 24 }}>
+                    <Col xs={24} md={8}>
+                        <div className="motor-image-wrapper">
+                            <img src="/motor.png" alt="my motor" style={{ width: '100%', maxWidth: '200px' }} />
                         </div>
-                        <div className={`stat-item-card ${isOverdue ? 'border-danger' : 'status-safe'}`}>
-                            <div className="status-label">預計下次保養</div>
-                            <div className="status-value">{remainingDays} 天</div>
-                            <div className={`status-hint ${isOverdue ? 'text-red' : ''}`}>
-                                日期：{nextMaintenance}
-                                {isOverdue && <span className="error-text">⚠️ 已過期</span>}
-                            </div>
-                        </div>
-                    </div>
+                    </Col>
+                    <Col xs={24} md={8}>
+                        <Card className={`status-mini-card ${metrics.daysSince >= 90 ? 'danger' : 'safe'}`}>
+                            <Text type="secondary">上次保養至今</Text>
+                            <Title level={3} style={{ margin: '8px 0' }}>{metrics.daysSince} 天</Title>
+                            {metrics.daysSince >= 90 ? <Tag color="error">⚠️ 建議保養</Tag> : <Tag color="success">狀態良好</Tag>}
+                        </Card>
+                    </Col>
+                    <Col xs={24} md={8}>
+                        <Card className={`status-mini-card ${metrics.isOverdue ? 'danger' : 'safe'}`}>
+                            <Text type="secondary">距離下次保養 (預計)</Text>
+                            <Title level={3} style={{ margin: '8px 0' }}>{metrics.remaining} 天</Title>
+                            <Text size="small" type={metrics.isOverdue ? 'danger' : 'secondary'}>
+                                目標日期：{metrics.nextDate}
+                            </Text>
+                        </Card>
+                    </Col>
+                </Row>
 
-                )}
-            </div>
+                <Table 
+                    columns={columns} 
+                    dataSource={records} 
+                    rowKey="id" 
+                    loading={loading}
+                    pagination={{ pageSize: 6 }}
+                    className="custom-antd-table"
+                />
+            </Card>
 
-            <div className="table-wrapper">
-                <table className="motor-table">
-                    <thead>
-                        <tr>
-                            <th>日期</th>
-                            <th>項目</th>
-                            <th>里程數</th>
-                            <th>價格</th>
-                            <th>備註</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {records.map(r => (
-                            <tr key={r.id}>
-                                <td>{r.maintenance_date}</td>
-                                <td>{r.item_name}</td>
-                                <td>{r.mileage} KM</td>
-                                <td className="text-price">${r.price}</td>
-                                <td className="text-muted">{r.note}</td>
-                            </tr>
-                        ))}
-                    </tbody>
-                </table>
-            </div>
+            <Modal
+                title={editingRecord ? "編輯保養紀錄" : "新增保養紀錄"}
+                open={isModalOpen}
+                onCancel={() => setIsModalOpen(false)}
+                onOk={() => form.submit()}
+                destroyOnClose
+            >
+                <Form form={form} layout="vertical" onFinish={handleFinish}>
+                    <Form.Item name="maintenance_date" label="保養日期" rules={[{ required: true, message: '請選擇日期' }]}>
+                        <DatePicker style={{ width: '100%' }} />
+                    </Form.Item>
+                    <Form.Item name="mileage" label="當前里程 (KM)" rules={[{ required: true, message: '請輸入里程' }]}>
+                        <InputNumber style={{ width: '100%' }} placeholder="例如: 12500" />
+                    </Form.Item>
+                    <Form.Item name="price" label="價格" rules={[{ required: true, message: '請輸入價格' }]}>
+                        <InputNumber style={{ width: '100%' }} prefix="$" placeholder="例如: 150" />
+                    </Form.Item>
+                    <Form.Item name="note" label="備註">
+                        <Input.TextArea placeholder="機油型號或其他更換項目" rows={3} />
+                    </Form.Item>
+                </Form>
+            </Modal>
         </div>
     );
 };

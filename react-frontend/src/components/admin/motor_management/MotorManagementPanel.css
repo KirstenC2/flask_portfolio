@@ -1,149 +1,33 @@
 /* MotorManagementPanel.css */
-
-:root {
-  --main-teal: #5ec2c2;
-  --text-dark: #2c3e50;
-  --text-light: #94a3b8;
-  --border-color: #edf2f7;
-  --bg-white: #ffffff;
+.status-mini-card {
+    border-radius: 12px;
+    text-align: center;
+    transition: all 0.3s;
+    border-left: 5px solid #d9d9d9;
 }
 
-.motor-container {
-  max-width: 1100px;
-  margin: 0 auto;
-  padding: 30px;
-  background-color: var(--bg-white);
+.status-mini-card.safe {
+    border-left-color: #52c41a;
+    background: #f6ffed;
 }
 
-/* 標題與輸入區：純白底 + 細邊框 */
-.motor-header-section {
-  padding-bottom: 30px;
-  border-bottom: 2px solid var(--border-color);
-  margin-bottom: 30px;
+.status-mini-card.danger {
+    border-left-color: #ff4d4f;
+    background: #fff1f0;
 }
 
-.motor-header-section h1 {
-  font-size: 20px;
-  color: var(--text-dark);
-  margin-bottom: 20px;
-  font-weight: 600;
+.motor-image-wrapper {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100%;
 }
 
-.motor-form {
-  display: flex;
-  gap: 12px;
-  align-items: center;
+/* 讓表格在小螢幕也能滑動 */
+.custom-antd-table {
+    overflow-x: auto;
 }
 
-.motor-form input {
-  padding: 10px 15px;
-  border: 1px solid var(--border-color);
-  border-radius: 8px;
-  font-size: 14px;
-  color: var(--text-dark);
-  transition: border-color 0.2s;
-  outline: none;
-}
-
-.motor-form input:focus {
-  border-color: var(--main-teal);
-}
-
-.btn-add-main {
-  background-color: var(--main-teal);
-  color: white;
-  border: none;
-  padding: 10px 20px;
-  border-radius: 8px;
-  font-weight: 500;
-  cursor: pointer;
-  white-space: nowrap;
-}
-
-/* 儀表板區域 */
-.motor-content {
-  display: flex;
-  gap: 40px;
-  margin-bottom: 40px;
-  align-items: flex-start;
-}
-
-.motor-content img {
-  width: 220px;
-  height: 220px;
-  object-fit: cover;
-  border-radius: 12px;
-  border: 1px solid var(--border-color);
-}
-
-.status-grid {
-  display: flex;
-  gap: 20px;
-  flex: 1;
-}
-
-/* 統一狀態卡片樣式 */
-.status-card, .stat-item-card {
-  flex: 1;
-  padding: 25px;
-  border: 1px solid var(--border-color);
-  border-radius: 16px;
-  background: var(--bg-white);
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-}
-
-.status-label {
-  font-size: 13px;
-  color: var(--text-light);
-  margin-bottom: 10px;
-}
-
-.status-value {
-  font-size: 36px;
-  font-weight: 700;
-  color: var(--main-teal); /* 統一使用青色 */
-}
-
-.status-hint, .stat-value {
-  font-size: 14px;
-  color: var(--text-dark);
-  margin-top: 10px;
-}
-
-/* 當過期或警告時，僅更換文字顏色，保持框線一致 */
-.status-danger .status-value, .text-red {
-  color: #e74c3c !important;
-}
-
-/* 表格區域 */
-.motor-table {
-  width: 100%;
-  border-collapse: collapse;
-}
-
-.motor-table th {
-  text-align: left;
-  padding: 15px;
-  font-size: 14px;
-  color: var(--text-light);
-  font-weight: 500;
-  border-bottom: 1px solid var(--border-color);
-}
-
-.motor-table td {
-  padding: 20px 15px;
-  font-size: 15px;
-  color: var(--text-dark);
-  border-bottom: 1px solid var(--border-color);
-}
-
-.text-price {
-  font-weight: 600;
-}
-
-.text-muted {
-  color: var(--text-light);
-  font-size: 13px;
+.main-glass-card{
+  height: 100%;
 }

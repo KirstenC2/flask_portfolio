@@ -4,12 +4,13 @@ import {
     BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip,
     ResponsiveContainer, Cell, LabelList
 } from 'recharts';
-import { Card, Table, Tag, Typography, DatePicker, Space, Row, Col, Spin, Calendar, Button } from 'antd';
+import { Card, Table, Tag, Typography, DatePicker, Space, Row, Col, Spin, Calendar, Button, Form, Modal, Select, Input, InputNumber, message } from 'antd';
 import dayjs from 'dayjs';
 import { StatRow } from './StatRow';
 import { financeApi } from '../../../services/financeApi';
 import './styles/ExpenseSection.css';
 import '../../../common/global.css';
+import { EditOutlined } from '@ant-design/icons';
 
 const { Text, Title } = Typography;
 
@@ -26,7 +27,13 @@ const ExpenseSection = ({
     const [expenses, setExpenses] = useState([]);                 // 當月所有支出
     const [dailySummaries, setDailySummaries] = useState([]);     // 日曆用的每日加總
     const [loading, setLoading] = useState(false);
-
+    const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+    const [editingRecord, setEditingRecord] = useState(null);
+    const [submitting, setSubmitting] = useState(false);
+    const [form] = Form.useForm();
+    const categoryOptions = useMemo(() =>
+        categories.map(c => ({ label: c.name, value: c.id })),
+        [categories]);
     // 2. 獲取數據邏輯 (單一來源)
     const refreshData = useCallback(async (date) => {
         setLoading(true);
@@ -114,10 +121,38 @@ const ExpenseSection = ({
                     ${(parseFloat(val) || 0).toLocaleString()}
                 </Text>
             ),
-        }
+        }, {
+            title: '操作',
+            key: 'action',
+            width: 100,
+            render: (_, record) => (
+                <Space>
+                    <Button
+                        type="link"
+                        icon={<EditOutlined />}
+                        onClick={() => handleEdit(record)}
+                    >
+                        編輯
+                    </Button>
+                </Space>
+            ),
+        },
     ];
 
     const chartData = stats?.monthly || [];
+
+
+    const handleEdit = (record) => {
+        setEditingRecord(record);
+        form.setFieldsValue({
+            expense_date: dayjs(record.expense_date), // 注意：這裡是 expense_date
+            category_id: record.category_id,         // 與 backend 模型對應
+            title: record.title,
+            amount: record.amount,
+            note: record.note || ''
+        });
+        setIsEditModalOpen(true);
+    };
 
     return (
         <section>
@@ -200,7 +235,7 @@ const ExpenseSection = ({
                     </form>
                 </div>
 
-                
+
 
                 <Spin spinning={loading}>
                     <StatRow items={[
@@ -295,8 +330,83 @@ const ExpenseSection = ({
                     </Col>
                 </Row>
 
-                
+
             </Card>
+            <Modal
+                title="修改支出紀錄"
+                open={isEditModalOpen}
+                onCancel={() => {
+                    setIsEditModalOpen(false);
+                    setEditingRecord(null);
+                    form.resetFields();
+                }}
+                onOk={() => form.submit()}
+                okText="儲存修改"
+                cancelText="取消"
+                confirmLoading={submitting}
+            >
+                <Form
+                    form={form}
+                    layout="vertical"
+                    onFinish={async (values) => {
+                        setSubmitting(true);
+                        try {
+                            const payload = {
+                                ...values,
+                                expense_date: values.expense_date.format('YYYY-MM-DD'),
+                            };
+                            
+                            const token = localStorage.getItem('adminToken');
+
+                            // 使用你定義好的 financeApi (或直接用 fetch)
+                            const res = await fetch(`http://localhost:5001/api/admin/expenses/${editingRecord.id}`, {
+                                method: 'PUT',
+                                headers: { 
+                                    'Content-Type': 'application/json', 
+                                    'Authorization': `Bearer ${token}` 
+                                },
+                                body: JSON.stringify(payload)
+                            });
+
+                            if (res.ok) {
+                                message.success('修改成功！');
+                                setIsEditModalOpen(false);
+                                refreshData(currentViewDate); // 重新抓取資料
+                            } else {
+                                throw new Error('Update failed');
+                            }
+                        } catch (error) {
+                            message.error('修改失敗，請檢查網路連接');
+                        } finally {
+                            setSubmitting(false);
+                        }
+                    }}
+                >
+                    <Form.Item name="expense_date" label="日期" rules={[{ required: true }]}>
+                        <DatePicker style={{ width: '100%' }} />
+                    </Form.Item>
+
+                    <Form.Item name="category_id" label="類別" rules={[{ required: true }]}>
+                        <Select options={categoryOptions} placeholder="選擇分類" />
+                    </Form.Item>
+
+                    <Form.Item name="title" label="項目名稱" rules={[{ required: true }]}>
+                        <Input placeholder="例如：午餐、房租" />
+                    </Form.Item>
+
+                    <Form.Item name="amount" label="金額" rules={[{ required: true }]}>
+                        <InputNumber
+                            style={{ width: '100%' }}
+                            prefix="$"
+                            formatter={value => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
+                        />
+                    </Form.Item>
+
+                    <Form.Item name="note" label="備註">
+                        <Input.TextArea placeholder="（選填）" />
+                    </Form.Item>
+                </Form>
+            </Modal>
         </section>
     );
 };

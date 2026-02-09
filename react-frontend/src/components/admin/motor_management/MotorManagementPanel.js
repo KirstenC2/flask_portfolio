@@ -147,7 +147,7 @@ const MotorManagementPanel = () => {
                 <Row justify="space-between" align="middle" style={{ marginBottom: 24 }}>
                     <Col>
                         <Title level={2} style={{ margin: 0 }}>
-                            <HistoryOutlined style={{ marginRight: 12, color: '#ec4899' }} />
+                            <HistoryOutlined style={{ marginRight: 12, color: 'var(--primary-color)' }} />
                             機車保養管理
                         </Title>
                     </Col>
@@ -156,7 +156,7 @@ const MotorManagementPanel = () => {
                             type="primary" 
                             icon={<PlusOutlined />} 
                             onClick={() => handleOpenModal()}
-                            style={{ background: '#ec4899', borderColor: '#ec4899' }}
+                            style={{ background: 'var(--primary-color)', borderColor: 'var(--primary-color)' }}
                             size="large"
                         >
                             新增紀錄

@@ -235,3 +235,43 @@ def delete_category(current_admin, id):
     db.session.delete(cat)
     db.session.commit()
     return jsonify({'message': 'Category deleted'})
+
+
+
+
+
+@admin_bp.route('/expenses/stats/by-category', methods=['GET', 'OPTIONS'])
+@token_required
+def get_expenses_by_categorys(current_admin):
+    # 1. 取得參數
+    year = request.args.get('year', type=int)
+    month = request.args.get('month', type=int)
+
+    # 打印到 Flask 終端機確認有收到 2
+    print(f"DEBUG: PostgreSQL Filtering -> Year: {year}, Month: {month}")
+
+    # 2. 建立基本查詢
+    query = db.session.query(
+        ExpenseCategory.name,
+        func.sum(Expense.amount).label('total')
+    ).join(Expense, ExpenseCategory.id == Expense.category_id)
+
+    # 3. 過濾年份 (PostgreSQL 寫法)
+    if year:
+        query = query.filter(extract('year', Expense.expense_date) == year)
+    
+    # 4. 過濾月份 (PostgreSQL 寫法)
+    # 這裡使用 is not None 確保 0 以外的數字都能通過
+    if month is not None:
+        query = query.filter(extract('month', Expense.expense_date) == month)
+
+    # 5. 分組
+    stats = query.group_by(ExpenseCategory.name).all()
+    
+    # 除錯：確認數據筆數
+    print(f"DEBUG: Found {len(stats)} categories for this period")
+
+    return jsonify([
+        {'category': name, 'total': float(total or 0)} 
+        for name, total in stats
+    ])

@@ -10,6 +10,7 @@ import { StatRow } from './StatRow';
 import { financeApi } from '../../../services/financeApi';
 import './styles/ExpenseSection.css';
 import '../../../common/global.css';
+import CategoryDistribution from './CategoryDistribution';
 import { EditOutlined } from '@ant-design/icons';
 
 const { Text, Title } = Typography;
@@ -26,6 +27,8 @@ const ExpenseSection = ({
     const [selectedDate, setSelectedDate] = useState(null);       // 使用者點選的特定日期
     const [expenses, setExpenses] = useState([]);                 // 當月所有支出
     const [dailySummaries, setDailySummaries] = useState([]);     // 日曆用的每日加總
+    const [monthlyStats, setMonthlyStats] = useState([]);         // 月度分類統計
+    const [yearlyStats, setYearlyStats] = useState([]);           // 全年分類統計
     const [loading, setLoading] = useState(false);
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
     const [editingRecord, setEditingRecord] = useState(null);
@@ -39,17 +42,21 @@ const ExpenseSection = ({
         setLoading(true);
         try {
             const year = date.year();
-            const month = date.month() + 1;
+            const month = date.month() + 1; // dayjs 的 month 從 0 開始，所以要 +1
 
-            const [expenseList, summaryData] = await Promise.all([
+            const [expenseList, summaryData, mStats, yStats] = await Promise.all([
                 financeApi.getExpenses(year, month),
-                financeApi.getDailySummary(year, month)
+                financeApi.getDailySummary(year, month),
+                financeApi.getCategoryStats(year, month), // 這裡是月度：傳入 (2026, 2)
+                financeApi.getCategoryStats(year)        // 這裡是年度：傳入 (2026)
             ]);
 
-            setExpenses(Array.isArray(expenseList) ? expenseList : expenseList.data || []);
-            setDailySummaries(Array.isArray(summaryData) ? summaryData : []);
+            setExpenses(expenseList);
+            setDailySummaries(summaryData);
+            setMonthlyStats(mStats);
+            setYearlyStats(yStats);
         } catch (error) {
-            console.error("Failed to fetch finance data:", error);
+            console.error(error);
         } finally {
             setLoading(false);
         }
@@ -278,6 +285,23 @@ const ExpenseSection = ({
                         </ResponsiveContainer>
                     </div>
                 </div>
+                {/* 修正後的分類統計區域 */}
+                <Row gutter={[24, 24]} style={{ marginTop: '24px' }}>
+                    <Col xs={24} md={12}>
+                        <CategoryDistribution
+                            title={`${currentViewDate.format('M')}月 分類佔比`}
+                            data={monthlyStats}
+                            loading={loading}
+                        />
+                    </Col>
+                    <Col xs={24} md={12}>
+                        <CategoryDistribution
+                            title={`${currentViewDate.format('YYYY')}年 累計支出`}
+                            data={yearlyStats}
+                            loading={loading}
+                        />
+                    </Col>
+                </Row>
 
                 {/* 日曆與表格 */}
                 <Row gutter={[24, 24]} align="stretch" style={{ marginTop: '24px' }}>
@@ -355,15 +379,15 @@ const ExpenseSection = ({
                                 ...values,
                                 expense_date: values.expense_date.format('YYYY-MM-DD'),
                             };
-                            
+
                             const token = localStorage.getItem('adminToken');
 
                             // 使用你定義好的 financeApi (或直接用 fetch)
                             const res = await fetch(`http://localhost:5001/api/admin/expenses/${editingRecord.id}`, {
                                 method: 'PUT',
-                                headers: { 
-                                    'Content-Type': 'application/json', 
-                                    'Authorization': `Bearer ${token}` 
+                                headers: {
+                                    'Content-Type': 'application/json',
+                                    'Authorization': `Bearer ${token}`
                                 },
                                 body: JSON.stringify(payload)
                             });

@@ -1,18 +1,18 @@
 import React, { useState } from 'react';
 import {
     Card, Progress, Statistic, Button, Modal, Drawer,
-    Form, Input, DatePicker, List, Space, Tag, Typography, Divider, Empty
+    Form, Input, DatePicker, List, Space, Tag, Typography, Divider, Empty, Select
 } from 'antd';
 import {
     DollarOutlined, HistoryOutlined, PlusOutlined,
-    CheckCircleOutlined, ArrowDownOutlined, FallOutlined  // 改成 FallOutlined
+    CheckCircleOutlined, ArrowDownOutlined, FallOutlined, ClockCircleOutlined
 } from '@ant-design/icons';
 import dayjs from 'dayjs';
 
 const { Text, Title } = Typography;
+const { Option } = Select;
 
 const DebtSection = ({ debts = [], newDebt, setNewDebt, onCreate, onAddPayment, filterStatus, setFilterStatus }) => {
-    // 狀態管理
     const [isPayModalOpen, setIsPayModalOpen] = useState(false);
     const [isHistoryOpen, setIsHistoryOpen] = useState(false);
     const [selectedDebt, setSelectedDebt] = useState(null);
@@ -21,26 +21,25 @@ const DebtSection = ({ debts = [], newDebt, setNewDebt, onCreate, onAddPayment, 
     const safeDebts = Array.isArray(debts) ? debts : [];
     const totalRemaining = safeDebts.reduce((acc, d) => acc + (Number(d.current_balance) || 0), 0);
 
-    // 開啟還款視窗
     const openPayModal = (debt) => {
         setSelectedDebt(debt);
         setIsPayModalOpen(true);
-        form.setFieldsValue({ amount: '', payment_date: dayjs(), note: '' });
+        // 預設狀態為 COMPLETED，日期為今天
+        form.setFieldsValue({ amount: '', date: dayjs(), note: '', status: 'COMPLETED' });
     };
 
-    // 開啟歷史紀錄抽屜
     const openHistory = (debt) => {
         setSelectedDebt(debt);
         setIsHistoryOpen(true);
     };
 
-    // 提交還款
     const handlePaymentSubmit = async () => {
         try {
             const values = await form.validateFields();
             const formatted = {
                 ...values,
-                payment_date: values.payment_date.format('YYYY-MM-DD')
+                // 後端 API 現在接收 date 欄位
+                date: values.date.format('YYYY-MM-DD HH:mm:ss')
             };
             await onAddPayment(selectedDebt.id, formatted);
             setIsPayModalOpen(false);
@@ -51,57 +50,52 @@ const DebtSection = ({ debts = [], newDebt, setNewDebt, onCreate, onAddPayment, 
 
     return (
         <div className="debt-page-container">
-
-            {/* 頂部新增與統計列 */}
+            {/* 統計與快速新增 */}
             <Card bordered={false} style={{ marginBottom: 20, borderRadius: 12 }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '20px' }}>
                     <Space size="large">
                         <Statistic
                             title="剩餘總負債"
                             value={totalRemaining}
-                            // 將 TrendingDownOutlined 改為 FallOutlined
                             prefix={<FallOutlined style={{ color: '#ff4d4f' }} />}
                             precision={0}
                             valueStyle={{ color: '#ff4d4f', fontWeight: 'bold' }}
                         />
-                        <div className="filter-group" style={{ marginLeft: 40 }}>
-                            <Text type="secondary" style={{ display: 'block', marginBottom: 8 }}>篩選狀態</Text>
-                            <Space.Compact>
-                                {['all', 'active', 'paid'].map(s => (
-                                    <Button
-                                        key={s}
-                                        type={filterStatus === s ? 'primary' : 'default'}
-                                        onClick={() => setFilterStatus(s)}
-                                    >
-                                        {s === 'all' ? '全部' : s === 'active' ? '待還' : '已結'}
-                                    </Button>
-                                ))}
-                            </Space.Compact>
-                        </div>
+                        <Space.Compact style={{ marginLeft: 20 }}>
+                            {['all', 'active', 'paid'].map(s => (
+                                <Button
+                                    key={s}
+                                    // 診斷點：看看當前 filterStatus 到底是哪個字串
+                                    type={filterStatus === s ? 'primary' : 'default'}
+                                    onClick={() => {
+                                        console.log("切換過濾器至:", s);
+                                        setFilterStatus(s);
+                                    }}
+                                >
+                                    {s === 'all' ? '全部' : s === 'active' ? '待還' : '已結'}
+                                </Button>
+                            ))}
+                        </Space.Compact>
                     </Space>
 
-                    <div className="quick-add">
-                        <Space align="end">
-                            <Form layout="inline">
-                                <Form.Item label="快速新增債務">
-                                    <Input
-                                        placeholder="債務名稱"
-                                        value={newDebt.title}
-                                        onChange={e => setNewDebt({ ...newDebt, title: e.target.value })}
-                                    />
-                                </Form.Item>
-                                <Form.Item>
-                                    <Input
-                                        type="number"
-                                        placeholder="金額"
-                                        value={newDebt.total_amount}
-                                        onChange={e => setNewDebt({ ...newDebt, total_amount: e.target.value })}
-                                    />
-                                </Form.Item>
-                                <Button type="primary" icon={<PlusOutlined />} onClick={onCreate}>新增</Button>
-                            </Form>
-                        </Space>
-                    </div>
+                    <Form layout="inline">
+                        <Form.Item>
+                            <Input
+                                placeholder="債務名稱"
+                                value={newDebt.title}
+                                onChange={e => setNewDebt({ ...newDebt, title: e.target.value })}
+                            />
+                        </Form.Item>
+                        <Form.Item>
+                            <Input
+                                type="number"
+                                placeholder="總金額"
+                                value={newDebt.total_amount}
+                                onChange={e => setNewDebt({ ...newDebt, total_amount: e.target.value })}
+                            />
+                        </Form.Item>
+                        <Button type="primary" icon={<PlusOutlined />} onClick={onCreate}>新增</Button>
+                    </Form>
                 </div>
             </Card>
 
@@ -109,49 +103,53 @@ const DebtSection = ({ debts = [], newDebt, setNewDebt, onCreate, onAddPayment, 
             <List
                 grid={{ gutter: 16, xs: 1, sm: 1, md: 2, lg: 2, xl: 3 }}
                 dataSource={safeDebts}
+                // ... 內部的 renderItem
                 renderItem={(debt) => {
-                    const progress = Math.min(100, Math.round(((debt.total_amount - debt.current_balance) / debt.total_amount) * 100));
+                    // 1. 強制轉換為數字，並給予預設值 0
+                    const total = Number(debt.total_amount) || 0;
+                    const current = Number(debt.current_balance) || 0;
+
+                    // 2. 增加分母檢查，避免除以 0
+                    const progress = total > 0
+                        ? Math.min(100, Math.round(((total - current) / total) * 100))
+                        : 0;
 
                     return (
                         <List.Item>
                             <Card
                                 hoverable
-                                bodyStyle={{ padding: '20px' }}
                                 actions={[
-                                    <Button type="text" icon={<HistoryOutlined />} onClick={() => openHistory(debt)}>查看明細</Button>,
+                                    <Button type="text" icon={<HistoryOutlined />} onClick={() => openHistory(debt)}>歷史</Button>,
                                     <Button
                                         type="primary"
                                         ghost
                                         icon={<DollarOutlined />}
                                         onClick={() => openPayModal(debt)}
-                                        disabled={debt.current_balance <= 0}
+                                        // 使用後端給的布林值，如果沒有則用邏輯判斷
+                                        disabled={debt.is_fully_paid || current <= 0}
                                     >
-                                        立即還款
+                                        還款
                                     </Button>
                                 ]}
                             >
-                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                                    <div style={{ flex: 1 }}>
-                                        <Title level={4} style={{ margin: 0 }}>{debt.title}</Title>
-                                        <Text type="secondary">總金額: ${Number(debt.total_amount).toLocaleString()}</Text>
-                                    </div>
-                                    <Statistic
-                                        value={debt.current_balance}
-                                        prefix="$"
-                                        valueStyle={{ fontSize: '20px', color: debt.current_balance > 0 ? '#ff4d4f' : '#52c41a' }}
-                                    />
+                                <div style={{ display: "flex", justifyContent: "space-between" }}>
+                                    <Title level={5} style={{ margin: 0 }}>{debt.title}</Title>
+                                    <Text type={current > 0 ? "danger" : "success"} strong>
+                                        ${current.toLocaleString()}
+                                    </Text>
                                 </div>
+                                {/* 確保數據存在才顯示 */}
+                                <Text type="secondary" style={{ fontSize: '12px' }}>
+                                    原始金額: ${total.toLocaleString()}
+                                </Text>
 
-                                <div style={{ marginTop: 20 }}>
-                                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 5 }}>
-                                        <Text strong>{progress}% 已還款</Text>
-                                        {progress === 100 && <Tag color="success" icon={<CheckCircleOutlined />}>已結清</Tag>}
-                                    </div>
+                                <div style={{ marginTop: 15 }}>
                                     <Progress
                                         percent={progress}
-                                        strokeColor={progress === 100 ? '#52c41a' : '#5ec2c2'}
-                                        showInfo={false}
+                                        size="small"
+                                        strokeColor={current <= 0 ? '#52c41a' : '#1890ff'}
                                     />
+                                    {debt.is_fully_paid && <Tag color="success" style={{ marginTop: 5 }}>已結清</Tag>}
                                 </div>
                             </Card>
                         </List.Item>
@@ -159,60 +157,62 @@ const DebtSection = ({ debts = [], newDebt, setNewDebt, onCreate, onAddPayment, 
                 }}
             />
 
-            {/* 彈窗：還款表單 */}
+            {/* 彈窗：還款表單 (新增狀態選擇) */}
             <Modal
-                title={`執行還款 - ${selectedDebt?.title}`}
+                title={`還款 - ${selectedDebt?.title}`}
                 open={isPayModalOpen}
                 onOk={handlePaymentSubmit}
                 onCancel={() => setIsPayModalOpen(false)}
-                okText="確認送出"
-                cancelText="取消"
                 destroyOnClose
             >
-                <Form form={form} layout="vertical" style={{ marginTop: 20 }}>
-                    <Form.Item name="amount" label="本次還款金額" rules={[{ required: true, message: '請輸入金額' }]}>
-                        <Input type="number" prefix="$" size="large" />
+                <Form form={form} layout="vertical">
+                    <Form.Item name="amount" label="金額" rules={[{ required: true }]}>
+                        <Input type="number" prefix="$" />
                     </Form.Item>
-                    <Form.Item name="payment_date" label="還款日期" rules={[{ required: true }]}>
-                        <DatePicker style={{ width: '100%' }} size="large" />
+                    <Form.Item name="date" label="日期" rules={[{ required: true }]}>
+                        <DatePicker style={{ width: '100%' }} />
+                    </Form.Item>
+                    <Form.Item name="status" label="交易狀態" tooltip="PENDING 會鎖定可用資金但債務餘額暫時不變">
+                        <Select>
+                            <Option value="COMPLETED">已支付 (Completed)</Option>
+                            <Option value="PENDING">預計支付 (Pending)</Option>
+                        </Select>
                     </Form.Item>
                     <Form.Item name="note" label="備註">
-                        <Input.TextArea placeholder="選填，例如：現金還款" rows={2} />
+                        <Input.TextArea rows={2} />
                     </Form.Item>
                 </Form>
             </Modal>
 
-            {/* 抽屜：查看還款歷史紀錄 */}
+            {/* 抽屜：明細 (整合 Transaction 資訊) */}
             <Drawer
-                title={`${selectedDebt?.title} - 還款歷史明細`}
-                placement="right"
-                width={400}
+                title="還款明細"
                 onClose={() => setIsHistoryOpen(false)}
                 open={isHistoryOpen}
+                width={350}
             >
-                {selectedDebt?.payments && selectedDebt.payments.length > 0 ? (
+                {selectedDebt?.payments?.length > 0 ? (
                     <List
-                        itemLayout="horizontal"
                         dataSource={selectedDebt.payments}
                         renderItem={p => (
-                            <List.Item
-                                extra={<Text strong style={{ color: '#ff4d4f' }}>-${Number(p.amount).toLocaleString()}</Text>}
-                            >
+                            <List.Item extra={<Text strong>-${p.amount}</Text>}>
                                 <List.Item.Meta
-                                    avatar={<ArrowDownOutlined style={{ color: '#52c41a' }} />}
-                                    title={<Text>{dayjs(p.payment_date).format('YYYY-MM-DD')}</Text>}
-                                    description={p.note || "無備註"}
+                                    title={dayjs(p.date).format('YYYY-MM-DD')}
+                                    description={
+                                        <Space direction="vertical" size={0}>
+                                            <Text type="secondary">{p.note || "無備註"}</Text>
+                                            {p.status === 'PENDING' ? (
+                                                <Tag icon={<ClockCircleOutlined />} color="warning">待執行</Tag>
+                                            ) : (
+                                                <Tag icon={<CheckCircleOutlined />} color="success">已完成</Tag>
+                                            )}
+                                        </Space>
+                                    }
                                 />
                             </List.Item>
                         )}
                     />
-                ) : (
-                    <Empty description="尚無任何還款紀錄" />
-                )}
-                <Divider />
-                <div style={{ textAlign: 'right' }}>
-                    <Text type="secondary">初始總債務：${Number(selectedDebt?.total_amount).toLocaleString()}</Text>
-                </div>
+                ) : <Empty />}
             </Drawer>
         </div>
     );

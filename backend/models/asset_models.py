@@ -20,3 +20,12 @@ class MotorRecord(db.Model):
             "maintenance_date": self.maintenance_date.isoformat(),
             "note": self.note
         }
+
+class MotorTaxes(db.Model):
+    __tablename__ = 'motor_taxes'
+    id = db.Column(db.Integer, primary_key=True)
+    title = db.Column(db.String(100), nullable=False)
+    expired_date = db.Column(db.Date, nullable=True)
+    amount = db.Column(db.Float, nullable=True)
+    created_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow, onupdate=datetime.utcnow)

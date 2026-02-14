@@ -1,277 +1,205 @@
 from . import admin_bp, token_required
 from flask import request, jsonify
-from models.finance_models import db, Expense,ExpenseCategory
+from models.finance_models import db, Expense, ExpenseCategory, Transaction  # 確保匯入 Transaction
 from datetime import datetime
 from sqlalchemy import func, extract
+from decimal import Decimal
+
+# --- Helper 轉換函式 ---
 
 def _expense_to_dict(e: Expense):
+    # 金額、日期、備註現在都統一從關聯的 transaction 抓
     return {
         'id': e.id,
+        'transaction_id': e.transaction_id,
         'category_id': e.category_id,
         'category_name': e.category.name if e.category else None,
         'title': e.title,
-        'amount': float(e.amount) if e.amount else 0.0,
-        'expense_date': e.expense_date.isoformat() if e.expense_date else None,
-        'note': e.note,
-        'created_at': e.created_at.isoformat() if e.created_at else None
+        'amount': float(e.transaction.amount),
+        'status': e.transaction.status,
+        'expense_date': e.transaction.transaction_date.isoformat(),
+        'note': e.transaction.note,
+        'created_at': e.transaction.created_at.isoformat()
     }
 
-def _category_to_dict(c: ExpenseCategory):
-    return {
-        'id': c.id,
-        'name': c.name,
-        'icon': c.icon,
-        'color': c.color,
-        'total_spent': float(c.total_spent)
-    }
+# --- Expenses CRUD ---
 
-# ----------------------
-# Expense Categories CRUD
-# ----------------------
-
-@admin_bp.route('/expense-categories', methods=['GET', 'OPTIONS'])
-@token_required
-def list_expense_categories(current_admin):
-    categories = ExpenseCategory.query.all()
-    return jsonify([_category_to_dict(c) for c in categories])
-
-@admin_bp.route('/expense-categories', methods=['POST', 'OPTIONS'])
-@token_required
-def create_expense_category(current_admin):
-    data = request.get_json(force=True) or {}
-    name = (data.get('name') or '').strip()
-    if not name:
-        return jsonify({'message': 'Category name is required'}), 400
-    
-    c = ExpenseCategory(
-        name=name,
-        icon=data.get('icon'),
-        color=data.get('color')
-    )
-    db.session.add(c)
-    db.session.commit()
-    return jsonify(_category_to_dict(c)), 201
-
-# ----------------------
-# Expenses CRUD
-# ----------------------
-
-@admin_bp.route('/expenses', methods=['GET'])
-@token_required
-def get_expenses(current_admin):
-    # 獲取參數
-    year = request.args.get('year', type=int)
-    month = request.args.get('month', type=int)
-    
-    query = Expense.query
-    
-    # 如果有傳入年月，則過濾
-    if year and month:
-        # 假設你的日期欄位是 expense_date
-        query = query.filter(
-            extract('year', Expense.expense_date) == year,
-            extract('month', Expense.expense_date) == month
-        )
-    
-    expenses = query.order_by(Expense.expense_date.desc()).all()
-        
-    return jsonify([_expense_to_dict(e) for e in expenses])
-   
 @admin_bp.route('/expenses', methods=['POST', 'OPTIONS'])
 @token_required
 def create_admin_expense(current_admin):
     data = request.get_json(force=True) or {}
     
-    # Validation
     if not data.get('amount') or not data.get('category_id'):
         return jsonify({'message': 'Amount and Category are required'}), 400
 
-    e = Expense(
-        title=(data.get('title') or '').strip(),
-        amount=data.get('amount'),
-        category_id=data.get('category_id'),
-        note=data.get('note'),
-        # Allow user to pick a date, otherwise use now
-        expense_date=datetime.fromisoformat(data['expense_date']) if data.get('expense_date') else datetime.utcnow()
-    )
-    db.session.add(e)
-    db.session.commit()
-    return jsonify(_expense_to_dict(e)), 201
+    try:
+        # 1. 建立核心 Transaction
+        new_tx = Transaction(
+            amount=Decimal(str(data.get('amount'))),
+            transaction_type='expense',
+            status=data.get('status', 'COMPLETED'), # 支持 PENDING (預算預留)
+            note=data.get('note'),
+            transaction_date=datetime.fromisoformat(data['expense_date']) if data.get('expense_date') else datetime.utcnow()
+        )
+        db.session.add(new_tx)
+        db.session.flush() # 取得交易 ID
+
+        # 2. 建立 Expense 業務紀錄
+        new_expense = Expense(
+            transaction_id=new_tx.id,
+            category_id=data.get('category_id'),
+            title=(data.get('title') or '').strip()
+        )
+        db.session.add(new_expense)
+        db.session.commit()
+        
+        return jsonify(_expense_to_dict(new_expense)), 201
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'message': 'Create failed', 'error': str(e)}), 400
+
+@admin_bp.route('/expenses', methods=['GET'])
+@token_required
+def get_expenses(current_admin):
+    year = request.args.get('year', type=int)
+    month = request.args.get('month', type=int)
+    
+    # 這裡要 Join Transaction 來過濾日期
+    query = Expense.query.join(Transaction)
+    
+    if year:
+        query = query.filter(extract('year', Transaction.transaction_date) == year)
+    if month:
+        query = query.filter(extract('month', Transaction.transaction_date) == month)
+    
+    expenses = query.order_by(Transaction.transaction_date.desc()).all()
+    return jsonify([_expense_to_dict(e) for e in expenses])
 
 @admin_bp.route('/expenses/<int:expense_id>', methods=['PUT', 'OPTIONS'])
 @token_required
 def update_admin_expense(current_admin, expense_id):
     e = Expense.query.get_or_404(expense_id)
+    tx = e.transaction # 直接抓關聯的交易
     data = request.get_json(force=True) or {}
     
-    if 'title' in data:
-        e.title = (data.get('title') or '').strip()
-    if 'amount' in data:
-        e.amount = data.get('amount')
-    if 'category_id' in data:
-        e.category_id = data.get('category_id')
-    if 'note' in data:
-        e.note = data.get('note')
-    if 'expense_date' in data:
-        e.expense_date = datetime.fromisoformat(data['expense_date'])
+    # 更新 Expense 欄位
+    if 'title' in data: e.title = data['title'].strip()
+    if 'category_id' in data: e.category_id = data['category_id']
+    
+    # 更新 Transaction 欄位
+    if 'amount' in data: tx.amount = Decimal(str(data['amount']))
+    if 'note' in data: tx.note = data['note']
+    if 'expense_date' in data: tx.transaction_date = datetime.fromisoformat(data['expense_date'])
+    if 'status' in data: tx.status = data['status']
         
     db.session.commit()
     return jsonify(_expense_to_dict(e))
-
-@admin_bp.route('/expenses/daily-summary', methods=['GET'])
-@token_required
-def get_expense_daily_summary(current_admin):
-    # 獲取參數，預設為當前年月
-    year = request.args.get('year', type=int)
-    month = request.args.get('month', type=int)
-    
-    if not year or not month:
-        return jsonify({"error": "Year and Month are required"}), 400
-
-    # 執行聚合查詢：按日期分組並加總金額
-    summary = db.session.query(
-        func.date(Expense.expense_date).label('date'),
-        func.sum(Expense.amount).label('daily_total')
-    ).filter(
-        func.extract('year', Expense.expense_date) == year,
-        func.extract('month', Expense.expense_date) == month
-    ).group_by(
-        func.date(Expense.expense_date)
-    ).all()
-
-    # 格式化輸出
-    result = [
-        {"date": str(s.date), "daily_total": float(s.daily_total)} 
-        for s in summary
-    ]
-    
-    return jsonify(result)
 
 @admin_bp.route('/expenses/<int:expense_id>', methods=['DELETE', 'OPTIONS'])
 @token_required
 def delete_admin_expense(current_admin, expense_id):
     e = Expense.query.get_or_404(expense_id)
-    db.session.delete(e)
+    # 刪除 Transaction，因為設定了 cascade，Expense 會跟著消失
+    db.session.delete(e.transaction)
     db.session.commit()
     return jsonify({'message': 'Expense deleted'})
 
-@admin_bp.route('/expenses/stats', methods=['GET', 'OPTIONS'])
+# --- 統計相關 API (都要改從 Transaction 抓) ---
+
+@admin_bp.route('/expenses/daily-summary', methods=['GET'])
 @token_required
-def get_expense_stats(current_admin):
-    try:
-        # 從 URL 參數獲取年份，預設為今年
-        selected_year = request.args.get('year', default=datetime.utcnow().year, type=int)
-        current_month_str = datetime.utcnow().strftime('%Y-%m')
-
-        # 1. 每月統計 (過濾特定年份)
-        monthly_query = db.session.query(
-            func.to_char(Expense.expense_date, 'YYYY-MM').label('month'),
-            func.sum(Expense.amount).label('total')
-        ).filter(
-            Expense.expense_date.isnot(None),
-            extract('year', Expense.expense_date) == selected_year
-        ).group_by('month').order_by('month').all()
-
-        # 2. 每日統計 (保持不變，通常只看當月)
-        daily_query = db.session.query(
-            func.to_char(Expense.expense_date, 'YYYY-MM-DD').label('day'),
-            func.sum(Expense.amount).label('total')
-        ).filter(
-            func.to_char(Expense.expense_date, 'YYYY-MM') == current_month_str
-        ).group_by('day').order_by('day').all()
-
-        return jsonify({
-            "monthly": [{"month": r.month, "total": float(r.total or 0)} for r in monthly_query if r.month],
-            "daily": [{"day": r.day, "total": float(r.total or 0)} for r in daily_query if r.day]
-        })
-    except Exception as e:
-        return jsonify({'message': '後端統計計算錯誤', 'error': str(e)}), 500
-
-@admin_bp.route('/expenses/by-category', methods=['GET', 'OPTIONS'])
-@token_required
-def get_expenses_by_category(current_admin):
-    """
-    Useful for Pie Charts: Spend per category.
-    """
-    stats = db.session.query(
-        ExpenseCategory.name,
-        func.sum(Expense.amount).label('total')
-    ).join(Expense, ExpenseCategory.id == Expense.category_id)\
-     .group_by(ExpenseCategory.name).all()
-
-    return jsonify([
-        {'category': name, 'total': float(total or 0)} 
-        for name, total in stats
-    ])
-
-# 新增類別
-@admin_bp.route('/expense-categories', methods=['POST'])
-@token_required
-def add_category(current_admin):
-    data = request.json
-    new_cat = ExpenseCategory(name=data['name'], description=data.get('description'))
-    db.session.add(new_cat)
-    db.session.commit()
-    return jsonify({'message': 'Category created'}), 201
-
-# 更新類別
-@admin_bp.route('/expense-categories/<int:id>', methods=['PUT'])
-@token_required
-def update_category(current_admin, id):
-    cat = ExpenseCategory.query.get_or_404(id)
-    data = request.json
-    cat.name = data['name']
-    cat.description = data.get('description')
-    cat.icon = data.get('icon')
-    cat.color = data.get('color')
-    db.session.commit()
-    return jsonify({'message': 'Category updated'})
-
-# 刪除類別
-@admin_bp.route('/expense-categories/<int:id>', methods=['DELETE'])
-@token_required
-def delete_category(current_admin, id):
-    cat = ExpenseCategory.query.get_or_404(id)
-    db.session.delete(cat)
-    db.session.commit()
-    return jsonify({'message': 'Category deleted'})
-
-
-
-
-
-@admin_bp.route('/expenses/stats/by-category', methods=['GET', 'OPTIONS'])
-@token_required
-def get_expenses_by_categorys(current_admin):
-    # 1. 取得參數
+def get_expense_daily_summary(current_admin):
     year = request.args.get('year', type=int)
     month = request.args.get('month', type=int)
 
-    # 打印到 Flask 終端機確認有收到 2
-    print(f"DEBUG: PostgreSQL Filtering -> Year: {year}, Month: {month}")
+    # 改為 Query Transaction 並 Filter type='expense'
+    summary = db.session.query(
+        func.date(Transaction.transaction_date).label('date'),
+        func.sum(Transaction.amount).label('daily_total')
+    ).filter(
+        Transaction.transaction_type == 'expense',
+        extract('year', Transaction.transaction_date) == year,
+        extract('month', Transaction.transaction_date) == month
+    ).group_by(func.date(Transaction.transaction_date)).all()
 
-    # 2. 建立基本查詢
+    return jsonify([{"date": str(s.date), "daily_total": float(s.daily_total)} for s in summary])
+
+@admin_bp.route('/expense/categories', methods=['GET'])
+# @admin_required
+def get_categories():
+    categories = ExpenseCategory.query.all()
+    return jsonify([{
+        'id': c.id,
+        'name': c.name,
+        'icon': c.icon, # e.g., "ShoppingCartOutlined"
+        'color': c.color # e.g., "#1890ff"
+    } for c in categories])
+
+@admin_bp.route('/expense/categories', methods=['POST'])
+# @admin_required
+def create_category():
+    data = request.json
+    new_cat = ExpenseCategory(
+        name=data.get('name'),
+        icon=data.get('icon', 'TagOutlined'),
+        color=data.get('color', '#1890ff')
+    )
+    db.session.add(new_cat)
+    db.session.commit()
+    return jsonify({'message': 'Category created successfully'}), 201
+
+@admin_bp.route('/expenses/stats', methods=['GET'])
+@token_required
+def get_expense_stats(current_admin):
+    year = request.args.get('year', type=int) or datetime.utcnow().year
+    
+    # 在 PostgreSQL 中使用 to_char 而不是 strftime
+    stats = db.session.query(
+        func.to_char(Transaction.transaction_date, 'YYYY-MM').label('month'),
+        func.sum(Transaction.amount).label('total')
+    ).join(Expense).filter(
+        db.extract('year', Transaction.transaction_date) == year,
+        Transaction.status == 'COMPLETED'
+    ).group_by('month').order_by('month').all()
+
+    return jsonify([{"month": s.month, "total": float(s.total)} for s in stats]), 200
+
+@admin_bp.route('/expenses/stats/by-category', methods=['GET'])
+@token_required
+def get_category_stats(current_admin):
+    year = request.args.get('year', type=int)
+    month = request.args.get('month', type=int)
+
     query = db.session.query(
-        ExpenseCategory.name,
-        func.sum(Expense.amount).label('total')
-    ).join(Expense, ExpenseCategory.id == Expense.category_id)
+        ExpenseCategory.name.label('category'),
+        func.sum(Transaction.amount).label('value')
+    ).join(Expense, Expense.category_id == ExpenseCategory.id)\
+     .join(Transaction, Expense.transaction_id == Transaction.id)
 
-    # 3. 過濾年份 (PostgreSQL 寫法)
-    if year:
-        query = query.filter(extract('year', Expense.expense_date) == year)
-    
-    # 4. 過濾月份 (PostgreSQL 寫法)
-    # 這裡使用 is not None 確保 0 以外的數字都能通過
-    if month is not None:
-        query = query.filter(extract('month', Expense.expense_date) == month)
+    query = query.filter(extract('year', Transaction.transaction_date) == year)
+    if month:
+        query = query.filter(extract('month', Transaction.transaction_date) == month)
 
-    # 5. 分組
     stats = query.group_by(ExpenseCategory.name).all()
-    
-    # 除錯：確認數據筆數
-    print(f"DEBUG: Found {len(stats)} categories for this period")
 
-    return jsonify([
-        {'category': name, 'total': float(total or 0)} 
-        for name, total in stats
-    ])
+    return jsonify([{
+        'category': row.category,
+        'value': float(row.value)
+    } for row in stats]), 200
+
+@admin_bp.route('/expenses/daily-summary', methods=['GET'])
+@token_required
+def get_daily_summary(current_admin):
+    year = request.args.get('year', type=int)
+    month = request.args.get('month', type=int)
+    
+    # 查詢每天的總額
+    summary = db.session.query(
+        db.func.date(Transaction.transaction_date).label('date'),
+        db.func.sum(Transaction.amount).label('daily_total')
+    ).join(Expense).filter(
+        extract('year', Transaction.transaction_date) == year,
+        extract('month', Transaction.transaction_date) == month
+    ).group_by(db.func.date(Transaction.transaction_date)).all()
+
+    return jsonify([{'date': str(s.date), 'daily_total': float(s.daily_total)} for s in summary])

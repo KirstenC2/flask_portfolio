@@ -13,11 +13,15 @@ const COLORS = ['#ec4899', '#f472b6', '#fb923c', '#fbbf24', '#a855f7', '#6366f1'
 const CategoryDistribution = ({ data = [], title, loading }) => {
     // 過濾掉總額為 0 的類別，並計算總計
     const chartData = data
-        .filter(item => item.total > 0)
-        .map(item => ({ name: item.category, value: item.total }));
+        .map(item => ({
+            // 優先取用後端的 category，若無則取 name
+            name: item.category || item.name,
+            // 優先取用後端的 value，若無則取 total (確保與 API 匹配)
+            value: parseFloat(item.value || item.total || 0)
+        }))
+        .filter(item => item.value > 0); // 過濾掉 0 元的項目
 
     const totalAmount = chartData.reduce((sum, item) => sum + item.value, 0);
-
     return (
         <Card
             size="small"
@@ -47,13 +51,13 @@ const CategoryDistribution = ({ data = [], title, loading }) => {
                                     <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                                 ))}
                             </Pie>
-                            <Tooltip 
+                            <Tooltip
                                 formatter={(value) => `$${value.toLocaleString()}`}
                             />
-                            <Legend verticalAlign="bottom" height={36}/>
+                            <Legend verticalAlign="bottom" height={36} />
                         </PieChart>
                     </ResponsiveContainer>
-                    
+
                     {/* 在環狀圖中間顯示總金額 */}
                     <div style={{
                         position: 'absolute',

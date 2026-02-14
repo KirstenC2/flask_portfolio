@@ -34,34 +34,40 @@ const ExpenseSection = ({
     const [editingRecord, setEditingRecord] = useState(null);
     const [submitting, setSubmitting] = useState(false);
     const [form] = Form.useForm();
+    const [monthlyTrend, setMonthlyTrend] = useState([]); // <--- 新增 State
     const categoryOptions = useMemo(() =>
         categories.map(c => ({ label: c.name, value: c.id })),
         [categories]);
+
+        
     // 2. 獲取數據邏輯 (單一來源)
     const refreshData = useCallback(async (date) => {
         setLoading(true);
         try {
             const year = date.year();
-            const month = date.month() + 1; // dayjs 的 month 從 0 開始，所以要 +1
+            const month = date.month() + 1;
 
-            const [expenseList, summaryData, mStats, yStats] = await Promise.all([
+            // 注意：這裡新增了 trendData
+            const [expenseList, summaryData, mStats, yStats, trendData] = await Promise.all([
                 financeApi.getExpenses(year, month),
                 financeApi.getDailySummary(year, month),
-                financeApi.getCategoryStats(year, month), // 這裡是月度：傳入 (2026, 2)
-                financeApi.getCategoryStats(year)        // 這裡是年度：傳入 (2026)
+                financeApi.getCategoryStats(year, month),
+                financeApi.getCategoryStats(year),
+                financeApi.getExpenseStats(year) // <--- 補上這一行
             ]);
 
-            setExpenses(expenseList);
-            setDailySummaries(summaryData);
-            setMonthlyStats(mStats);
-            setYearlyStats(yStats);
+            setExpenses(expenseList || []);
+            setDailySummaries(summaryData || []);
+            setMonthlyStats(mStats || []);
+            setYearlyStats(yStats || []);
+            // 確保 trendData 是一個陣列，否則 Recharts 會報錯
+            setMonthlyTrend(Array.isArray(trendData) ? trendData : []);
         } catch (error) {
-            console.error(error);
+            console.error("抓取圖表數據失敗:", error);
         } finally {
             setLoading(false);
         }
     }, []);
-
     // 3. 監聽月份切換
     useEffect(() => {
         refreshData(currentViewDate);
@@ -146,7 +152,7 @@ const ExpenseSection = ({
         },
     ];
 
-    const chartData = stats?.monthly || [];
+    const chartData = monthlyTrend;
 
 
     const handleEdit = (record) => {

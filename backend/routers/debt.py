@@ -1,65 +1,39 @@
-import os
 from flask import Blueprint, request, jsonify
 from flask_cors import CORS
-from models import db, DebtRecord, PaymentLog
+from models.finance_models import db, DebtRecord, PaymentLog, Transaction  # 記得導入 Transaction
 from decimal import Decimal
 from datetime import datetime
-from sqlalchemy import func
 
 debt_bp = Blueprint('debt', __name__)
 
-# 依照你的需求設定 CORS
+# CORS 設定保持不變
 CORS(debt_bp, 
      resources={r"/api/debt/*": {"origins": "http://localhost:3000"}},
-     supports_credentials=True,
-     allow_headers=["Content-Type", "Authorization"],
-     methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"])
-def payment_to_dict(p):
-    """處理還款紀錄轉換 (注意：這裡沒有 title)"""
-    return {
-        "id": p.id,
-        "debt_id": p.debt_id,
-        "amount": float(p.amount),
-        "payment_date": p.payment_date.isoformat(),
-        "note": p.note
-    }
+     supports_credentials=True)
 
-def to_dict(dr: DebtRecord, redact: bool = False):
+def to_dict(dr: DebtRecord):
     """
-    將 DebtRecord 物件轉換為字典格式
-    :param dr: DebtRecord 實體
-    :param redact: 是否脫敏（隱藏敏感資訊）
+    更新後的轉換邏輯：從關聯的 Transaction 取得金額與日期
     """
-    # 基礎資料轉換
-    data = {
+    return {
         "id": dr.id,
         "title": dr.title,
         "total_amount": float(dr.total_amount),
         "current_balance": float(dr.current_balance),
-        "is_fully_paid": dr.current_balance <= 0,
-        "created_at": dr.created_at.strftime('%Y-%m-%d %H:%M:%S') if dr.created_at else None,
-        "updated_at": dr.updated_at.strftime('%Y-%m-%d %H:%M:%S') if dr.updated_at else None,
-    }
-
-    # 處理關聯的還款紀錄 (PaymentLog)
-    # 如果 redact 為 True，我們可能只回傳還款總額，而不回傳詳細列表
-    if not redact:
-        data["payments"] = [
+        "is_fully_paid": dr.is_fully_paid,
+        "created_at": dr.created_at.strftime('%Y-%m-%d %H:%M:%S'),
+        "payments": [
             {
-                "id": p.id,
-                "amount": float(p.amount),
-                "payment_date": p.payment_date.strftime('%Y-%m-%d %H:%M:%S'),
-                "note": p.note
+                "payment_log_id": p.id,
+                "transaction_id": p.transaction.id,
+                "amount": float(p.transaction.amount),
+                "date": p.transaction.transaction_date.strftime('%Y-%m-%d %H:%M:%S'),
+                "status": p.transaction.status,
+                "note": p.transaction.note
             } for p in dr.payments
         ]
-    else:
-        # 脫敏模式：隱藏詳細紀錄，隱藏標題部分字元，或隱藏備註
-        data["title"] = data["title"][0] + "***" if len(data["title"]) > 1 else "*"
-        data["payments_count"] = len(dr.payments)
-        # 僅顯示已還總額，不顯示每筆細節
-        data["total_paid"] = float(sum(p.amount for p in dr.payments))
+    }
 
-    return data
 # --- 債務主表 ---
 
 @debt_bp.route('/api/debt', methods=['POST'])
@@ -78,49 +52,56 @@ def list_debts():
     debts = DebtRecord.query.all()
     return jsonify([to_dict(d) for d in debts]), 200
 
-@debt_bp.route('/api/debt/<int:id>', methods=['GET'])
-def get_debt(id):
-    debt = DebtRecord.query.get_or_404(id)
-    return jsonify(to_dict(debt)), 200
-
-@debt_bp.route('/api/debt/<int:id>', methods=['PATCH'])
-def update_debt(id):
-    debt = DebtRecord.query.get_or_404(id)
-    data = request.get_json()
-    if 'title' in data: debt.title = data['title']
-    if 'total_amount' in data: debt.total_amount = Decimal(str(data['total_amount']))
-    db.session.commit()
-    return jsonify(to_dict(debt)), 200
-
 @debt_bp.route('/api/debt/<int:id>', methods=['DELETE'])
 def delete_debt(id):
     debt = DebtRecord.query.get_or_404(id)
+    # 這裡要注意：因為我們設定了 cascade="all, delete-orphan"，
+    # 刪除 Debt 會刪除 PaymentLog，進而刪除關聯的 Transaction
     db.session.delete(debt)
     db.session.commit()
-    return jsonify({"message": "Deleted"}), 200
+    return jsonify({"message": "Debt and associated transactions deleted"}), 200
 
-# --- 還款紀錄 (紀錄每次還款日期) ---
+# --- 還款紀錄 (核心變動：與 Transaction 綁定) ---
 
 @debt_bp.route('/api/debt/<int:debt_id>/payment', methods=['POST'])
 def add_payment(debt_id):
     debt = DebtRecord.query.get_or_404(debt_id)
     data = request.get_json()
     
-    new_payment = PaymentLog(
-        debt_id=debt.id,
-        amount=Decimal(str(data.get('amount', 0))),
-        note=data.get('note'),
-        # 支援從前端傳送日期字串 (YYYY-MM-DD)，否則用現在時間
-        payment_date=datetime.fromisoformat(data['date']) if data.get('date') else datetime.utcnow()
-    )
+    try:
+        # 1. 先建立核心 Transaction
+        new_tx = Transaction(
+            amount=Decimal(str(data.get('amount', 0))),
+            transaction_type='debt_payment',
+            status=data.get('status', 'COMPLETED'), # 預設完成，也可傳 PENDING 鎖定資金
+            note=data.get('note'),
+            transaction_date=datetime.fromisoformat(data['date']) if data.get('date') else datetime.utcnow()
+        )
+        db.session.add(new_tx)
+        db.session.flush() # 取得 new_tx.id 但不 commit
+
+        # 2. 建立 PaymentLog 並關聯 Transaction
+        new_payment = PaymentLog(
+            debt_id=debt.id,
+            transaction_id=new_tx.id
+        )
+        db.session.add(new_payment)
+        
+        db.session.commit()
+        
+        # 回傳更新後的債務資訊
+        return jsonify(to_dict(debt)), 201
     
-    db.session.add(new_payment)
-    db.session.commit()
-    return jsonify(payment_to_dict(new_payment)), 201
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"error": str(e)}), 400
 
 @debt_bp.route('/api/debt/payment/<int:payment_id>', methods=['DELETE'])
 def delete_payment(payment_id):
     payment = PaymentLog.query.get_or_404(payment_id)
-    db.session.delete(payment)
+    # 由於 Transaction 是強關聯，我們直接刪除對應的 Transaction
+    # 在 Model 的設定下，PaymentLog 也會被 cascade 處理
+    tx = Transaction.query.get(payment.transaction_id)
+    db.session.delete(tx)
     db.session.commit()
-    return jsonify(payment_to_dict(payment)), 200
+    return jsonify({"message": "Payment transaction deleted"}), 200

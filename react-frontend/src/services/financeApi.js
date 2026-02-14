@@ -7,7 +7,20 @@ const getHeaders = () => ({
 
 export const financeApi = {
     // === 債務相關 (保持不變) ===
-    getDebts: () => fetch(`${API_BASE}/debt`).then(res => res.json()),
+    getDebts: async () => {
+        try {
+            const res = await fetch(`${API_BASE}/debt`);
+            const data = await res.json();
+            // 診斷：這裡印出的內容必須是陣列才對
+            console.log("FinanceAPI 收到的原始資料:", data);
+            
+            // 如果後端把資料包在 data 屬性裡，這裡做自動解構
+            return Array.isArray(data) ? data : (data.data || []);
+        } catch (err) {
+            console.error("getDebts API Error:", err);
+            return []; // 發生錯誤時回傳空陣列，防止前端崩潰
+        }
+    },
     createDebt: (data) => fetch(`${API_BASE}/debt`, {
         method: 'POST',
         headers: getHeaders(),
@@ -19,7 +32,7 @@ export const financeApi = {
         body: JSON.stringify(data),
     }),
 
-    // === 支出管理 (CRUD) ===
+    // // === 支出管理 (CRUD) ===
     getExpenses: (year, month) =>
         fetch(`${API_BASE}/admin/expenses?year=${year}&month=${month}`, { headers: getHeaders() }).then(res => res.json()),
 
@@ -42,13 +55,13 @@ export const financeApi = {
         headers: getHeaders(),
     }).then(res => res.json()),
 
-    // === 統計數據 ===
+    // // === 統計數據 ===
 
-    // 獲取圖表用的每月/每日趨勢
+    // // 獲取圖表用的每月/每日趨勢
     getExpenseStats: (year) =>
         fetch(`${API_BASE}/admin/expenses/stats?year=${year}`, { headers: getHeaders() }).then(res => res.json()),
 
-    // 獲取日曆格子的金額標籤
+    // // 獲取日曆格子的金額標籤
     getDailySummary: (year, month) =>
         fetch(`${API_BASE}/admin/expenses/daily-summary?year=${year}&month=${month}`, { headers: getHeaders() })
             .then(res => res.json()),
@@ -66,5 +79,5 @@ export const financeApi = {
     },
 
     // === 類別管理 ===
-    getCategories: () => fetch(`${API_BASE}/admin/expense-categories`, { headers: getHeaders() }).then(res => res.json()),
+    getCategories: () => fetch(`${API_BASE}/admin/expense/categories`, { headers: getHeaders() }).then(res => res.json()),
 };

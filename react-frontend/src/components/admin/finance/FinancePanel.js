@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
 import { Tabs, Dropdown, Space, ConfigProvider } from 'antd';
-import { 
-    SettingOutlined, TagOutlined, 
-    BankOutlined, WalletOutlined, 
-    DownOutlined 
+import {
+    SettingOutlined, TagOutlined,
+    BankOutlined, WalletOutlined,
+    DownOutlined
 } from '@ant-design/icons';
 import { useFinanceData } from '../../../hooks/useFinanceData';
 import { financeApi } from '../../../services/financeApi';
@@ -13,10 +13,10 @@ import ExpenseCategorySection from './ExpenseCategorySection';
 import './styles/DebtPanel.css';
 
 const FinancePanel = () => {
-    const { 
-        debts, categories, refreshAll, 
-        filterStatus, setFilterStatus, stats, 
-        selectedYear, setSelectedYear 
+    const {
+        debts, categories, refreshAll,
+        filterStatus, setFilterStatus, stats,
+        selectedYear, setSelectedYear
     } = useFinanceData();
 
     const [newDebt, setNewDebt] = useState({ title: '', total_amount: '' });
@@ -24,7 +24,7 @@ const FinancePanel = () => {
         expense_date: new Date().toISOString().split('T')[0],
         title: '', amount: '', category_id: ''
     });
-    
+
     const [activeTab, setActiveTab] = useState('debt');
 
     // --- Action Handlers ---
@@ -61,12 +61,16 @@ const FinancePanel = () => {
     // 將標籤與內容邏輯完全分離
     const tabComponents = {
         'debt': (
+            
             <DebtSection
-                debts={debts}
+                debts={debts} // 這裡傳入的是 Hook 過濾後的 filteredDebts
                 newDebt={newDebt}
                 setNewDebt={setNewDebt}
                 onCreate={handleCreateDebt}
-                onAddPayment={handleAddPayment}
+                onAddPayment={async (id, data) => {
+                    await financeApi.addPayment(id, data);
+                    refreshAll();
+                }}
                 filterStatus={filterStatus}
                 setFilterStatus={setFilterStatus}
             />
@@ -84,9 +88,9 @@ const FinancePanel = () => {
             />
         ),
         'category-mgmt': (
-            <ExpenseCategorySection 
-                categories={categories} 
-                refreshAll={refreshAll} 
+            <ExpenseCategorySection
+                categories={categories}
+                refreshAll={refreshAll}
             />
         )
     };
@@ -122,22 +126,22 @@ const FinancePanel = () => {
         >
             <div className="container" style={{ padding: '20px' }}>
                 {/* 導覽列容器 */}
-                <div className="finance-nav-wrapper" style={{ 
-                    background: '#fff', 
-                    padding: '0 20px', 
+                <div className="finance-nav-wrapper" style={{
+                    background: '#fff',
+                    padding: '0 20px',
                     borderRadius: '12px',
-                    boxShadow: '0 2px 8px rgba(0,0,0,0.05)' 
+                    boxShadow: '0 2px 8px rgba(0,0,0,0.05)'
                 }}>
-                    <Tabs 
-                        activeKey={activeTab} 
-                        onChange={(key) => setActiveTab(key)} 
-                        items={navItems} 
+                    <Tabs
+                        activeKey={activeTab}
+                        onChange={(key) => setActiveTab(key)}
+                        items={navItems}
                         size="large"
                         tabBarExtraContent={
                             <Dropdown menu={{ items: managementItems }} placement="bottomRight">
-                                <span 
+                                <span
                                     className={`mgmt-dropdown-trigger ${activeTab === 'category-mgmt' ? 'active' : ''}`}
-                                    style={{ 
+                                    style={{
                                         color: activeTab === 'category-mgmt' ? '#5ec2c2' : '#666',
                                         cursor: 'pointer',
                                         display: 'flex',

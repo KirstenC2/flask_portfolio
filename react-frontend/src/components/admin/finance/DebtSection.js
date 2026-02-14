@@ -49,9 +49,12 @@ const DebtSection = ({ debts = [], newDebt, setNewDebt, onCreate, onAddPayment, 
     };
 
     return (
-        <div className="debt-page-container">
+        <section>
+            <Card bordered={false} className="full-calendar-card" style={{ height: '100%' }}>
+                <Title level={2} style={{ margin: 0, padding: '20px 0' }}>債務管理</Title>
+
             {/* 統計與快速新增 */}
-            <Card bordered={false} style={{ marginBottom: 20, borderRadius: 12 }}>
+            <Card bordered={false} style={{ marginBottom: 20, borderRadius: 12, height: "100%" }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '20px' }}>
                     <Space size="large">
                         <Statistic
@@ -214,7 +217,8 @@ const DebtSection = ({ debts = [], newDebt, setNewDebt, onCreate, onAddPayment, 
                     />
                 ) : <Empty />}
             </Drawer>
-        </div>
+            </Card>
+        </section>
     );
 };
 

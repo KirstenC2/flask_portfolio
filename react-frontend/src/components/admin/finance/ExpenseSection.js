@@ -39,7 +39,7 @@ const ExpenseSection = ({
         categories.map(c => ({ label: c.name, value: c.id })),
         [categories]);
 
-        
+
     // 2. 獲取數據邏輯 (單一來源)
     const refreshData = useCallback(async (date) => {
         setLoading(true);
@@ -82,24 +82,40 @@ const ExpenseSection = ({
     }, [expenses, selectedDate]);
 
     // 5. 日曆格子渲染
-    const cellRender = (value) => {
-        // 只渲染當前月份的金額
+    // 修改第 80 行附近的 cellRender
+    const cellRender = useCallback((value) => {
+        // 1. 排除非本月的格子（提升效能且避免跨月資料干擾）
         if (value.month() !== currentViewDate.month()) return null;
 
         const dateStr = value.format('YYYY-MM-DD');
-        const dayData = dailySummaries.find(item => item.date === dateStr);
+
+        // 2. 尋找匹配項：改用 isSame 增加相容性
+        const dayData = dailySummaries.find(item => {
+            if (!item.date) return false;
+            return dayjs(item.date).isSame(value, 'day');
+        });
 
         if (dayData && dayData.daily_total > 0) {
             return (
-                <div className="calendar-amount-badge">
-                    <Text style={{ fontSize: '10px', color: '#be185d', fontWeight: '800' }}>
+                <div style={{ textAlign: 'center', marginTop: '4px' }}>
+                    <Text style={{
+                        fontSize: '11px',
+                        color: '#be185d',
+                        fontWeight: '800',
+                        background: '#fdf2f8',
+                        padding: '1px 4px',
+                        borderRadius: '4px',
+                        border: '1px solid #fbcfe8',
+                        display: 'block',
+                        margin: '0 2px'
+                    }}>
                         ${Math.round(dayData.daily_total).toLocaleString()}
                     </Text>
                 </div>
             );
         }
         return null;
-    };
+    }, [dailySummaries, currentViewDate]); // 💡 確保當資料更新時，此函數會重新生成
 
     const columns = [
         {

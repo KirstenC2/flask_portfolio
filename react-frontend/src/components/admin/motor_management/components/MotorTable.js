@@ -21,12 +21,6 @@ const MotorTable = ({ records, loading, onEdit, onDelete }) => {
             key: 'mileage', 
             render: (val) => `${val?.toLocaleString()} KM` 
         },
-        { 
-            title: '價格', 
-            dataIndex: 'price', 
-            key: 'price', 
-            render: (val) => <Text style={{ color: '#cf1322', fontWeight: 'bold' }}>${val?.toLocaleString()}</Text> 
-        },
         { title: '備註', dataIndex: 'note', key: 'note', ellipsis: true },
         {
             title: '操作',

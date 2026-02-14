@@ -20,7 +20,7 @@ import './MotorManagementPanel.css';
 import '../../../common/global.css';
 
 const { Title } = Typography;
-const API_URL = "http://localhost:5001/api/motor";
+const API_URL = "http://localhost:5001/api/admin/motor";
 
 const MotorManagementPanel = () => {
     // --- 狀態管理 ---
@@ -75,8 +75,8 @@ const MotorManagementPanel = () => {
         // 2. 修正 URL：確保新增時也是打到 /taxes
         const method = editingTax ? 'PUT' : 'POST';
         const url = editingTax
-            ? `${API_URL}/taxes/${editingTax.id}`   // 修改：/api/motor/taxes/1
-            : `${API_URL}/taxes`;                  // 新增：/api/motor/taxes
+            ? `${API_URL}/taxes/${editingTax.id}`   // 修改：/api/admin/motor/taxes/1
+            : `${API_URL}/taxes`;                  // 新增：/api/admin/motor/taxes
 
         console.log(`Sending ${method} request to: ${url}`, payload); // 調試用
 

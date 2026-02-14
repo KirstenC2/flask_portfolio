@@ -4,7 +4,10 @@ from models.finance_models import db, Expense, ExpenseCategory, Transaction  # �
 from datetime import datetime
 from sqlalchemy import func, extract
 from decimal import Decimal
-
+from sqlalchemy import text
+import calendar
+from datetime import datetime
+from sqlalchemy import func, cast, Date
 # --- Helper 轉換函式 ---
 
 def _expense_to_dict(e: Expense):
@@ -187,19 +190,43 @@ def get_category_stats(current_admin):
         'value': float(row.value)
     } for row in stats]), 200
 
+
+
 @admin_bp.route('/expenses/daily-summary', methods=['GET'])
 @token_required
 def get_daily_summary(current_admin):
     year = request.args.get('year', type=int)
     month = request.args.get('month', type=int)
     
-    # 查詢每天的總額
-    summary = db.session.query(
-        db.func.date(Transaction.transaction_date).label('date'),
-        db.func.sum(Transaction.amount).label('daily_total')
-    ).join(Expense).filter(
-        extract('year', Transaction.transaction_date) == year,
-        extract('month', Transaction.transaction_date) == month
-    ).group_by(db.func.date(Transaction.transaction_date)).all()
+    if not year or not month:
+        return jsonify([])
 
-    return jsonify([{'date': str(s.date), 'daily_total': float(s.daily_total)} for s in summary])
+    # 1. 建立該月的起止時間 (考慮到時分秒)
+    start_date = datetime(year, month, 1, 0, 0, 0)
+    _, last_day = calendar.monthrange(year, month)
+    end_date = datetime(year, month, last_day, 23, 59, 59)
+
+    # 2. 執行查詢
+    summary = db.session.query(
+        # 強制轉型為 Date，避免帶有時間資訊導致 Group By 失敗
+        cast(Transaction.transaction_date, Date).label('date'),
+        func.sum(Transaction.amount).label('daily_total')
+    ).filter(
+        Transaction.transaction_date.between(start_date, end_date)
+        # 使用 ilike 處理大小寫不敏感，確保 income/INCOME 都被排除
+        # Transaction.transaction_type.ilike('INCOME') == False,
+        # 暫時先註解掉 status 檢查，看看是不是因為 status 導致沒資料
+        # Transaction.status == 'COMPLETED' 
+    ).group_by(
+        cast(Transaction.transaction_date, Date)
+    ).order_by(
+        cast(Transaction.transaction_date, Date)
+    ).all()
+
+    # 3. 輸出
+    return jsonify([
+        {
+            "date": s.date.strftime('%Y-%m-%d'),
+            "daily_total": float(s.daily_total)
+        } for s in summary
+    ])

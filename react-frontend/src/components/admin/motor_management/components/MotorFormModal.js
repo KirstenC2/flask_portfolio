@@ -34,8 +34,8 @@ const MotorFormModal = ({ open, onCancel, onFinish, editingRecord }) => {
                 <Form.Item name="mileage" label="當前里程 (KM)" rules={[{ required: true, message: '請輸入里程' }]}>
                     <InputNumber style={{ width: '100%' }} placeholder="例如: 12500" />
                 </Form.Item>
-                <Form.Item name="price" label="價格" rules={[{ required: true, message: '請輸入價格' }]}>
-                    <InputNumber style={{ width: '100%' }} prefix="$" placeholder="例如: 150" />
+                <Form.Item name="amount" label="維修費用" rules={[{ required: true, message: '請輸入費用' }]}>
+                    <InputNumber style={{ width: '100%' }} placeholder="例如: 350" />
                 </Form.Item>
                 <Form.Item name="note" label="備註">
                     <Input.TextArea placeholder="機油型號或其他更換項目" rows={3} />

@@ -4,7 +4,7 @@ import { FileProtectOutlined, EditOutlined, CalendarOutlined, DollarOutlined, De
 import dayjs from 'dayjs';
 
 const { Title, Text } = Typography;
-const DOC_API_URL = "http://localhost:5001/api/motor/taxes";
+const DOC_API_URL = "http://localhost:5001/api/admin/motor/taxes";
 
 const MotorTaxesView = ({ onEdit, onAdd, refreshTrigger }) => {
     const [documents, setDocuments] = useState([]);

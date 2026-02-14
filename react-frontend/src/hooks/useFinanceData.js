@@ -5,6 +5,8 @@ export const useFinanceData = () => {
     const [rawDebts, setRawDebts] = useState([]); // 改名避免與 filteredDebts 衝突
     const [expenses, setExpenses] = useState([]);
     const [categories, setCategories] = useState([]);
+    const [incomeCategories, setIncomeCategories] = useState([]);
+    const [incomes, setIncomes] = useState([]);
     const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
     const [stats, setStats] = useState({ monthly: [], daily: [] });
     const [filterStatus, setFilterStatus] = useState('all');
@@ -32,12 +34,15 @@ export const useFinanceData = () => {
             // 2. 其他 API 用個別處理，或者暫時註解掉
             // 如果 categories 或 expenses 還沒準備好，不要讓它們擋住 debts
             try {
-                const [c] = await Promise.all([
+                const [c,ic, i] = await Promise.all([
                     financeApi.getCategories(),
+                    financeApi.getIncomeCategories(),
+                    financeApi.getIncomes(selectedYear),
                     // financeApi.getExpenses(selectedYear), // 如果沒寫好先註解
                 ]);
                 setCategories(Array.isArray(c) ? c : []);
-                console.log("API 原始回傳的 Category:", c);
+                setIncomeCategories(Array.isArray(i) ? ic : []);
+                setIncomes(Array.isArray(i) ? i : []);
             } catch (subErr) {
                 console.warn("部分 API 載入失敗，但不影響債務顯示", subErr);
             }
@@ -76,12 +81,16 @@ export const useFinanceData = () => {
         rawDebts,            
         expenses, 
         categories, 
+        incomes,
+        incomeCategories,
         stats, 
         selectedYear, 
         setSelectedYear, 
         refreshAll, 
         setDebts: setRawDebts, 
         setExpenses, 
+        setIncomes,
+        setIncomeCategories,
         filterStatus, 
         setFilterStatus 
     };

@@ -3,20 +3,23 @@ import { Tabs, Dropdown, Space, ConfigProvider } from 'antd';
 import {
     SettingOutlined, TagOutlined,
     BankOutlined, WalletOutlined,
-    DownOutlined
+    DownOutlined, DollarCircleOutlined
 } from '@ant-design/icons';
 import { useFinanceData } from '../../../hooks/useFinanceData';
 import { financeApi } from '../../../services/financeApi';
 import DebtSection from './DebtSection';
 import ExpenseSection from './ExpenseSection';
 import ExpenseCategorySection from './ExpenseCategorySection';
+import IncomeSection from './IncomeSection';
 import './styles/DebtPanel.css';
 
 const FinancePanel = () => {
     const {
         debts, categories, refreshAll,
         filterStatus, setFilterStatus, stats,
-        selectedYear, setSelectedYear
+        selectedYear, setSelectedYear,
+        incomes, setIncomes,
+        incomeCategories, setIncomeCategories
     } = useFinanceData();
 
     const [newDebt, setNewDebt] = useState({ title: '', total_amount: '' });
@@ -87,6 +90,12 @@ const FinancePanel = () => {
                 stats={stats}
             />
         ),
+        'income': (
+            <IncomeSection
+                incomes={incomes}
+                incomeCategories={incomeCategories}
+            />
+        ),
         'category-mgmt': (
             <ExpenseCategorySection
                 categories={categories}
@@ -110,6 +119,14 @@ const FinancePanel = () => {
             label: (
                 <span>
                     <WalletOutlined /> 支出紀錄
+                </span>
+            ),
+        },
+        {
+            key: 'income',
+            label: (
+                <span>
+                    <DollarCircleOutlined /> 收入管理
                 </span>
             ),
         }

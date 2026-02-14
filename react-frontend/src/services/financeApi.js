@@ -80,4 +80,28 @@ export const financeApi = {
 
     // === 類別管理 ===
     getCategories: () => fetch(`${API_BASE}/admin/expense/categories`, { headers: getHeaders() }).then(res => res.json()),
+    getIncomeCategories: () => fetch(`${API_BASE}/admin/incomes/categories`, { headers: getHeaders() }).then(res => res.json()),
+    getIncomes: (year, month) => 
+        fetch(`${API_BASE}/admin/incomes?year=${year}&month=${month}`, { headers: getHeaders() })
+            .then(res => res.json()),
+
+    createIncome: (data) =>
+        fetch(`${API_BASE}/admin/incomes`, {
+            method: 'POST',
+            headers: getHeaders(),
+            body: JSON.stringify(data)
+        }).then(res => res.json()),
+
+    updateIncome: (id, data) =>
+        fetch(`${API_BASE}/admin/incomes/${id}`, {
+            method: 'PUT',
+            headers: getHeaders(),
+            body: JSON.stringify(data)
+        }).then(res => res.json()),
+
+    deleteIncome: (id) =>
+        fetch(`${API_BASE}/admin/incomes/${id}`, {
+            method: 'DELETE',
+            headers: getHeaders()
+        }).then(res => res.json()),
 };

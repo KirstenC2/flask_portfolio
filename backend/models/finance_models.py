@@ -24,6 +24,7 @@ class Transaction(db.Model):
     # 雙向關聯設定
     expense = db.relationship('Expense', back_populates='transaction', uselist=False, cascade="all, delete-orphan")
     payment_log = db.relationship('PaymentLog', back_populates='transaction', uselist=False, cascade="all, delete-orphan")
+    income = db.relationship('Income', back_populates='transaction', uselist=False, cascade="all, delete-orphan")
 
     def __repr__(self):
         return f'<Transaction {self.transaction_type} {self.amount} ({self.status})>'
@@ -93,3 +94,31 @@ class Expense(db.Model):
     # 建立與 Transaction 和 Category 的雙向連結
     transaction = db.relationship('Transaction', back_populates='expense')
     category = db.relationship('ExpenseCategory', back_populates='expenses')
+
+# ----------------------------------------------------------------
+# 收入模組 (IncomeSource & Income)
+# ----------------------------------------------------------------
+class IncomeSource(db.Model):
+    __tablename__ = 'income_sources'
+
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(50), nullable=False, unique=True) # 例如：主業薪資、兼職、股息
+    icon = db.Column(db.String(50))
+    color = db.Column(db.String(20))
+    
+    incomes = db.relationship('Income', back_populates='source', lazy=True)
+
+class Income(db.Model):
+    __tablename__ = 'incomes'
+
+    id = db.Column(db.Integer, primary_key=True)
+    transaction_id = db.Column(db.Integer, db.ForeignKey('transactions.id'), nullable=False)
+    source_id = db.Column(db.Integer, db.ForeignKey('income_sources.id'), nullable=False)
+    title = db.Column(db.String(100), nullable=False)
+
+    # 建立與 Transaction 和 Source 的雙向連結
+    transaction = db.relationship('Transaction', back_populates='income', uselist=False)
+    source = db.relationship('IncomeSource', back_populates='incomes')
+
+# 記得在 Transaction Model 裡加上關聯
+# income = db.relationship('Income', back_populates='transaction', uselist=False, cascade="all, delete-orphan")

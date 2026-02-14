@@ -1,0 +1,14 @@
+.income-section .main-card {
+    border-radius: 16px;
+    height: 100%;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+}
+
+.income-section .ant-btn-primary {
+    height: 40px;
+    font-weight: 600;
+}
+
+.income-section .ant-table-thead > tr > th {
+    background: #f0fdf4; /* 淺綠色表頭 */
+}

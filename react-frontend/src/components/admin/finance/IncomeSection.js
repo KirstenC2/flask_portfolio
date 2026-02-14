@@ -98,7 +98,7 @@ const IncomeSection = ({ incomes: initialIncomes = [], incomeCategories = [] }) 
                 {/* 控制與統計區 */}
                 <div className="control-panel" style={{ marginBottom: 24 }}>
                     <Row gutter={[16, 16]} align="middle" justify="space-between">
-                        <Col xs={24} md={12}>
+                        <Col xs={24} md={12} style={{ display: 'flex', alignItems: 'center', height: '100%' }}>
                             <Space size="middle">
                                 <Button 
                                     icon={<ChevronLeft size={16} />} 

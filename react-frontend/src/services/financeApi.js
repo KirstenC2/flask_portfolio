@@ -84,6 +84,7 @@ export const financeApi = {
     getIncomes: (year, month) => 
         fetch(`${API_BASE}/admin/incomes?year=${year}&month=${month}`, { headers: getHeaders() })
             .then(res => res.json()),
+            
 
     createIncome: (data) =>
         fetch(`${API_BASE}/admin/incomes`, {

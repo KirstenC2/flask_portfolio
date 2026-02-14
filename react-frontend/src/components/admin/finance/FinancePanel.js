@@ -3,12 +3,14 @@ import { Tabs, Dropdown, Space, ConfigProvider } from 'antd';
 import {
     SettingOutlined, TagOutlined,
     BankOutlined, WalletOutlined,
-    DownOutlined, DollarCircleOutlined
+    DownOutlined, DollarCircleOutlined,
+    SaveOutlined
 } from '@ant-design/icons';
 import { useFinanceData } from '../../../hooks/useFinanceData';
 import { financeApi } from '../../../services/financeApi';
 import DebtSection from './DebtSection';
 import ExpenseSection from './ExpenseSection';
+import SavingSection from './SavingSection';
 import ExpenseCategorySection from './ExpenseCategorySection';
 import IncomeSection from './IncomeSection';
 import './styles/DebtPanel.css';
@@ -101,6 +103,9 @@ const FinancePanel = () => {
                 categories={categories}
                 refreshAll={refreshAll}
             />
+        ),
+        'saving': (
+            <SavingSection />
         )
     };
 
@@ -127,6 +132,14 @@ const FinancePanel = () => {
             label: (
                 <span>
                     <DollarCircleOutlined /> 收入管理
+                </span>
+            ),
+        },
+        {
+            key: 'saving',
+            label: (
+                <span>
+                    <SaveOutlined /> 儲蓄計劃
                 </span>
             ),
         }

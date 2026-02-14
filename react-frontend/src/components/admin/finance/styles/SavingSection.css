@@ -1,0 +1,61 @@
+/* SavingSection.css */
+
+/* 1. 全局背景與字體優化 */
+.saving-page-container {
+  background: linear-gradient(180deg, #f0f2f5 0%, #ffffff 100%);
+  min-height: 100vh;
+  padding: 40px 20px;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial;
+}
+
+/* 2. 主卡片容器：增加高級感的投影 */
+.main-content-card {
+  border-radius: 20px !important;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.05) !important;
+  border: none !important;
+  overflow: hidden;
+}
+
+/* 3. 標題區塊間距 */
+.header-section {
+  text-align: center;
+  margin-bottom: 40px;
+}
+
+.header-section h2 {
+  color: #1a1a1a;
+  margin-bottom: 8px !important;
+}
+
+/* 4. 側邊欄與列表的間隔優化 */
+.section-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 24px !important;
+  font-weight: 600 !important;
+}
+
+.section-title::before {
+  content: "";
+  display: inline-block;
+  width: 4px;
+  height: 18px;
+  background: #1677ff;
+  border-radius: 2px;
+}
+
+/* 5. 針對 Antd List 的微調 */
+.ant-list-item {
+  padding: 0 !important;
+  margin-bottom: 16px;
+  border: none !important;
+}
+
+.ant-card {
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.ant-card:hover {
+  transform: translateY(-2px);
+}

@@ -20,6 +20,7 @@ const FinancePanel = () => {
         debts, categories, refreshAll,
         filterStatus, setFilterStatus, stats,
         selectedYear, setSelectedYear,
+        selectedMonth, setSelectedMonth,
         incomes, setIncomes,
         incomeCategories, setIncomeCategories
     } = useFinanceData();
@@ -94,7 +95,6 @@ const FinancePanel = () => {
         ),
         'income': (
             <IncomeSection
-                incomes={incomes}
                 incomeCategories={incomeCategories}
             />
         ),
@@ -105,7 +105,14 @@ const FinancePanel = () => {
             />
         ),
         'saving': (
-            <SavingSection />
+            <SavingSection 
+                incomes={incomes}
+                refreshAll={refreshAll}
+                selectedYear={selectedYear}
+                setSelectedYear={setSelectedYear}
+                selectedMonth={selectedMonth}
+                setSelectedMonth={setSelectedMonth}
+            />
         )
     };
 
@@ -154,6 +161,7 @@ const FinancePanel = () => {
                 },
             }}
         >
+            <p></p>
             <div className="container" style={{ padding: '20px' }}>
                 {/* 導覽列容器 */}
                 <div className="finance-nav-wrapper" style={{

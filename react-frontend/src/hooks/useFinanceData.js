@@ -1,63 +1,66 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { financeApi } from '../services/financeApi';
+import dayjs from 'dayjs'; // 建議引入 dayjs 處理時間比較方便
 
 export const useFinanceData = () => {
-    const [rawDebts, setRawDebts] = useState([]); // 改名避免與 filteredDebts 衝突
+    const [rawDebts, setRawDebts] = useState([]);
     const [expenses, setExpenses] = useState([]);
     const [categories, setCategories] = useState([]);
     const [incomeCategories, setIncomeCategories] = useState([]);
     const [incomes, setIncomes] = useState([]);
+    const [savingGoals, setSavingGoals] = useState([]);
+    const [savingHistory, setSavingHistory] = useState([]);
     const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
+    const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth() + 1);
     const [stats, setStats] = useState({ monthly: [], daily: [] });
     const [filterStatus, setFilterStatus] = useState('all');
 
-    // 1. 強健的過濾邏輯
     const filteredDebts = useMemo(() => {
         return rawDebts.filter(debt => {
             const balance = parseFloat(debt.current_balance) || 0;
             if (filterStatus === 'active') return balance > 0;
             if (filterStatus === 'paid') return balance <= 0;
-            return true; // 'all'
+            return true;
         });
     }, [rawDebts, filterStatus]);
 
     // 2. 核心刷新函數
     const refreshAll = useCallback(async () => {
         try {
-            console.log("開始執行 refreshAll...");
+            console.log(`開始執行 refreshAll... (${selectedYear}-${selectedMonth})`);
             
-            // 1. 先抓債務，確保它不被其他失敗的 API 影響
             const d = await financeApi.getDebts();
-            const debtData = Array.isArray(d) ? d : (d?.data || []);
-            setRawDebts(debtData);
+            setRawDebts(Array.isArray(d) ? d : (d?.data || []));
 
-            // 2. 其他 API 用個別處理，或者暫時註解掉
-            // 如果 categories 或 expenses 還沒準備好，不要讓它們擋住 debts
             try {
-                const [c,ic, i] = await Promise.all([
+                const [c, ic, i, sg, dh] = await Promise.all([
                     financeApi.getCategories(),
                     financeApi.getIncomeCategories(),
-                    financeApi.getIncomes(selectedYear),
-                    // financeApi.getExpenses(selectedYear), // 如果沒寫好先註解
+                    // 💡 修正：必須傳入兩個參數
+                    financeApi.getIncomes(selectedYear, selectedMonth), 
+                    financeApi.getSavingGoals(selectedYear, selectedMonth),
+                    financeApi.getDepositHistory(selectedYear, selectedMonth),
                 ]);
                 setCategories(Array.isArray(c) ? c : []);
-                setIncomeCategories(Array.isArray(i) ? ic : []);
+                setIncomeCategories(Array.isArray(ic) ? ic : []);
                 setIncomes(Array.isArray(i) ? i : []);
+                setSavingGoals(Array.isArray(sg) ? sg : []);
+                setSavingHistory(Array.isArray(dh) ? dh : []);
             } catch (subErr) {
-                console.warn("部分 API 載入失敗，但不影響債務顯示", subErr);
+                console.warn("部分分頁 API 載入失敗", subErr);
             }
-
         } catch (err) {
             console.error("refreshAll 核心錯誤:", err);
         }
-    }, [selectedYear]);
+    }, [selectedYear, selectedMonth]); // 💡 修正：依賴項必須包含 selectedMonth
 
-    // 3. 統計與支出刷新 (年份改變時觸發)
-    const refreshPeriodic = useCallback(async (year) => {
+    // 3. 統計與支出刷新
+    const refreshPeriodic = useCallback(async (year, month) => {
         try {
             const [s, e] = await Promise.all([
                 financeApi.getExpenseStats(year),
-                financeApi.getExpenses(year)
+                // 💡 修正：必須傳入 month
+                financeApi.getExpenses(year, month) 
             ]);
             setStats(s && s.monthly ? s : { monthly: [], daily: [] });
             setExpenses(Array.isArray(e) ? e : []);
@@ -66,31 +69,35 @@ export const useFinanceData = () => {
         }
     }, []);
 
+    // 當年份或月份改變時，觸發刷新
     useEffect(() => {
-        refreshPeriodic(selectedYear);
-    }, [selectedYear, refreshPeriodic]);
+        refreshPeriodic(selectedYear, selectedMonth); // 💡 修正：傳入兩個參數
+    }, [selectedYear, selectedMonth, refreshPeriodic]);
 
-    // 初始載入
     useEffect(() => {
         refreshAll();
     }, [refreshAll]);
 
     return {
-        // 修正：這裡要傳 filteredDebts 給 UI
         debts: filteredDebts, 
         rawDebts,            
         expenses, 
         categories, 
         incomes,
         incomeCategories,
+        savingGoals,
+        savingHistory,
         stats, 
         selectedYear, 
         setSelectedYear, 
+        selectedMonth,      // 已新增
+        setSelectedMonth,    // 已新增
         refreshAll, 
         setDebts: setRawDebts, 
         setExpenses, 
         setIncomes,
         setIncomeCategories,
+        setSavingGoals,
         filterStatus, 
         setFilterStatus 
     };

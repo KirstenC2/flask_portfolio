@@ -1,62 +1,225 @@
-import React, { useState } from 'react';
-import { Typography, Row, Col, ConfigProvider, Space, Divider, Card } from 'antd';
-import SavingStats from './SavingStats';
+import React, { useMemo, useState, useEffect, useCallback } from 'react';
+import { Typography, Row, Col, ConfigProvider, Space, Divider, Card, Statistic, Progress, Spin, DatePicker, message } from 'antd';
+import { WalletOutlined, RocketOutlined, SafetyCertificateOutlined } from '@ant-design/icons';
+import dayjs from 'dayjs';
+import { useFinanceData } from '../../../hooks/useFinanceData';
+import { financeApi } from '../../../services/financeApi';
 import SavingGoals from './SavingGoals';
-import AddGoalForm from './AddGoalForm';
+import AddGoalForm from './components/AddGoalForm';
+import AccountJars from './components/AccountJars';
 
-const { Title, Paragraph } = Typography;
+const { Title, Text } = Typography;
 
-const SavingSection = () => {
-    const [goals, setGoals] = useState([
-        { id: 1, title: '日本旅遊基金', target: 50000, current: 25000, icon: '✈️' },
-        { id: 2, title: '緊急備用金', target: 100000, current: 80000, icon: '🛡️' },
-    ]);
+const SavingSection = ({ refreshAll, selectedYear, setSelectedYear, selectedMonth, setSelectedMonth }) => {
 
-    const totalSaved = goals.reduce((acc, goal) => acc + goal.current, 0);
-    const totalTarget = goals.reduce((acc, goal) => acc + goal.target, 0);
+    const [incomes, setIncomes] = useState([]);
+    const [currentViewDate, setCurrentViewDate] = useState(dayjs());
+    // 初始值給予空陣列，防止 SavingGoals 渲染時 map 出錯
+    const [goals, setGoals] = useState([]);
+    const [loadingGoals, setLoadingGoals] = useState(false);
+    const [loading, setLoading] = useState(false);
+    // 2. 核心抓取邏輯：加入嚴格的參數檢查
+    const fetchGoalsByMonth = useCallback(async (dateObj) => {
+        // 1. 強制確保有有效的年份與月份，若無則用當下時間
+        const target = (dateObj && dateObj.isValid()) ? dateObj : dayjs();
+        const year = target.year();
+        const month = target.month() + 1;
 
-    const addGoal = (newGoal) => {
-        // 確保數據格式一致
-        const goalData = {
-            ...newGoal,
-            id: Date.now(),
-            current: newGoal.current || 0,
-            icon: newGoal.icon || '💰'
-        };
-        setGoals([...goals, goalData]);
+        if (!year || !month) return; // 再次防禦
+
+        setLoadingGoals(true);
+        try {
+            console.log(`📡 正在請求儲蓄計畫: ${year}-${month}`);
+            const response = await financeApi.getSavingGoals(year, month);
+
+            // 這裡要解構後端回傳，確保一定是陣列
+            const data = Array.isArray(response) ? response : (response?.data || []);
+            setGoals(data);
+        } catch (error) {
+            console.error("載入儲蓄目標失敗:", error);
+            setGoals([]); // 失敗時清空，避免舊資料誤導
+        } finally {
+            setLoadingGoals(false);
+        }
+    }, []);
+
+    const refreshData = useCallback(async (date) => {
+            setLoading(true);
+            try {
+                const year = date.year();
+                const month = date.month() + 1;
+                // 假設你後端有對應的 getIncomes API
+                const data = await financeApi.getIncomes(year, month);
+                setIncomes(data || []);
+            } catch (error) {
+                console.error("抓取收入數據失敗:", error);
+                message.error("無法載入收入資料");
+            } finally {
+                setLoading(false);
+            }
+        }, []);
+    // 當日期改變時同步所有狀態
+    useEffect(() => {
+        const year = currentViewDate.year();
+        const month = currentViewDate.month() + 1;
+
+        if (year !== selectedYear) setSelectedYear(year);
+        if (month !== selectedMonth) setSelectedMonth(month);
+
+        fetchGoalsByMonth(currentViewDate);
+        refreshData(currentViewDate);
+    }, [currentViewDate, selectedYear, selectedMonth, setSelectedYear, setSelectedMonth]);
+    // 3. 計算邏輯：加入更強大的 Null Check
+    const currentMonthTotal = useMemo(() => {
+        const targetMonth = currentViewDate.month();
+        const targetYear = currentViewDate.year();
+
+        // 💡 增加 Log 觀察 incomes 的內容
+        console.log("Current Incomes from Hook:", incomes);
+
+        return (incomes || [])
+            .filter(inc => {
+                // 解析 "Thu, 05 Feb 2026 00:00:00 GMT"
+                const d = dayjs(inc.income_date || inc.date);
+
+                // 檢查是否解析成功
+                if (!d.isValid()) return false;
+
+                const isMatch = d.year() === targetYear && d.month() === targetMonth;
+
+                // 如果 API 有資料但沒顯示，通常是這裡 filter 沒過
+                if (!isMatch && incomes.length > 0) {
+                    // console.log(`日期不匹配: ${d.format('YYYY-MM')} vs 目標 ${targetYear}-${targetMonth + 1}`);
+                }
+
+                return isMatch;
+            })
+            .reduce((acc, curr) => acc + (parseFloat(curr.amount) || 0), 0);
+    }, [incomes, currentViewDate]);
+
+    // 計算本月計畫存入總額
+    const totalMonthlySavingGoal = useMemo(() => {
+        return (goals || []).reduce((acc, goal) => {
+            // 注意：這裡的欄位名稱必須與你後端 Python _goal_to_dict 定義的一致
+            return acc + (parseFloat(goal.monthly_push) || 0);
+        }, 0);
+    }, [goals]);
+
+    const fixedExpenseRate = 0.35;
+    const estimatedFixedExpenses = currentMonthTotal * fixedExpenseRate;
+    const disposableIncome = currentMonthTotal - totalMonthlySavingGoal - estimatedFixedExpenses;
+
+    const handleAddGoal = async (formData) => {
+        try {
+            // 1. 檢查 formData 內容，將 AntD 表單可能的 camelCase 轉為 snake_case
+            const payload = {
+                title: formData.title,
+                target_amount: parseFloat(formData.target_amount || formData.targetAmount), // 相容兩種寫法
+                monthly_push: parseFloat(formData.monthly_push || formData.monthlyPush || 0),
+                icon: formData.icon || '💰',
+                // 2. 重要：補回被註解的日期，否則後端計算生效月份會出錯
+                effective_date: currentViewDate.startOf('month').format('YYYY-MM-DD')
+            };
+
+            console.log("🚀 準備送出的資料:", payload);
+
+            await financeApi.createSavingGoal(payload);
+            message.success('已新增儲蓄目標');
+
+            // 3. 重新整理資料
+            fetchGoalsByMonth(currentViewDate);
+            refreshAll();
+        } catch (err) {
+            console.error("新增失敗詳情:", err);
+            message.error(`新增失敗: ${err.message}`);
+        }
     };
 
     return (
         <Card bordered={false} style={{ height: '100%' }}>
-            <ConfigProvider theme={{ token: { borderRadius: 12, colorPrimary: '#1890ff' } }}>
-
-
-                {/* 頁面標題區 */}
-                <div style={{ marginBottom: 32 }}>
-                    <Title level={2} style={{ marginBottom: 4 }}>儲蓄管理中心</Title>
-                    <Paragraph type="secondary">掌控每一筆儲蓄進度，加速實現你的理財夢想</Paragraph>
-                </div>
+            <p>{JSON.stringify(incomes)}</p>
+            <ConfigProvider theme={{ token: { borderRadius: 12, colorPrimary: '#5ec2c2' } }}>
+                <Row justify="space-between" align="middle" style={{ marginBottom: 32 }}>
+                    <Col>
+                        <Title level={2} style={{ marginBottom: 4 }}>財務調度中心</Title>
+                        <Space size="middle">
+                            <Text type="secondary">切換統計月份：</Text>
+                            <DatePicker
+                                picker="month"
+                                value={currentViewDate}
+                                onChange={(date) => {
+                                    if (date) setCurrentViewDate(date);
+                                }}
+                                allowClear={false}
+                            />
+                            {loadingGoals && <Spin size="small" />}
+                        </Space>
+                    </Col>
+                    <Col>
+                        <Statistic
+                            title={`${currentViewDate.format('M')} 月總收入`}
+                            value={currentMonthTotal}
+                            prefix="$"
+                            valueStyle={{ color: '#5ec2c2' }}
+                        />
+                    </Col>
+                </Row>
 
                 <Space direction="vertical" size={32} style={{ display: 'flex' }}>
+                    <AccountJars income={currentMonthTotal} />
 
-                    {/* 數據總覽區卡片 */}
-                    <SavingStats totalSaved={totalSaved} totalTarget={totalTarget} />
+                    <Card size="small" className="shadow-sm" style={{ borderRadius: '16px' }}>
+                        <div style={{ padding: '20px' }}>
+                            <Title level={4} style={{ marginBottom: 24 }}>⚖️ 資金分配監控</Title>
+                            <Row gutter={32}>
+                                <Col span={8}>
+                                    <Statistic
+                                        title="本月儲蓄目標"
+                                        value={totalMonthlySavingGoal}
+                                        prefix={<RocketOutlined />}
+                                        groupSeparator=","
+                                        suffix="元"
+                                    />
+                                </Col>
+                                <Col span={8}>
+                                    <Statistic
+                                        title="生活預估支出"
+                                        value={estimatedFixedExpenses}
+                                        prefix={<SafetyCertificateOutlined />}
+                                        groupSeparator=","
+                                        suffix="元"
+                                    />
+                                    <Progress percent={Math.min(fixedExpenseRate * 100, 100)} size="small" showInfo={false} strokeColor="#faad14" />
+                                </Col>
+                                <Col span={8}>
+                                    <Statistic
+                                        title="剩餘可動用金額"
+                                        value={disposableIncome}
+                                        prefix={<WalletOutlined />}
+                                        groupSeparator=","
+                                        suffix="元"
+                                        valueStyle={{ color: disposableIncome < 0 ? '#ff4d4f' : '#52c41a', fontWeight: 'bold' }}
+                                    />
+                                </Col>
+                            </Row>
+                        </div>
+                    </Card>
 
-                    <Divider />
+                    <Divider orientation="left">儲蓄進度詳情</Divider>
 
                     <Row gutter={[32, 32]}>
-                        {/* 左側：新增目標表單 (佔 1/3) */}
-                        <Col xs={24} lg={8}>
-                            <AddGoalForm onAdd={addGoal} />
+                        <Col xs={24} lg={9}>
+                            <AddGoalForm onAdd={handleAddGoal} />
                         </Col>
-
-                        {/* 右側：目標清單 (佔 2/3) */}
-                        <Col xs={24} lg={16}>
-                            <SavingGoals goals={goals} />
+                        <Col xs={24} lg={15}>
+                            {/* 傳入 goals，並在 SavingGoals 組件內也要做空值判斷 */}
+                            <SavingGoals
+                                goals={goals || []}
+                                onRefresh={() => fetchGoalsByMonth(currentViewDate)}
+                            />
                         </Col>
                     </Row>
                 </Space>
-
             </ConfigProvider>
         </Card>
     );

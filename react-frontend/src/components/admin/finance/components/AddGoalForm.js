@@ -12,7 +12,7 @@ const AddGoalForm = ({ onAdd }) => {
         <Form.Item name="title" label="目標名稱" rules={[{ required: true }]}>
           <Input placeholder="例如：日本旅遊" size="large" />
         </Form.Item>
-        <Form.Item name="target" label="目標金額" rules={[{ required: true }]}>
+        <Form.Item name="target_amount" label="目標金額" rules={[{ required: true }]}>
           <InputNumber style={{ width: '100%' }} size="large" prefix="$" />
         </Form.Item>
         <Button type="primary" htmlType="submit" block size="large" icon={<PlusOutlined />}>

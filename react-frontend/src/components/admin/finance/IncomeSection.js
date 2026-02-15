@@ -8,9 +8,9 @@ import './styles/IncomeSection.css'; // 建議建立專屬 CSS
 
 const { Text, Title } = Typography;
 
-const IncomeSection = ({ incomes: initialIncomes = [], incomeCategories = [] }) => {
+const IncomeSection = ({ incomeCategories = [] }) => {
     const [currentViewDate, setCurrentViewDate] = useState(dayjs());
-    const [incomes, setIncomes] = useState(initialIncomes);
+    const [incomes, setIncomes] = useState([]);
     const [loading, setLoading] = useState(false);
     const [form] = Form.useForm();
 

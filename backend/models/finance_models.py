@@ -25,6 +25,7 @@ class Transaction(db.Model):
     expense = db.relationship('Expense', back_populates='transaction', uselist=False, cascade="all, delete-orphan")
     payment_log = db.relationship('PaymentLog', back_populates='transaction', uselist=False, cascade="all, delete-orphan")
     income = db.relationship('Income', back_populates='transaction', uselist=False, cascade="all, delete-orphan")
+    saving_log = db.relationship('SavingLog', back_populates='transaction', uselist=False, cascade="all, delete-orphan")
 
     def __repr__(self):
         return f'<Transaction {self.transaction_type} {self.amount} ({self.status})>'

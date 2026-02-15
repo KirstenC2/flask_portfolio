@@ -2,11 +2,11 @@ import React, { useMemo, useState, useEffect, useCallback } from 'react';
 import { Typography, Row, Col, ConfigProvider, Space, Divider, Card, Statistic, Progress, Spin, DatePicker, message } from 'antd';
 import { WalletOutlined, RocketOutlined, SafetyCertificateOutlined } from '@ant-design/icons';
 import dayjs from 'dayjs';
-import { useFinanceData } from '../../../hooks/useFinanceData';
 import { financeApi } from '../../../services/financeApi';
 import SavingGoals from './SavingGoals';
 import AddGoalForm from './components/AddGoalForm';
 import AccountJars from './components/AccountJars';
+import MonthlyExpenseTotalStat from './components/MonthlyExpenseTotalStat';
 
 const { Title, Text } = Typography;
 
@@ -29,7 +29,6 @@ const SavingSection = ({ refreshAll, selectedYear, setSelectedYear, selectedMont
 
         setLoadingGoals(true);
         try {
-            console.log(`📡 正在請求儲蓄計畫: ${year}-${month}`);
             const response = await financeApi.getSavingGoals(year, month);
 
             // 這裡要解構後端回傳，確保一定是陣列
@@ -44,20 +43,20 @@ const SavingSection = ({ refreshAll, selectedYear, setSelectedYear, selectedMont
     }, []);
 
     const refreshData = useCallback(async (date) => {
-            setLoading(true);
-            try {
-                const year = date.year();
-                const month = date.month() + 1;
-                // 假設你後端有對應的 getIncomes API
-                const data = await financeApi.getIncomes(year, month);
-                setIncomes(data || []);
-            } catch (error) {
-                console.error("抓取收入數據失敗:", error);
-                message.error("無法載入收入資料");
-            } finally {
-                setLoading(false);
-            }
-        }, []);
+        setLoading(true);
+        try {
+            const year = date.year();
+            const month = date.month() + 1;
+            // 假設你後端有對應的 getIncomes API
+            const data = await financeApi.getIncomes(year, month);
+            setIncomes(data || []);
+        } catch (error) {
+            console.error("抓取收入數據失敗:", error);
+            message.error("無法載入收入資料");
+        } finally {
+            setLoading(false);
+        }
+    }, []);
     // 當日期改變時同步所有狀態
     useEffect(() => {
         const year = currentViewDate.year();
@@ -73,9 +72,6 @@ const SavingSection = ({ refreshAll, selectedYear, setSelectedYear, selectedMont
     const currentMonthTotal = useMemo(() => {
         const targetMonth = currentViewDate.month();
         const targetYear = currentViewDate.year();
-
-        // 💡 增加 Log 觀察 incomes 的內容
-        console.log("Current Incomes from Hook:", incomes);
 
         return (incomes || [])
             .filter(inc => {
@@ -137,7 +133,6 @@ const SavingSection = ({ refreshAll, selectedYear, setSelectedYear, selectedMont
 
     return (
         <Card bordered={false} style={{ height: '100%' }}>
-            <p>{JSON.stringify(incomes)}</p>
             <ConfigProvider theme={{ token: { borderRadius: 12, colorPrimary: '#5ec2c2' } }}>
                 <Row justify="space-between" align="middle" style={{ marginBottom: 32 }}>
                     <Col>
@@ -169,36 +164,62 @@ const SavingSection = ({ refreshAll, selectedYear, setSelectedYear, selectedMont
                     <AccountJars income={currentMonthTotal} />
 
                     <Card size="small" className="shadow-sm" style={{ borderRadius: '16px' }}>
-                        <div style={{ padding: '20px' }}>
-                            <Title level={4} style={{ marginBottom: 24 }}>⚖️ 資金分配監控</Title>
-                            <Row gutter={32}>
-                                <Col span={8}>
+                        <div style={{ padding: '24px' }}>
+                            <Title level={4} style={{ marginBottom: 32, textAlign: 'center' }}>
+                                <span style={{ marginRight: 8 }}>⚖️</span>資金分配監控
+                            </Title>
+
+                            <Row gutter={[16, 24]} justify="space-around" align="top">
+                                {/* 1. 儲蓄目標 */}
+                                <Col xs={12} sm={6} style={{ textAlign: 'center' }}>
                                     <Statistic
                                         title="本月儲蓄目標"
                                         value={totalMonthlySavingGoal}
                                         prefix={<RocketOutlined />}
-                                        groupSeparator=","
                                         suffix="元"
+                                        valueStyle={{ fontSize: '20px' }}
                                     />
                                 </Col>
-                                <Col span={8}>
+
+                                {/* 2. 預估支出 - 解決小數點問題 */}
+                                <Col xs={12} sm={6} style={{ textAlign: 'center' }}>
                                     <Statistic
-                                        title="生活預估支出"
-                                        value={estimatedFixedExpenses}
+                                        title="預估固定支出"
+                                        // 💡 使用 Math.round 解決 32,535.999999 的顯示問題
+                                        value={Math.round(estimatedFixedExpenses)}
                                         prefix={<SafetyCertificateOutlined />}
-                                        groupSeparator=","
                                         suffix="元"
+                                        valueStyle={{ fontSize: '20px' }}
                                     />
-                                    <Progress percent={Math.min(fixedExpenseRate * 100, 100)} size="small" showInfo={false} strokeColor="#faad14" />
+                                    <div style={{ width: '80%', margin: '8px auto 0' }}>
+                                        <Progress percent={35} size="small" showInfo={false} strokeColor="#faad14" />
+                                    </div>
                                 </Col>
-                                <Col span={8}>
+
+                                {/* 3. 實際支出 - 建議修改該組件內容使其只渲染 Statistic */}
+                                <Col xs={12} sm={6} style={{ textAlign: 'center' }}>
+                                    {/* 建議進入 MonthlyExpenseTotalStat 組件，
+                   把外層的 Card 或背景 Div 拿掉，直接回傳 <Statistic />
+                */}
+                                    <MonthlyExpenseTotalStat
+                                        year={currentViewDate.year()}
+                                        month={currentViewDate.month() + 1}
+                                        title="本月實際支出"
+                                    />
+                                </Col>
+
+                                {/* 4. 剩餘金額 */}
+                                <Col xs={12} sm={6} style={{ textAlign: 'center' }}>
                                     <Statistic
                                         title="剩餘可動用金額"
-                                        value={disposableIncome}
+                                        value={Math.round(disposableIncome)}
                                         prefix={<WalletOutlined />}
-                                        groupSeparator=","
                                         suffix="元"
-                                        valueStyle={{ color: disposableIncome < 0 ? '#ff4d4f' : '#52c41a', fontWeight: 'bold' }}
+                                        valueStyle={{
+                                            color: disposableIncome < 0 ? '#ff4d4f' : '#52c41a',
+                                            fontSize: '24px', // 讓結果稍微大一點點
+                                            fontWeight: 'bold'
+                                        }}
                                     />
                                 </Col>
                             </Row>

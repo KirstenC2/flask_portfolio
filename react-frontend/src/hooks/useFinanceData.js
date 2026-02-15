@@ -27,8 +27,7 @@ export const useFinanceData = () => {
     // 2. 核心刷新函數
     const refreshAll = useCallback(async () => {
         try {
-            console.log(`開始執行 refreshAll... (${selectedYear}-${selectedMonth})`);
-            
+
             const d = await financeApi.getDebts();
             setRawDebts(Array.isArray(d) ? d : (d?.data || []));
 

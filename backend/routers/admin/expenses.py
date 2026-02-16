@@ -230,3 +230,4 @@ def get_daily_summary(current_admin):
             "daily_total": float(s.daily_total)
         } for s in summary
     ])
+

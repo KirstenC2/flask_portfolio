@@ -1,7 +1,7 @@
 from flask_sqlalchemy import SQLAlchemy
 
 db = SQLAlchemy()
-from .finance_models import DebtRecord, PaymentLog, Transaction, Income, IncomeSource
+from .finance_models import DebtRecord, PaymentLog, Transaction, Income, IncomeSource, RecurringExpense
 from .saving_models import SavingGoal, GoalPlan
 from .models import Project, Skill, Experience, Education, Study, Message, Admin, LifeEvent, Introduction, TaskDescription,ExperienceProject, Resume, DevFeature, DevTask
 from .asset_models import MotorRecord, MotorTaxes

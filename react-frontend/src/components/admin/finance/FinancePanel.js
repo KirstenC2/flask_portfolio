@@ -13,6 +13,7 @@ import ExpenseSection from './ExpenseSection';
 import SavingSection from './SavingSection';
 import ExpenseCategorySection from './ExpenseCategorySection';
 import IncomeSection from './IncomeSection';
+import RecurringExpenseSection from './RecurringExpenseSection';
 import './styles/DebtPanel.css';
 
 const FinancePanel = () => {
@@ -22,7 +23,8 @@ const FinancePanel = () => {
         selectedYear, setSelectedYear,
         selectedMonth, setSelectedMonth,
         incomes, setIncomes,
-        incomeCategories, setIncomeCategories
+        incomeCategories, setIncomeCategories,
+        recurringExpenses, setRecurringExpenses
     } = useFinanceData();
 
     const [newDebt, setNewDebt] = useState({ title: '', total_amount: '' });
@@ -60,6 +62,12 @@ const FinancePanel = () => {
             label: '支出類別管理',
             icon: <TagOutlined />,
             onClick: () => setActiveTab('category-mgmt'),
+        },
+        {
+            key: 'recurring-mgmt',
+            label: '定期支出管理',
+            icon: <TagOutlined />,
+            onClick: () => setActiveTab('recurring-mgmt'),
         }
     ];
 
@@ -67,7 +75,7 @@ const FinancePanel = () => {
     // 將標籤與內容邏輯完全分離
     const tabComponents = {
         'debt': (
-            
+
             <DebtSection
                 debts={debts} // 這裡傳入的是 Hook 過濾後的 filteredDebts
                 newDebt={newDebt}
@@ -104,8 +112,17 @@ const FinancePanel = () => {
                 refreshAll={refreshAll}
             />
         ),
+        'recurring-mgmt':(
+            <RecurringExpenseSection
+                categories={categories}
+                recurringExpenses={recurringExpenses}
+                setRecurringExpenses={setRecurringExpenses}
+                refreshAll={refreshAll}
+            />
+        )
+        ,
         'saving': (
-            <SavingSection 
+            <SavingSection
                 incomes={incomes}
                 refreshAll={refreshAll}
                 selectedYear={selectedYear}
@@ -161,7 +178,6 @@ const FinancePanel = () => {
                 },
             }}
         >
-            <p></p>
             <div className="container" style={{ padding: '20px' }}>
                 {/* 導覽列容器 */}
                 <div className="finance-nav-wrapper" style={{

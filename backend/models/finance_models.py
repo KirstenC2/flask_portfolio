@@ -1,5 +1,7 @@
+from curses import ALL_MOUSE_EVENTS
 from datetime import datetime
 from decimal import Decimal
+from os import name
 from . import db
 
 # ----------------------------------------------------------------
@@ -123,3 +125,18 @@ class Income(db.Model):
 
 # 記得在 Transaction Model 裡加上關聯
 # income = db.relationship('Income', back_populates='transaction', uselist=False, cascade="all, delete-orphan")
+
+
+class RecurringExpense(db.Model):
+    __tablename__ = 'recurring_expenses'
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(100), nullable=False) # 例如：Netflix
+    amount = db.Column(db.Numeric(10, 2), nullable=False) # 這是「預設金額」
+    day_of_month = db.Column(db.Integer, default=1) # 每月幾號扣款
+    
+    # 外鍵關聯
+    category_id = db.Column(db.Integer, db.ForeignKey('expense_categories.id'))
+    category = db.relationship('ExpenseCategory')
+
+    def __repr__(self):
+        return f'<RecurringExpense {self.name}>'

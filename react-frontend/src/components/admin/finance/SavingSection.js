@@ -191,9 +191,6 @@ const SavingSection = ({ refreshAll, selectedYear, setSelectedYear, selectedMont
                                         suffix="元"
                                         valueStyle={{ fontSize: '20px' }}
                                     />
-                                    <div style={{ width: '80%', margin: '8px auto 0' }}>
-                                        <Progress percent={35} size="small" showInfo={false} strokeColor="#faad14" />
-                                    </div>
                                 </Col>
 
                                 {/* 3. 實際支出 - 建議修改該組件內容使其只渲染 Statistic */}

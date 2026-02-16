@@ -132,8 +132,28 @@ export const financeApi = {
         headers: getHeaders(),
         body: JSON.stringify(data)
     }).then(handleResponse),
-    getSavingGoalHistory: (goalId) => 
-        fetch(`${API_BASE}/admin/saving/goals/${goalId}/history`, { 
-            headers: getHeaders() 
+    getSavingGoalHistory: (goalId) =>
+        fetch(`${API_BASE}/admin/saving/goals/${goalId}/history`, {
+            headers: getHeaders()
         }).then(handleResponse),
+
+    getRecurringExpenses: () =>
+        fetch(`${API_BASE}/admin/expense/recurring`, {
+            headers: getHeaders()
+        }).then(handleResponse),
+    createRecurringExpense: (data) => fetch(`${API_BASE}/admin/expense/recurring`, {
+        method: 'POST',
+        headers: getHeaders(),
+        body: JSON.stringify(data)
+    }).then(handleResponse),
+    updateRecurringExpenses: (id, data) => fetch(`${API_BASE}/admin/expense/recurring/${id}`, {
+        method: 'PUT',
+        headers: getHeaders(),
+        body: JSON.stringify(data)
+    }).then(handleResponse),
+    removeRecurringExpenses: (id) => fetch(`${API_BASE}/admin/expense/recurring/${id}`, {
+        method: 'DELETE',
+        headers: getHeaders()
+    }).then(handleResponse),
+
 };

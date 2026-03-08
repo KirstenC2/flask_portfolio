@@ -1,6 +1,36 @@
 from datetime import datetime, timedelta
 from . import db
 
+
+class StandardService(db.Model):
+    """標準服務項目模板 (軍火庫)"""
+    __tablename__ = 'standard_services'
+    
+    id = db.Column(db.Integer, primary_key=True)
+    category = db.Column(db.String(50), nullable=False) # BACKEND, FRONTEND, DEVOPS, DESIGN
+    name = db.Column(db.String(100), nullable=False)    # 服務名稱 (如: JWT認證系統)
+    
+    # 專業描述模板，讓你在前端一選就跳出這段話
+    default_description = db.Column(db.Text) 
+    
+    # 經濟參數
+    base_price = db.Column(db.Float, default=0.0)      # 參考單價
+    unit = db.Column(db.String(20), default='式')      # 單位: 支, 頁, 套, 小時
+    
+    is_active = db.Column(db.Boolean, default=True)    # 是否啟用
+    sort_order = db.Column(db.Integer, default=0)      # 排序用
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "category": self.category,
+            "name": self.name,
+            "description": self.default_description,
+            "price": self.base_price,
+            "unit": self.unit
+        }
+
 class PublicQuotation(db.Model):
     __tablename__ = 'public_quotations'
     id = db.Column(db.Integer, primary_key=True)

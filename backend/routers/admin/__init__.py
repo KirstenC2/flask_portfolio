@@ -38,4 +38,4 @@ def token_required(f):
 
 
 # Crucial: Import the routes AFTER defining admin_bp to avoid circular imports
-from . import health,auth, skills, education, life_events,study, projects, experience, message, expenses, dev_tasks, templates,warboard, motor, incomes, savings, recurring_expenses
+from . import health,auth, skills, education, life_events,study, experience, dev_tasks, templates,warboard, motor, incomes, savings, recurring_expenses, quotation, projects

@@ -9,7 +9,7 @@ import TaskQuadrant from './components/TaskQuadrant';
 import ThinkingProjectForm from './components/forms/ThinkingProjectForm';
 import TemplateManagementPage from './pages/TemplateManagementPage';
 import WarBoardPage from './pages/WarBoardPage';
-
+import QuotationSystem from './components/quotation/quotationEditor';
 const WorkPanel = ({ onProjectSelect }) => {
     const [activeTab, setActiveTab] = useState('dev-progress');
     const [dynamicItems, setDynamicItems] = useState([]);
@@ -86,6 +86,15 @@ const WorkPanel = ({ onProjectSelect }) => {
                     週報板
                 </span>
             ),
+        },
+        {
+            key: 'quotation-editor',
+            label: (
+                <span>
+                    <FileTextOutlined />
+                    報價單編輯器
+                </span>
+            ),
         }
     ];
 
@@ -96,7 +105,8 @@ const WorkPanel = ({ onProjectSelect }) => {
             'task-quadrant': <TaskQuadrant />,
             'dynamic-thinking-form': <ThinkingProjectForm templateId={selectedTemplateId} key={selectedTemplateId} />,
             'template-manager': <TemplateManagementPage />,
-            'war-board': <WarBoardPage />
+            'war-board': <WarBoardPage />,
+            'quotation-editor': <QuotationSystem />
         };
         // 統一使用 activeTab 即可
         return components[activeTab];
@@ -106,12 +116,12 @@ const WorkPanel = ({ onProjectSelect }) => {
     const currentTab = ['dev-progress', 'task-quadrant','war-board'].includes(activeTab) ? activeTab : null;
 
     return (
-        <div className="container" style={{ padding: '20px' }}>
+        <div className="container" style={{ padding: '20px', }}>
             <div className="nav-wrapper" style={{
                 background: '#fff',
                 padding: '0 20px',
                 borderRadius: '12px',
-                boxShadow: '0 2px 8px rgba(0,0,0,0.05)'
+
             }}>
                 <Tabs
                     activeKey={currentTab}

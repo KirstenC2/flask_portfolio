@@ -8,4 +8,4 @@ from .asset_models import MotorRecord, MotorTaxes
 from .tools import Diary, Post
 from .health_models import AlcoholLogs
 from .template_models import ThinkingTemplate, TemplateStep, ThinkingProject, ProjectContent
-from .quotation_models import PublicQuotation, PublicQuotationItem
+from .quotation_models import PublicQuotation, PublicQuotationItem, StandardService

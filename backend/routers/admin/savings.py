@@ -4,7 +4,6 @@ from models.finance_models import Transaction
 from datetime import datetime, date
 from sqlalchemy import func
 from . import admin_bp, token_required
-from sqlalchemy import func
 
 # 輔助函數：將資料轉為字典
 def _goal_to_dict(goal, monthly_push=0):

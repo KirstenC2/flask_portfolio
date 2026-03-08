@@ -4,10 +4,8 @@ from models.finance_models import db, Expense, ExpenseCategory, Transaction  # �
 from datetime import datetime
 from sqlalchemy import func, extract
 from decimal import Decimal
-from sqlalchemy import text
 import calendar
-from datetime import datetime
-from sqlalchemy import func, cast, Date
+from sqlalchemy import cast, Date
 # --- Helper 轉換函式 ---
 
 def _expense_to_dict(e: Expense):

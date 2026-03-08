@@ -3,7 +3,6 @@ from models import db, Diary
 from routers.admin import token_required
 from flask_cors import CORS
 from sqlalchemy import extract
-from sqlalchemy import func
 diary_bp = Blueprint("diary", __name__)
 CORS(diary_bp)
 

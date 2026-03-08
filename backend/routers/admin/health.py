@@ -289,3 +289,4 @@ def get_sobriety_status(current_admin):
         "days_count": actual_sobriety_days,
         "last_log_date": last_drink_date.isoformat()
     })
+

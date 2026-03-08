@@ -3,8 +3,30 @@ from models import db, Diary
 from routers.admin import token_required
 from flask_cors import CORS
 from sqlalchemy import extract
+from sqlalchemy import func
 diary_bp = Blueprint("diary", __name__)
 CORS(diary_bp)
+
+# 💡 補完情緒配置，用於後端標籤轉換
+MOOD_CONFIG = {
+    'happy': {'label': '開心'},
+    'neutral': {'label': '平常'},
+    'tired': {'label': '累'},
+    'helpless': {'label': '無助'},
+    'sad': {'label': '傷心'},
+    'angry': {'label': '生氣'}
+}
+
+# 💡 心情分數映射
+MOOD_MAP = {
+    'happy': {'score': 2, 'label': '開心'},
+    'neutral': {'score': 1, 'label': '平常'},
+    'tired': {'score': 0, 'label': '累'},
+    'helpless': {'score': -1, 'label': '無助'},
+    'sad': {'score': -2, 'label': '傷心'},
+    'angry': {'score': -2, 'label': '生氣'}
+}
+
 
 @diary_bp.route("/api/diary", methods=["GET", "POST"])
 def diary():
@@ -86,3 +108,65 @@ def delete_diary(current_admin, id):
     db.session.delete(diary)
     db.session.commit()
     return jsonify({"success": True, "data": "Diary entry deleted successfully!"})
+
+
+@diary_bp.route('/api/diary/stats', methods=['GET'])
+@token_required
+def get_diary_stats(current_admin):
+    year = request.args.get('year', type=int)
+    month = request.args.get('month', type=int)
+
+    if not year or not month:
+        return jsonify({"success": False, "message": "Year and Month are required"}), 400
+
+    # 1. 抓取數據
+    diaries = Diary.query.filter(
+        extract('year', Diary.date) == year,
+        extract('month', Diary.date) == month
+    ).order_by(Diary.date).all()
+
+    if not diaries:
+        return jsonify({
+            "pieData": [],
+            "lineData": [],
+            "summary": {"total": 0, "posRate": 0}
+        })
+
+    line_data = []
+    emotion_counts = {}
+    positive_count = 0
+
+    for d in diaries:
+        # 💡 防止 key 不存在導致報錯，使用 .get 並提供預設值
+        mood = MOOD_MAP.get(d.emotion, {'score': 0, 'label': d.emotion})
+        
+        line_data.append({
+            "date": d.date.strftime('%m/%d') if hasattr(d.date, 'strftime') else str(d.date),
+            "score": mood['score'],
+            "emotion": mood['label']
+        })
+        
+        emotion_counts[d.emotion] = emotion_counts.get(d.emotion, 0) + 1
+        if d.emotion in ['happy', 'neutral']:
+            positive_count += 1
+
+    # 3. 處理圓餅圖數據
+    pie_data = []
+    for emotion, count in emotion_counts.items():
+        pie_data.append({
+            "key": emotion,
+            "name": MOOD_CONFIG.get(emotion, {}).get('label', emotion),
+            "value": count
+        })
+
+    total = len(diaries)
+    pos_rate = round((positive_count / total) * 100) if total > 0 else 0
+
+    return jsonify({
+        "pieData": pie_data,
+        "lineData": line_data,
+        "summary": {
+            "total": total,
+            "posRate": pos_rate
+        }
+    })

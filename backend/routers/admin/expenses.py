@@ -61,22 +61,83 @@ def create_admin_expense(current_admin):
         db.session.rollback()
         return jsonify({'message': 'Create failed', 'error': str(e)}), 400
 
+
 @admin_bp.route('/expenses', methods=['GET'])
 @token_required
 def get_expenses(current_admin):
     year = request.args.get('year', type=int)
     month = request.args.get('month', type=int)
     
-    # 這裡要 Join Transaction 來過濾日期
-    query = Expense.query.join(Transaction)
+    # 1. 從 Transaction 發起查詢，過濾出所有「支出類」的交易
+    # 包含一般支出 (expense) 和 還債 (debt_payment)
+    query = Transaction.query.filter(
+        Transaction.transaction_type.in_(['expense', 'debt_payment']),
+        Transaction.status == 'COMPLETED'  # 通常只列出已完成的
+    )
     
+    # 2. 時間過濾
     if year:
         query = query.filter(extract('year', Transaction.transaction_date) == year)
     if month:
         query = query.filter(extract('month', Transaction.transaction_date) == month)
     
-    expenses = query.order_by(Transaction.transaction_date.desc()).all()
-    return jsonify([_expense_to_dict(e) for e in expenses])
+    # 3. 排序並抓取
+    transactions = query.order_by(Transaction.transaction_date.desc()).all()
+    
+    # 4. 轉換成字典輸出
+    return jsonify([_unified_transaction_to_dict(t) for t in transactions])
+
+def _unified_transaction_to_dict(t):
+    """
+    統一處理交易轉換，確保欄位名稱與前端表格預期一致 (expense_date, category_name)
+    """
+    # 基礎資料
+    data = {
+        "id": t.id,
+        "amount": float(t.amount),
+        # 將 date 改為 expense_date 以符合前端原本的預期
+        "expense_date": t.transaction_date.strftime('%Y-%m-%d %H:%M'),
+        "type": t.transaction_type,
+        "note": t.note or "",
+        "title": "未知項目",
+        "category_name": "未分類",
+        "category_color": "#94a3b8" # 預設灰色
+    }
+    
+    # 如果是 一般支出 (Expense)
+    if t.transaction_type == 'expense' and t.expense:
+        data.update({
+            "title": t.expense.title,
+            "category_name": t.expense.category.name if t.expense.category else "未分類",
+            "category_color": t.expense.category.color if (t.expense.category and t.expense.category.color) else "#1890ff"
+        })
+    
+    # 如果是 債務還款 (Debt Payment)
+    elif t.transaction_type == 'debt_payment' and t.payment_log:
+        debt_title = t.payment_log.debt.title if t.payment_log.debt else "債務"
+        data.update({
+            "title": f"還款: {debt_title}",
+            "category_name": "債務還款",
+            "category_color": "#FF5733" # 債務專用橘紅色
+        })
+        
+    return data
+# @admin_bp.route('/expenses', methods=['GET'])
+# @token_required
+# def get_expenses(current_admin):
+#     year = request.args.get('year', type=int)
+#     month = request.args.get('month', type=int)
+    
+#     # 這裡要 Join Transaction 來過濾日期
+#     query = Expense.query.join(Transaction)
+    
+#     if year:
+#         query = query.filter(extract('year', Transaction.transaction_date) == year)
+#     if month:
+#         query = query.filter(extract('month', Transaction.transaction_date) == month)
+    
+#     expenses = query.order_by(Transaction.transaction_date.desc()).all()
+#     return jsonify([_expense_to_dict(e) for e in expenses])
 
 @admin_bp.route('/expenses/<int:expense_id>', methods=['PUT', 'OPTIONS'])
 @token_required
@@ -115,12 +176,14 @@ def get_expense_daily_summary(current_admin):
     year = request.args.get('year', type=int)
     month = request.args.get('month', type=int)
 
-    # 改為 Query Transaction 並 Filter type='expense'
+    # 1. 修改過濾條件，包含 'expense' 與 'debt_payment'
     summary = db.session.query(
         func.date(Transaction.transaction_date).label('date'),
         func.sum(Transaction.amount).label('daily_total')
     ).filter(
-        Transaction.transaction_type == 'expense',
+        # 關鍵修改：允許這兩種類型同時計入支出統計
+        Transaction.transaction_type.in_(['expense', 'debt_payment']),
+        Transaction.status == 'COMPLETED', # 建議加上狀態檢查，確保只計算已發生的支出
         extract('year', Transaction.transaction_date) == year,
         extract('month', Transaction.transaction_date) == month
     ).group_by(func.date(Transaction.transaction_date)).all()
@@ -173,22 +236,38 @@ def get_category_stats(current_admin):
     year = request.args.get('year', type=int)
     month = request.args.get('month', type=int)
 
-    query = db.session.query(
+    # 1. 計算一般支出的分類統計
+    expense_stats = db.session.query(
         ExpenseCategory.name.label('category'),
         func.sum(Transaction.amount).label('value')
     ).join(Expense, Expense.category_id == ExpenseCategory.id)\
-     .join(Transaction, Expense.transaction_id == Transaction.id)
+     .join(Transaction, Expense.transaction_id == Transaction.id)\
+     .filter(extract('year', Transaction.transaction_date) == year)
 
-    query = query.filter(extract('year', Transaction.transaction_date) == year)
     if month:
-        query = query.filter(extract('month', Transaction.transaction_date) == month)
+        expense_stats = expense_stats.filter(extract('month', Transaction.transaction_date) == month)
+    
+    res_expense = expense_stats.group_by(ExpenseCategory.name).all()
 
-    stats = query.group_by(ExpenseCategory.name).all()
+    # 2. 計算債務還款的總計
+    debt_query = db.session.query(
+        func.sum(Transaction.amount).label('value')
+    ).filter(
+        Transaction.transaction_type == 'debt_payment',
+        extract('year', Transaction.transaction_date) == year
+    )
+    
+    if month:
+        debt_query = debt_query.filter(extract('month', Transaction.transaction_date) == month)
+    
+    debt_total = debt_query.scalar() or 0
 
-    return jsonify([{
-        'category': row.category,
-        'value': float(row.value)
-    } for row in stats]), 200
+    # 3. 合併結果
+    final_stats = [{'category': row.category, 'value': float(row.value)} for row in res_expense]
+    if debt_total > 0:
+        final_stats.append({'category': '債務還款', 'value': float(debt_total)})
+
+    return jsonify(final_stats), 200
 
 
 

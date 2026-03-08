@@ -351,7 +351,7 @@ const ExpenseSection = ({
                         </Card>
                     </Col>
 
-                    <Col l={24} lg={13}>
+                    <Col l={24} lg={14}>
                         <Card
                             style={{ height: '100%' }}
                             title={

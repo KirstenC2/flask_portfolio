@@ -12,6 +12,10 @@
     border: 1px solid #f1f5f9;
 }
 
+.expense-calendar-card .ant-picker-calendar-date-value {
+    font-size: 12px;
+}
+
 /* 內聯表單修正 */
 .expense-form-inline {
     width: 100%; /* 讓它在小螢幕時自動佔滿 */

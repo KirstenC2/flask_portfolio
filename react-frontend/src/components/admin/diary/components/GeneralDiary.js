@@ -247,7 +247,7 @@ const Diary = () => {
                         </p>
                         {currentDiary?.image_url && (
                             <div style={{ marginTop: '20px', textAlign: 'center' }}>
-                                <Image src={displayUrls[currentDiary.image_url]} style={{ maxWidth: '100%', borderRadius: '8px' }} />
+                                <Image src={displayUrls[currentDiary.image_url]} style={{ maxWidth: '30%', borderRadius: '8px' }} />
                             </div>
                         )}
                     </div>

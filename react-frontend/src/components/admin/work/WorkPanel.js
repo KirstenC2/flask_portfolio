@@ -2,7 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { Dropdown, Tabs } from 'antd';
 import {
     DownOutlined, SettingOutlined, BulbOutlined,
-    FileTextOutlined, ProjectOutlined, AppstoreOutlined
+    FileTextOutlined, ProjectOutlined, AppstoreOutlined,
+    DollarOutlined, MedicineBoxOutlined
 } from '@ant-design/icons';
 import ProjectManager from './components/ProjectManager';
 import TaskQuadrant from './components/TaskQuadrant';
@@ -10,6 +11,8 @@ import ThinkingProjectForm from './components/forms/ThinkingProjectForm';
 import TemplateManagementPage from './pages/TemplateManagementPage';
 import WarBoardPage from './pages/WarBoardPage';
 import QuotationSystem from './components/quotation/quotationEditor';
+import ServiceList from './components/quotation/serviceList';
+
 const WorkPanel = ({ onProjectSelect }) => {
     const [activeTab, setActiveTab] = useState('dev-progress');
     const [dynamicItems, setDynamicItems] = useState([]);
@@ -18,7 +21,7 @@ const WorkPanel = ({ onProjectSelect }) => {
     const API_BASE = 'http://localhost:5001/api/admin/templates';
     const token = localStorage.getItem('adminToken');
 
-    // 抓取模板
+    // 抓取思考引擎模板
     useEffect(() => {
         const fetchTemplates = async () => {
             try {
@@ -26,7 +29,6 @@ const WorkPanel = ({ onProjectSelect }) => {
                     headers: { 'Authorization': `Bearer ${token}` }
                 });
                 const data = await res.json();
-
                 const items = data.map(t => ({
                     key: `template-${t.id}`,
                     label: t.name,
@@ -44,7 +46,10 @@ const WorkPanel = ({ onProjectSelect }) => {
         fetchTemplates();
     }, [token]);
 
-    const dropdownMenu = {
+    // --- 選單配置 ---
+
+    // 1. 思考引擎 Dropdown
+    const thinkingMenu = {
         items: [
             ...dynamicItems,
             { type: 'divider' },
@@ -58,47 +63,33 @@ const WorkPanel = ({ onProjectSelect }) => {
         ]
     };
 
-    // Tabs 的配置
+    // 2. 商務報價 Dropdown
+    const businessMenu = {
+        items: [
+            {
+                key: 'quotation-editor',
+                label: '新建報價單',
+                icon: <FileTextOutlined />,
+                onClick: () => setActiveTab('quotation-editor'),
+            },
+            {
+                key: 'service-list',
+                label: '標準服務軍火庫',
+                icon: <MedicineBoxOutlined />,
+                onClick: () => setActiveTab('service-list'),
+            },
+        ]
+    };
+
+    // 3. 主 Tabs 配置 (僅保留開發核心)
     const tabItems = [
-        {
-            key: 'dev-progress',
-            label: (
-                <span>
-                    <ProjectOutlined />
-                    專案開發進度
-                </span>
-            ),
-        },
-        {
-            key: 'task-quadrant',
-            label: (
-                <span>
-                    <AppstoreOutlined />
-                    任務象限圖
-                </span>
-            ),
-        },
-        {
-            key: 'war-board',
-            label: (
-                <span>
-                    <AppstoreOutlined />
-                    週報板
-                </span>
-            ),
-        },
-        {
-            key: 'quotation-editor',
-            label: (
-                <span>
-                    <FileTextOutlined />
-                    報價單編輯器
-                </span>
-            ),
-        }
+        { key: 'dev-progress', label: <span><ProjectOutlined />專案開發進度</span> },
+        { key: 'task-quadrant', label: <span><AppstoreOutlined />任務象限圖</span> },
+        { key: 'war-board', label: <span><AppstoreOutlined />週報板</span> },
     ];
 
-    // 內容渲染邏輯 (簡化為物件映射)
+    // --- 渲染邏輯 ---
+
     const renderContent = () => {
         const components = {
             'dev-progress': <ProjectManager onProjectClick={onProjectSelect} />,
@@ -106,48 +97,64 @@ const WorkPanel = ({ onProjectSelect }) => {
             'dynamic-thinking-form': <ThinkingProjectForm templateId={selectedTemplateId} key={selectedTemplateId} />,
             'template-manager': <TemplateManagementPage />,
             'war-board': <WarBoardPage />,
-            'quotation-editor': <QuotationSystem />
+            'quotation-editor': <QuotationSystem />,
+            'service-list': <ServiceList />,
         };
-        // 統一使用 activeTab 即可
-        return components[activeTab];
+        return components[activeTab] || components['dev-progress'];
     };
 
-    // 處理當點擊思考引擎選單時，Tab 可能不在列隊中的標籤高亮問題
-    const currentTab = ['dev-progress', 'task-quadrant','war-board'].includes(activeTab) ? activeTab : null;
+    // 判斷當前高亮狀態
+    const isThinkingActive = ['dynamic-thinking-form', 'template-manager'].includes(activeTab);
+    const isBusinessActive = ['quotation-editor', 'service-list'].includes(activeTab);
+    const currentTab = ['dev-progress', 'task-quadrant', 'war-board'].includes(activeTab) ? activeTab : null;
+
+    // 統一的 Dropdown Trigger 樣式封裝
+    const triggerStyle = (isActive, activeColor = '#1677ff') => ({
+        color: isActive ? activeColor : '#666',
+        cursor: 'pointer',
+        display: 'flex',
+        alignItems: 'center',
+        gap: '6px',
+        padding: '0 15px',
+        fontWeight: isActive ? '600' : 'normal',
+        transition: 'all 0.3s'
+    });
 
     return (
-        <div className="container" style={{ padding: '20px', }}>
+        <div className="container" style={{ padding: '20px' }}>
             <div className="nav-wrapper" style={{
                 background: '#fff',
                 padding: '0 20px',
                 borderRadius: '12px',
-
+                display: 'flex',
+                alignItems: 'center'
             }}>
                 <Tabs
                     activeKey={currentTab}
                     onChange={(key) => setActiveTab(key)}
-                    items={tabItems} // 你定義的 '專案開發進度' 和 '任務象限圖'
+                    items={tabItems}
                     size="large"
+                    style={{ flex: 1 }}
                     tabBarExtraContent={
-                        <Dropdown menu={dropdownMenu} placement="bottomRight">
-                            <span
-                                className={`mgmt-dropdown-trigger ${['dynamic-thinking-form', 'template-manager'].includes(activeTab) ? 'active' : ''}`}
-                                style={{
-                                    // 如果目前在動態表單或模板管理，就變色
-                                    color: ['dynamic-thinking-form', 'template-manager'].includes(activeTab) ? '#5ec2c2' : '#666',
-                                    cursor: 'pointer',
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    gap: '6px',
-                                    padding: '12px 0',
-                                    fontWeight: ['dynamic-thinking-form', 'template-manager'].includes(activeTab) ? '600' : 'normal'
-                                }}
-                            >
-                                <BulbOutlined /> {/* 這裡維持思考引擎的 Bulb 圖標 */}
-                                思考引擎
-                                <DownOutlined style={{ fontSize: '10px' }} />
-                            </span>
-                        </Dropdown>
+                        <div style={{ display: 'flex', alignItems: 'center', height: '100%' }}>
+                            {/* 商務報價下拉 */}
+                            <Dropdown menu={businessMenu} placement="bottomRight">
+                                <span style={triggerStyle(isBusinessActive, '#1677ff')}>
+                                    <DollarOutlined />
+                                    商務報價
+                                    <DownOutlined style={{ fontSize: '10px' }} />
+                                </span>
+                            </Dropdown>
+
+                            {/* 思考引擎下拉 */}
+                            <Dropdown menu={thinkingMenu} placement="bottomRight">
+                                <span style={triggerStyle(isThinkingActive, '#5ec2c2')}>
+                                    <BulbOutlined />
+                                    思考引擎
+                                    <DownOutlined style={{ fontSize: '10px' }} />
+                                </span>
+                            </Dropdown>
+                        </div>
                     }
                 />
             </div>

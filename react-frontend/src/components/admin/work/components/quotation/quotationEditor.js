@@ -156,7 +156,7 @@ const QuotationSystem = () => {
 
   return (
     <div style={{ padding: '40px', background: '#f4f7f9', minHeight: '100vh' }}>
-      <Card bordered={false} loading={loading}>
+      <Card style={{ height: '100%'}} loading={loading}>
         <Title level={2}><FileProtectOutlined /> 外包報價系統</Title>
         <Form form={form} layout="vertical" onFinish={onFinish} initialValues={{ items: [{}], taxRate: 0.05, discount: 0 }}>
           {/* ... 客戶與主旨 Row (同之前) ... */}

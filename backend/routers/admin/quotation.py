@@ -32,7 +32,25 @@ def add_service_template(current_admin):
     db.session.commit()
     return jsonify({"message": "服務模板已建立", "id": new_service.id}), 201
 
-
+# 修改路徑以接收 ID
+@admin_bp.route('/services/<int:service_id>', methods=['PUT'])
+@token_required
+def update_service_template(current_admin, service_id): # 新增參數 service_id
+    data = request.json
+    # 直接從路徑抓取 ID 進行查詢
+    service = StandardService.query.get(service_id)
+    if not service:
+        return jsonify({"error": "服務模板不存在"}), 404
+    
+    # 根據前端傳來的 JSON 欄位進行賦值 [對齊前端 handleSave 的 values]
+    service.category = data.get('category')
+    service.name = data.get('name')
+    service.default_description = data.get('description', '') # 對應前端的 description
+    service.base_price = data.get('price', 0.0)             # 對應前端的 price
+    service.unit = data.get('unit', '式')
+    
+    db.session.commit()
+    return jsonify({"message": "服務模板已更新", "id": service.id}), 200
 
 # [POST] 建立報價單 (從前端 Table Form 提交)
 @admin_bp.route('/quotations', methods=['POST'])
@@ -114,3 +132,18 @@ def get_quotation_detail(current_admin, id):
         },
         "items": items
     })
+
+@admin_bp.route('/services/<int:id>', methods=['DELETE', 'OPTIONS'])
+@token_required
+def delete_service(current_admin, id):
+    # 1. 尋找該服務，找不到回傳 404
+    service = StandardService.query.get_or_404(id)
+    
+    try:
+        # 2. 執行刪除
+        db.session.delete(service)
+        db.session.commit()
+        return jsonify({"message": "服務模板已成功刪除", "id": id}), 200
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"message": "刪除失敗，該項目可能正被報價單引用", "error": str(e)}), 400

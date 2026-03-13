@@ -77,8 +77,16 @@ const ExpenseSection = ({
     // 4. 計算屬性：根據選中日期過濾清單
     const filteredExpenses = useMemo(() => {
         if (!selectedDate) return expenses;
+        
+        // 將選中的日期轉化為 YYYY-MM-DD 字串
         const dateStr = selectedDate.format('YYYY-MM-DD');
-        return expenses.filter(e => e.expense_date.split('T')[0] === dateStr);
+        
+        return expenses.filter(e => {
+            if (!e.expense_date) return false;
+            // 使用 dayjs 處理 e.expense_date，並轉化為 YYYY-MM-DD 格式進行比對
+            // 這樣可以忽略後端傳來的 T00:00:00.000Z 或其他雜訊
+            return dayjs(e.expense_date).format('YYYY-MM-DD') === dateStr;
+        });
     }, [expenses, selectedDate]);
 
     // 5. 日曆格子渲染

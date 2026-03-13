@@ -140,19 +140,25 @@ def _unified_transaction_to_dict(t):
 @admin_bp.route('/expenses/<int:expense_id>', methods=['PUT', 'OPTIONS'])
 @token_required
 def update_admin_expense(current_admin, expense_id):
-    e = Expense.query.get_or_404(expense_id)
-    tx = e.transaction # 直接抓關聯的交易
+    # CHANGE THIS: Look up by transaction_id instead of the PK id
+    e = Expense.query.filter_by(transaction_id=expense_id).first_or_404()
+    
+    tx = e.transaction 
     data = request.get_json(force=True) or {}
     
-    # 更新 Expense 欄位
-    if 'title' in data: e.title = data['title'].strip()
-    if 'category_id' in data: e.category_id = data['category_id']
+    # Now the rest of your logic will work:
+    if 'category_id' in data: 
+        e.category_id = int(data['category_id'])
     
-    # 更新 Transaction 欄位
-    if 'amount' in data: tx.amount = Decimal(str(data['amount']))
-    if 'note' in data: tx.note = data['note']
-    if 'expense_date' in data: tx.transaction_date = datetime.fromisoformat(data['expense_date'])
-    if 'status' in data: tx.status = data['status']
+    if 'title' in data: 
+        e.title = data['title'].strip()
+    
+    # Update Transaction fields
+    if tx:
+        if 'amount' in data: 
+            tx.amount = Decimal(str(data['amount']))
+        if 'expense_date' in data: 
+            tx.transaction_date = datetime.fromisoformat(data['expense_date'])
         
     db.session.commit()
     return jsonify(_expense_to_dict(e))

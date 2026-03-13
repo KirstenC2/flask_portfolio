@@ -3,6 +3,7 @@ from datetime import datetime,timedelta
 from werkzeug.security import generate_password_hash, check_password_hash
 from . import db
 
+
 class Project(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     title = db.Column(db.String(100), nullable=False)
@@ -17,6 +18,8 @@ class Project(db.Model):
     date_created = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
 
     dev_features = db.relationship('DevFeature', backref='project', lazy=True)
+    # 在 Project 類別內加入
+    meeting_minutes = db.relationship('TechMeetingMinute', backref='project', lazy=True, cascade="all, delete-orphan")
 
     @property
     def progress_stats(self):
@@ -214,3 +217,36 @@ class Resume(db.Model):
     file_name = db.Column(db.String(255), nullable=False) # 存儲在 MinIO 的 unique_filename
     is_active = db.Column(db.Boolean, default=False) # 是否為當前網站下載使用的版本
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+class TechMeetingMinute(db.Model):
+    __tablename__ = 'tech_meeting_minutes'
+    
+    id = db.Column(db.Integer, primary_key=True)
+    
+    # 1. 關聯專案 (修正 ForeignKey 與 relationship)
+    project_id = db.Column(db.Integer, db.ForeignKey('project.id'), nullable=False)
+    # 這裡會自動對應到 Project 模型中的 backref 或另外定義 relationship
+    
+    # 2. 基本資訊
+    title = db.Column(db.String(255), nullable=False)
+    date = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
+    
+    # 3. 結構化數據 (Flask-SQLAlchemy 使用 db.JSON 儲存陣列或物件)
+    # 適合存儲 ["User A", "User B"]
+    attendees = db.Column(db.JSON, default=list) 
+    
+    # 適合存儲 ["Decision 1", "Decision 2"]
+    decisions = db.Column(db.JSON, default=list) 
+    
+    # 適合存儲 Markdown 討論內容
+    notes = db.Column(db.Text, nullable=True) 
+    
+    # 適合存儲 [{"task": "...", "owner": "...", "done": false}]
+    actions = db.Column(db.JSON, default=list) 
+    
+    # 4. 系統紀錄
+    date_created = db.Column(db.DateTime, default=datetime.utcnow)
+    date_updated = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    def __repr__(self):
+        return f"<TechMeetingMinute '{self.title}' on {self.date}>"

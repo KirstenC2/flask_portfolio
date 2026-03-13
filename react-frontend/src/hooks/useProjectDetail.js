@@ -1,4 +1,3 @@
-// src/hooks/useProjectDetail.js
 import { useState, useEffect, useCallback } from 'react';
 import axios from 'axios';
 import { featureApi } from '../services/featureApi';
@@ -12,72 +11,129 @@ export const useProjectDetail = (projectId) => {
     const API_BASE = 'http://localhost:5001/api/admin';
 
     // 獲取專案詳情
+    // src/hooks/useProjectDetail.js 修正 fetch 邏輯
+
     const fetchProjectDetail = useCallback(async (isSilent = false) => {
         if (!projectId) return;
         try {
             if (!isSilent) setLoading(true);
-            const response = await axios.get(`${API_BASE}/projects/info/${projectId}`, {
+
+            // 1. 拿專案基本資料
+            const infoRes = await axios.get(`${API_BASE}/projects/info/${projectId}`, {
                 headers: { 'Authorization': `Bearer ${token}` }
             });
-            const projectData = Array.isArray(response.data) ? response.data[0] : response.data;
-            setProject({ ...projectData });
+            const projectData = Array.isArray(infoRes.data) ? infoRes.data[0] : infoRes.data;
+
+            // 2. 拿會議紀錄列表 (這就是剛才 404 的那個 API)
+            const meetingsRes = await axios.get(`${API_BASE}/projects/${projectId}/meetings`, {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+
+            // 3. 合併資料
+            setProject({
+                ...projectData,
+                meeting_minutes: meetingsRes.data // 將列表塞進去，左側 List 就會動了
+            });
+
         } catch (err) {
+            console.error("載入失敗:", err);
             setError(err.message);
         } finally {
             setLoading(false);
         }
     }, [projectId, token]);
 
-    const deleteThinkingProject = async (analysisId) => {
+    // --- 🚀 新增：會議記錄相關 Actions ---
+
+    // 1. 刪除會議紀錄
+    const deleteMeetingMinute = async (meetingId) => {
         try {
-            // 注意：這裡路徑建議根據你的後端 API 設計調整，假設是 /thinking/:id
-            const response = await axios.delete(`${API_BASE}/thinking-projects/${analysisId}`, {
+            const response = await axios.delete(`${API_BASE}/meetings/${meetingId}`, {
                 headers: { 'Authorization': `Bearer ${token}` }
             });
-            
-            if (response.status === 200 || response.status === 204) {
-                await fetchProjectDetail(true); // 靜默更新，讓側邊欄清單同步
+            if (response.status === 200) {
+                await fetchProjectDetail(true); // 成功後靜默刷新 Sidebar 清單
                 return true;
             }
-            return false;
         } catch (err) {
-            console.error("Delete thinking project error:", err);
-            return false;
+            console.error("刪除會議紀錄失敗", err);
+        }
+        return false;
+    };
+
+    const fetchMeetingMinutes = useCallback(async () => {
+        if (!projectId) return;
+        try {
+            const response = await axios.get(`${API_BASE}/projects/${projectId}/meetings`, {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            // 將抓到的會議列表合併進 project 物件中，這樣 List 才會重新渲染
+            setProject(prev => ({
+                ...prev,
+                meeting_minutes: response.data
+            }));
+        } catch (err) {
+            console.error("Fetch meetings error:", err);
+        }
+    }, [projectId, token]);
+
+    const getMeetingMinuteDetail = async (meetingId) => {
+        try {
+            const response = await axios.get(`${API_BASE}/meetings/${meetingId}`, {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            return response.data; // 直接回傳詳情，不要 setProject
+        } catch (err) {
+            console.error("Fetch meeting detail error:", err);
+            throw err;
         }
     };
 
-    // 更新 Feature 邏輯
+    // --- 原有其他 Actions ---
+
+    const deleteThinkingProject = async (analysisId) => {
+        try {
+            const response = await axios.delete(`${API_BASE}/thinking-projects/${analysisId}`, {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            if (response.status === 200 || response.status === 204) {
+                await fetchProjectDetail(true);
+                return true;
+            }
+        } catch (err) {
+            console.error("Delete thinking project error:", err);
+        }
+        return false;
+    };
+
     const updateFeature = async (featureId, data) => {
         try {
             const response = await axios.patch(`${API_BASE}/features/${featureId}`, data, {
                 headers: { 'Authorization': `Bearer ${token}` }
             });
-            
             if (response.status === 200 || response.status === 204) {
-                await fetchProjectDetail(true); 
+                await fetchProjectDetail(true);
                 return true;
             }
-            return false;
         } catch (err) {
             console.error("Update feature error:", err);
-            return false;
         }
+        return false;
     };
 
-    // 刪除 Feature 邏輯
     const removeFeature = async (featureId) => {
         try {
             const res = await featureApi.delete(featureId);
             if (res.ok) {
-                await fetchProjectDetail(true); 
+                await fetchProjectDetail(true);
                 return true;
             }
-            return false;
         } catch (err) {
             console.error("Delete feature error:", err);
-            return false;
         }
+        return false;
     }
+
     useEffect(() => {
         fetchProjectDetail();
     }, [fetchProjectDetail]);
@@ -90,7 +146,10 @@ export const useProjectDetail = (projectId) => {
             refresh: fetchProjectDetail,
             removeFeature,
             updateFeature,
-            deleteThinkingProject
+            deleteThinkingProject,
+            deleteMeetingMinute,  // 💡 記得回傳這個
+            fetchMeetingMinutes,      // 💡 記得回傳這個
+            getMeetingMinuteDetail
         }
     };
 };

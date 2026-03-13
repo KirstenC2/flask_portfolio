@@ -1,6 +1,6 @@
 from . import admin_bp, token_required
 from flask import request, jsonify
-from models import db, Project, ThinkingProject, DevFeature
+from models import db, Project, ThinkingProject, DevFeature, TechMeetingMinute
 from datetime import datetime, timedelta
 # ----------------------
 # Projects CRUD (Admin)
@@ -73,7 +73,118 @@ def get_projects(current_admin):
         
     return jsonify(result)
 
+@admin_bp.route('/projects/<int:project_id>/meetings', methods=['POST', 'OPTIONS'])
+@token_required
+def add_meeting(current_admin, project_id):
+    data = request.json
+    
+    # 1. 先在外面處理時間邏輯
+    raw_date = data.get('date')
+    if raw_date:
+        # 只取前 10 碼 YYYY-MM-DD，避開後面的時分秒
+        date_obj = datetime.strptime(raw_date[:10], '%Y-%m-%d')
+    else:
+        date_obj = datetime.utcnow()
 
+    # 2. 實例化模型
+    new_meeting = TechMeetingMinute(
+        project_id=project_id,
+        title=data.get('title'),
+        date=date_obj,  # 傳入處理好的日期物件
+        attendees=data.get('attendees', []),
+        decisions=data.get('decisions', []),
+        notes=data.get('notes', ''),
+        actions=data.get('actions', [])
+    )
+    
+    try:
+        db.session.add(new_meeting)
+        db.session.commit()
+        return jsonify({"message": "Meeting saved!", "id": new_meeting.id}), 201
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"error": str(e)}), 500
+
+@admin_bp.route('/projects/<int:project_id>/meetings', methods=['GET'])
+@token_required # 確保你有這個裝飾器處理權限
+def get_project_meetings(current_admin, project_id):
+    try:
+        # 假設你的 Model 叫 TechMeetingMinute
+        # 如果你的外鍵欄位是 project_id
+        meetings = TechMeetingMinute.query.filter_by(project_id=project_id)\
+            .order_by(TechMeetingMinute.date.desc())\
+            .all()
+        
+        # 序列化成 JSON 陣列
+        result = []
+        for m in meetings:
+            result.append({
+                "id": m.id,
+                "title": m.title,
+                "date": m.date.isoformat() if m.date else None,
+                # 列表只需要標題和日期，內容不用傳，節省頻寬
+            })
+            
+        return jsonify(result), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+@admin_bp.route('/meetings/<int:meeting_id>', methods=['GET'])
+@token_required
+def get_meeting_details(current_admin, meeting_id):
+    meeting = TechMeetingMinute.query.get_or_404(meeting_id)
+    
+    return jsonify({
+        "id": meeting.id,
+        "project_id": meeting.project_id,
+        "title": meeting.title,
+        "date": meeting.date.isoformat(),
+        "attendees": meeting.attendees,  # 這是 JSON
+        "decisions": meeting.decisions,  # 這是 JSON
+        "notes": meeting.notes,          # 💡 這裡是對應資料庫的 notes
+        "actions": meeting.actions       # 這是 JSON
+    }), 200
+
+# 2. PUT: 更新現有的會議紀錄
+@admin_bp.route('/meetings/<int:meeting_id>', methods=['PUT', 'OPTIONS'])
+@token_required
+def update_meeting(current_admin, meeting_id):
+    meeting = TechMeetingMinute.query.get_or_404(meeting_id)
+    data = request.json
+    
+    try:
+        # 更新欄位
+        meeting.title = data.get('title', meeting.title)
+        
+        # 處理日期 (維持你之前的邏輯：只取前 10 碼或完整處理)
+        raw_date = data.get('date')
+        if raw_date:
+            meeting.date = datetime.strptime(raw_date[:10], '%Y-%m-%d')
+            
+        meeting.attendees = data.get('attendees', meeting.attendees)
+        meeting.decisions = data.get('decisions', meeting.decisions)
+        meeting.notes = data.get('notes', meeting.notes)
+        meeting.actions = data.get('actions', meeting.actions)
+        
+        db.session.commit()
+        return jsonify({"message": "Meeting updated successfully!"}), 200
+        
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"error": str(e)}), 500
+
+# 3. DELETE: 刪除會議紀錄
+@admin_bp.route('/meetings/<int:meeting_id>', methods=['DELETE'])
+@token_required
+def delete_meeting(current_admin, meeting_id):
+    meeting = TechMeetingMinute.query.get_or_404(meeting_id)
+    try:
+        db.session.delete(meeting)
+        db.session.commit()
+        return jsonify({"message": "Meeting deleted!"}), 200
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"error": str(e)}), 500
 
 @admin_bp.route('/projects/warboard-stats', methods=['GET', 'OPTIONS'])
 @token_required

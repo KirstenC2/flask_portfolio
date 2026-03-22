@@ -17,7 +17,8 @@ const WorkPanel = ({ onProjectSelect }) => {
     const [activeTab, setActiveTab] = useState('dev-progress');
     const [dynamicItems, setDynamicItems] = useState([]);
     const [selectedTemplateId, setSelectedTemplateId] = useState(null);
-
+    // const [projectFilter, setProjectFilter] = useState('active'); // 預設看進行中
+    const [activeFilter, setActiveFilter] = useState('active'); // 預設看進行中
     const API_BASE = 'http://localhost:5001/api/admin/templates';
     const token = localStorage.getItem('adminToken');
 
@@ -83,7 +84,30 @@ const WorkPanel = ({ onProjectSelect }) => {
 
     // 3. 主 Tabs 配置 (僅保留開發核心)
     const tabItems = [
-        { key: 'dev-progress', label: <span><ProjectOutlined />專案開發進度</span> },
+        { 
+        key: 'dev-progress', 
+        label: (
+            <Dropdown
+                menu={{
+                    items: [
+                        { key: 'active', label: '進行中專案', icon: <ProjectOutlined /> },
+                        { key: 'inactive', label: '已封存專案', icon: <ProjectOutlined />, danger: true },
+                    ],
+                    onClick: ({ key }) => {
+                        // setProjectFilter(key);
+                        setActiveFilter(key);
+                        setActiveTab('dev-progress'); // 確保切換回這個 Tab
+                    }
+                }}
+            >
+                <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                    <ProjectOutlined />
+                    {activeFilter === 'active' ? '專案開發進度' : '已封存專案'}
+                    <DownOutlined style={{ fontSize: '10px', marginLeft: '4px' }} />
+                </span>
+            </Dropdown>
+        )
+    },
         { key: 'task-quadrant', label: <span><AppstoreOutlined />任務象限圖</span> },
         { key: 'war-board', label: <span><AppstoreOutlined />週報板</span> },
     ];
@@ -92,7 +116,13 @@ const WorkPanel = ({ onProjectSelect }) => {
 
     const renderContent = () => {
         const components = {
-            'dev-progress': <ProjectManager onProjectClick={onProjectSelect} />,
+            'dev-progress': (
+            <ProjectManager 
+                key={activeFilter} 
+                filter={activeFilter} 
+                onProjectClick={onProjectSelect} 
+            />
+        ),
             'task-quadrant': <TaskQuadrant />,
             'dynamic-thinking-form': <ThinkingProjectForm templateId={selectedTemplateId} key={selectedTemplateId} />,
             'template-manager': <TemplateManagementPage />,

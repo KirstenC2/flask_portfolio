@@ -2,11 +2,14 @@ import React, { useState, useEffect, useMemo } from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faChevronRight, faTasks, faSearch, faFilter, faLayerGroup } from '@fortawesome/free-solid-svg-icons';
+import { 
+    faChevronRight, faTasks, faSearch, faFilter, faLayerGroup, 
+    faChartPie, faCalendarAlt 
+} from '@fortawesome/free-solid-svg-icons';
 import '../style/WorkPanel.css';
 import '../../../../common/global.css';
 
-const ProjectManager = ({ onProjectClick }) => {
+const ProjectManager = ({ onProjectClick, filter ='active' }) => {
     const [projects, setProjects] = useState([]);
     const [loading, setLoading] = useState(true);
     const [searchQuery, setSearchQuery] = useState('');
@@ -15,11 +18,13 @@ const ProjectManager = ({ onProjectClick }) => {
 
     useEffect(() => {
         fetchWorkData();
-    }, []);
+    }, [filter]);
 
     const fetchWorkData = async () => {
         try {
-            const response = await axios.get('http://localhost:5001/api/admin/projects', {
+            console.log(filter);
+            // 這裡呼叫的是優化後的輕量 API
+            const response = await axios.get(`http://localhost:5001/api/admin/projects?status=${filter}`, {
                 headers: { 'Authorization': `Bearer ${localStorage.getItem('adminToken')}` }
             });
             setProjects(response.data);
@@ -30,7 +35,6 @@ const ProjectManager = ({ onProjectClick }) => {
         }
     };
 
-    // 篩選與搜尋邏輯
     const filteredProjects = useMemo(() => {
         return projects.filter(project => {
             const matchesSearch = project.title.toLowerCase().includes(searchQuery.toLowerCase());
@@ -40,6 +44,7 @@ const ProjectManager = ({ onProjectClick }) => {
     }, [projects, searchQuery, filterType]);
 
     const goToProjectDetail = (projectId) => {
+        // 當點擊時，才會觸發外層的「讀取詳情 (get_projects_info)」邏輯
         if (onProjectClick) {
             onProjectClick(projectId);
         } else {
@@ -94,26 +99,41 @@ const ProjectManager = ({ onProjectClick }) => {
                             <FontAwesomeIcon icon={faChevronRight} className="arrow-icon" />
                         </div>
 
-                        <div className="features-preview">
-                            <p className="section-label">Roadmap Preview</p>
-                            {project.dev_features && project.dev_features.length > 0 ? (
-                                project.dev_features.slice(0, 3).map(feature => (
-                                    <div key={feature.id} className="feature-mini-item">
-                                        <FontAwesomeIcon icon={faTasks} className="tasks-icon" />
-                                        <span className="feature-title-text">{feature.title}</span>
-                                        <span className="task-pill">{feature.tasks?.length || 0}</span>
-                                    </div>
-                                ))
-                            ) : (
-                                <p className="no-features">No features defined</p>
-                            )}
-                            {project.dev_features?.length > 3 && (
-                                <p className="more-count">and {project.dev_features.length - 3} more...</p>
-                            )}
+                        {/* --- 新版：使用 stats 取代 roadmap 預覽 --- */}
+                        <div className="project-stats-overview">
+                            <div className="stat-row">
+                                <div className="stat-item">
+                                    <FontAwesomeIcon icon={faChartPie} className="stat-icon" />
+                                    <span>Progress: <strong>{project.stats?.percent || 0}%</strong></span>
+                                </div>
+                                <div className="stat-item">
+                                    <FontAwesomeIcon icon={faTasks} className="stat-icon" />
+                                    <span>Remaining: <strong>{project.stats?.remaining || 0}</strong></span>
+                                </div>
+                            </div>
+                            
+                            {/* 進度條預覽 */}
+                            <div className="mini-progress-track">
+                                <div 
+                                    className="mini-progress-bar" 
+                                    style={{ width: `${project.stats?.percent || 0}%` }}
+                                ></div>
+                            </div>
+
+                            <div className="tech-stack-pills">
+                                {project.technologies?.split(',').slice(0, 3).map(tech => (
+                                    <span key={tech} className="tech-pill-sm">{tech.trim()}</span>
+                                ))}
+                                {project.technologies?.split(',').length > 3 && <span className="more-tech">...</span>}
+                            </div>
                         </div>
 
                         <div className="card-footer">
-                            <span className="view-detail-hint">Enter Dashboard</span>
+                            <div className="date-info">
+                                <FontAwesomeIcon icon={faCalendarAlt} />
+                                <span>{new Date(project.date_created).toLocaleDateString()}</span>
+                            </div>
+                            <span className="view-detail-hint">View Tasks</span>
                         </div>
                     </div>
                 ))}

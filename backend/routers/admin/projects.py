@@ -23,29 +23,25 @@ def _project_to_dict(p: Project):
         'date_created': p.date_created.isoformat() if p.date_created else None
     }
 
-
-
-@admin_bp.route('/projects', methods=['GET', 'OPTIONS'])
+@admin_bp.route('/projects', methods=['GET'])
 @token_required
 def get_projects(current_admin):
+    status = request.args.get('status', 'active')
     project_type = request.args.get('type')
     
-    # 1. 效能優化：使用 joinedload 一次性抓取所有關聯層級
-    query = Project.query.options(
-        joinedload(Project.dev_features).joinedload(DevFeature.tasks)
-    )
+    # 1. 基礎查詢：根據 status 過濾專案
+    query = Project.query.filter_by(status=status)
     
+    # 2. 選填查詢：如果前端有傳 type 才加疊條件
     if project_type:
         query = query.filter_by(project_type=project_type)
-    
-    projects = query.all()
+        
+    # 3. 排序 (選配)：通常會希望新專案在前面
+    projects = query.order_by(Project.date_created.desc()).all()
     
     result = []
     for p in projects:
-        # 2. 調用我們在 Model 定義的 @property
-        stats = p.progress_stats 
-        
-        project_data = {
+        result.append({
             "id": p.id,
             "title": p.title,
             "description": p.description,
@@ -53,29 +49,63 @@ def get_projects(current_admin):
             "image_url": p.image_url,
             "status": p.status,
             "project_type": p.project_type,
-            "project_status": p.status,
-            "date_created": p.date_created.isoformat(),
-            # 3. 戰情室所需的關鍵統計
-            "stats": stats, 
-            "dev_features": [
-                {
-                    "id": f.id,
-                    "title": f.title,
-                    "description": f.description,
-                    "tasks": [
-                        {
-                            "id": t.id,
-                            "content": t.content,
-                            "status": t.status,
-                            "priority": t.priority
-                        } for t in sorted(f.tasks, key=lambda x: x.priority)
-                    ]
-                } for f in p.dev_features
-            ]
-        }
-        result.append(project_data)
+            "date_created": p.date_created.isoformat() if p.date_created else None,
+            "stats": p.progress_stats 
+        })
         
     return jsonify(result)
+
+# @admin_bp.route('/projects', methods=['GET', 'OPTIONS'])
+# @token_required
+# def get_projects(current_admin):
+#     project_type = request.args.get('type')
+    
+#     # 1. 效能優化：使用 joinedload 一次性抓取所有關聯層級
+#     query = Project.query.options(
+#         joinedload(Project.dev_features).joinedload(DevFeature.tasks)
+#     )
+    
+#     if project_type:
+#         query = query.filter_by(project_type=project_type)
+    
+#     projects = query.all()
+    
+#     result = []
+#     for p in projects:
+#         # 2. 調用我們在 Model 定義的 @property
+#         stats = p.progress_stats 
+        
+#         project_data = {
+#             "id": p.id,
+#             "title": p.title,
+#             "description": p.description,
+#             "technologies": p.technologies,
+#             "image_url": p.image_url,
+#             "status": p.status,
+#             "project_type": p.project_type,
+#             "project_status": p.status,
+#             "date_created": p.date_created.isoformat(),
+#             # 3. 戰情室所需的關鍵統計
+#             "stats": stats, 
+#             "dev_features": [
+#                 {
+#                     "id": f.id,
+#                     "title": f.title,
+#                     "description": f.description,
+#                     "tasks": [
+#                         {
+#                             "id": t.id,
+#                             "content": t.content,
+#                             "status": t.status,
+#                             "priority": t.priority
+#                         } for t in sorted(f.tasks, key=lambda x: x.priority)
+#                     ]
+#                 } for f in p.dev_features
+#             ]
+#         }
+#         result.append(project_data)
+        
+#     return jsonify(result)
 
 @admin_bp.route('/projects/<int:project_id>/meetings', methods=['POST', 'OPTIONS'])
 @token_required
@@ -244,71 +274,125 @@ def get_warboard_stats(current_admin):
         }
     })
 
-
-
-
 @admin_bp.route('/projects/info/<int:project_id>', methods=['GET'])
 @token_required
 def get_projects_info(current_admin, project_id):
-    # 1. 預加載專案、功能、任務 (一條 SQL 搞定所有基礎資料)
-    query = Project.query.options(
+    # 使用 subqueryload 優化深度查詢
+    project = Project.query.options(
         subqueryload(Project.dev_features).subqueryload(DevFeature.tasks)
-    ).filter_by(id=project_id)
-
-    project = query.first()
-    if not project:
-        return jsonify([]), 404
+    ).get_or_404(project_id)
     
-    # 2. 收集所有相關的 Task ID，準備做大量查詢
+    # 收集 Task IDs 做情報比對 (Bug / Solution / Question)
     all_task_ids = [t.id for f in project.dev_features for t in f.tasks]
+    
+    bug_set, sol_set, question_set = set(), set(), set()
+    if all_task_ids:
+        intel_records = db.session.query(TaskLog.task_id, TaskLog.log_type)\
+            .filter(TaskLog.task_id.in_(all_task_ids))\
+            .filter(TaskLog.log_type.in_(['bug', 'solution', 'question']))\
+            .all()
+        
+        for r in intel_records:
+            if r.log_type == 'bug': bug_set.add(r.task_id)
+            elif r.log_type == 'solution': sol_set.add(r.task_id)
+            elif r.log_type == 'question': question_set.add(r.task_id)
 
-    # 3. 效能關鍵：一次性抓取「哪些 Task 有 Bug/Solution」
-    # 產出格式會像這樣: { (task_id, 'bug'), (task_id, 'solution') }
-    intel_records = db.session.query(TaskLog.task_id, TaskLog.log_type)\
-        .filter(TaskLog.task_id.in_(all_task_ids))\
-        .filter(TaskLog.log_type.in_(['bug', 'solution','question']))\
-        .distinct().all() if all_task_ids else []
-
-    # 轉成集合 (Set) 方便在迴圈中極速查找 (O(1) 複雜度)
-    bug_set = {r.task_id for r in intel_records if r.log_type == 'bug'}
-    sol_set = {r.task_id for r in intel_records if r.log_type == 'solution'}
-    question_set = {r.task_id for r in intel_records if r.log_type == 'question'}
-    # 4. 抓取分析紀錄 (維持原本邏輯)
+    # 抓取相關的戰略分析
     analyses = ThinkingProject.query.filter_by(ref_id=project.id, ref_type='project').all()
 
-    # 5. 組裝最終 JSON
-    project_data = {
+    # 組裝回傳資料
+    return jsonify({
         "id": project.id,
         "title": project.title,
+        "description": project.description,
         "technologies": project.technologies,
         "project_type": project.project_type,
-        "date_created": project.date_created.isoformat() if project.date_created else None,
         "thinking_analyses": [
             {"id": a.id, "title": a.title, "template_id": a.template_id} for a in analyses
         ],
-        "dev_features": []
-    }
+        "dev_features": [
+            {
+                "id": f.id,
+                "title": f.title,
+                "description": f.description,
+                "tasks": [
+                    {
+                        "id": t.id,
+                        "content": t.content,
+                        "status": t.status,
+                        "priority": t.priority,
+                        "has_bugs": t.id in bug_set,
+                        "has_solutions": t.id in sol_set,
+                        "has_questions": t.id in question_set
+                    } for t in sorted(f.tasks, key=lambda x: x.priority)
+                ]
+            } for f in project.dev_features
+        ]
+    })
 
-    for f in project.dev_features:
-        feature_item = {
-            "id": f.id,
-            "title": f.title,
-            "tasks": []
-        }
-        # 排序並注入情報 (現在是在 Python 記憶體裡比對，超快)
-        for t in sorted(f.tasks, key=lambda x: x.priority):
-            feature_item["tasks"].append({
-                "id": t.id,
-                "content": t.content,
-                "status": t.status,
-                "priority": t.priority,
-                "has_bugs": t.id in bug_set,
-                "has_solutions": t.id in sol_set,
-                "has_questions": t.id in question_set
-            })
-        project_data["dev_features"].append(feature_item)
+
+# @admin_bp.route('/projects/info/<int:project_id>', methods=['GET'])
+# @token_required
+# def get_projects_info(current_admin, project_id):
+#     # 1. 預加載專案、功能、任務 (一條 SQL 搞定所有基礎資料)
+#     query = Project.query.options(
+#         subqueryload(Project.dev_features).subqueryload(DevFeature.tasks)
+#     ).filter_by(id=project_id)
+
+#     project = query.first()
+#     if not project:
+#         return jsonify([]), 404
+    
+#     # 2. 收集所有相關的 Task ID，準備做大量查詢
+#     all_task_ids = [t.id for f in project.dev_features for t in f.tasks]
+
+#     # 3. 效能關鍵：一次性抓取「哪些 Task 有 Bug/Solution」
+#     # 產出格式會像這樣: { (task_id, 'bug'), (task_id, 'solution') }
+#     intel_records = db.session.query(TaskLog.task_id, TaskLog.log_type)\
+#         .filter(TaskLog.task_id.in_(all_task_ids))\
+#         .filter(TaskLog.log_type.in_(['bug', 'solution','question']))\
+#         .distinct().all() if all_task_ids else []
+
+#     # 轉成集合 (Set) 方便在迴圈中極速查找 (O(1) 複雜度)
+#     bug_set = {r.task_id for r in intel_records if r.log_type == 'bug'}
+#     sol_set = {r.task_id for r in intel_records if r.log_type == 'solution'}
+#     question_set = {r.task_id for r in intel_records if r.log_type == 'question'}
+#     # 4. 抓取分析紀錄 (維持原本邏輯)
+#     analyses = ThinkingProject.query.filter_by(ref_id=project.id, ref_type='project').all()
+
+#     # 5. 組裝最終 JSON
+#     project_data = {
+#         "id": project.id,
+#         "title": project.title,
+#         "technologies": project.technologies,
+#         "project_type": project.project_type,
+#         "date_created": project.date_created.isoformat() if project.date_created else None,
+#         "thinking_analyses": [
+#             {"id": a.id, "title": a.title, "template_id": a.template_id} for a in analyses
+#         ],
+#         "dev_features": []
+#     }
+
+#     for f in project.dev_features:
+#         feature_item = {
+#             "id": f.id,
+#             "title": f.title,
+#             "tasks": []
+#         }
+#         # 排序並注入情報 (現在是在 Python 記憶體裡比對，超快)
+#         for t in sorted(f.tasks, key=lambda x: x.priority):
+#             feature_item["tasks"].append({
+#                 "id": t.id,
+#                 "content": t.content,
+#                 "status": t.status,
+#                 "priority": t.priority,
+#                 "has_bugs": t.id in bug_set,
+#                 "has_solutions": t.id in sol_set,
+#                 "has_questions": t.id in question_set
+#             })
+#         project_data["dev_features"].append(feature_item)
         
-    return jsonify([project_data])
+#     return jsonify([project_data])
 
 @admin_bp.route('/projects', methods=['POST', 'OPTIONS'])
 @token_required

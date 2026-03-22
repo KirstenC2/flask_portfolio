@@ -24,18 +24,34 @@ class Project(db.Model):
 
     @property
     def progress_stats(self):
-        all_tasks = [t for f in self.dev_features for t in f.tasks]
+        all_tasks = []
+        for feature in self.dev_features:
+            all_tasks.extend(feature.tasks)
+
         total = len(all_tasks)
-        done = [t for t in all_tasks if t.status == 'completed']
+        if total == 0:
+            return {'percent': 0, 'total': 0, 'remaining': 0, 'done': 0, 'has_delay': False}
+
+        # 修正點：明確區分 done 與 remaining
+        # 假設你的完成狀態字串是 'done' 或 'completed'
+        done_tasks = [t for t in all_tasks if t.status in ['done', 'completed']]
+        done_count = len(done_tasks)
         
-        # 篩選過去 7 天完成的任務
-        one_week_ago = datetime.utcnow() - timedelta(days=7)
-        weekly_done_count = len([t for t in done if t.date_completed and t.date_completed >= one_week_ago])
+        # 剩餘任務 = 總數 - 已完成
+        remaining_count = total - done_count
+        
+        # 計算百分比 (取整數)
+        percent = int((done_count / total) * 100)
+
+        # 檢查是否有延遲 (可選：如果有過期日期邏輯的話)
+        has_delay = any(t.status == 'pending' and t.priority == 1 for t in all_tasks)
 
         return {
-            "percent": round((len(done) / total * 100)) if total > 0 else 0,
-            "remaining": total - len(done),
-            "weekly_done_count": weekly_done_count
+            'percent': percent,
+            'total': total,
+            'remaining': remaining_count,
+            'done': done_count,
+            'has_delay': has_delay
         }
 
     def __repr__(self):

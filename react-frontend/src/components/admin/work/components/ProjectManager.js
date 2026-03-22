@@ -106,11 +106,9 @@ const ProjectManager = ({ onProjectClick, filter ='active' }) => {
                                     <FontAwesomeIcon icon={faChartPie} className="stat-icon" />
                                     <span>Progress: <strong>{project.stats?.percent || 0}%</strong></span>
                                 </div>
-                                <div className="stat-item">
-                                    <FontAwesomeIcon icon={faTasks} className="stat-icon" />
-                                    <span>Remaining: <strong>{project.stats?.remaining || 0}</strong></span>
-                                </div>
+
                             </div>
+                            
                             
                             {/* 進度條預覽 */}
                             <div className="mini-progress-track">
@@ -118,6 +116,20 @@ const ProjectManager = ({ onProjectClick, filter ='active' }) => {
                                     className="mini-progress-bar" 
                                     style={{ width: `${project.stats?.percent || 0}%` }}
                                 ></div>
+                            </div>
+                            <div className="stat-row">
+                                <div className="stat-item">
+                                    <FontAwesomeIcon icon={faTasks} className="stat-icon" />
+                                    <span>Remaining: <strong>{project.stats?.remaining || 0}</strong></span>
+                                </div>
+                                <div className="stat-item">
+                                    <FontAwesomeIcon icon={faTasks} className="stat-icon" />
+                                    <span>Done: <strong>{project.stats?.done || 0}</strong></span>
+                                </div>
+                                <div className="stat-item">
+                                    <FontAwesomeIcon icon={faTasks} className="stat-icon" />
+                                    <span>Total: <strong>{project.stats?.total || 0}</strong></span>
+                                </div>
                             </div>
 
                             <div className="tech-stack-pills">

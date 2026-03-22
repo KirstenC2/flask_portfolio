@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import {
   Table, Tag, Card, Typography, Button, Space, Spin, List, Badge,
-  Empty, Tabs, message
+  Empty, Tabs, message, Radio
 } from 'antd';
 import {
   CalendarOutlined, CheckCircleFilled, RocketOutlined,
@@ -22,15 +22,16 @@ const WarBoardPage = () => {
   const [warData, setWarData] = useState({ start_date: '', data: [] });
   const [activeTab, setActiveTab] = useState('1');
   const [isAdding, setIsAdding] = useState(false); // 控制是否正在新增匯報
+  const [filter, setFilter] = useState('all');
 
   useEffect(() => {
     fetchWarBoard();
-  }, []);
+  }, [filter]);
 
   const fetchWarBoard = async () => {
     try {
       const token = localStorage.getItem('adminToken');
-      const response = await axios.get('http://localhost:5001/api/admin/warboard', {
+      const response = await axios.get(`http://localhost:5001/api/admin/warboard?type=${filter}`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       setWarData(response.data);
@@ -140,102 +141,116 @@ const WarBoardPage = () => {
   if (loading) return <div style={{ textAlign: 'center', padding: '100px' }}><Spin size="large" tip="正在讀取戰場數據..." /></div>;
 
   return (
-    <div style={{ padding: '30px', background: '#f0f2f5', minHeight: '100vh' }}>
-      <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
-        <Title level={2}><RocketOutlined style={{ color: '#1890ff', marginRight: '12px' }} />戰鬥指揮中心</Title>
+    <Card style={{ height: '100%' }}>
+        <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+            <Title level={2} style={{ margin: 0 }}>
+              <RocketOutlined style={{ color: '#1890ff', marginRight: '12px' }} />戰鬥指揮中心
+            </Title>
 
-        <Tabs
-          activeKey={activeTab}
-          onChange={(key) => {
-            setActiveTab(key);
-            if (key === '1') setIsAdding(false); // 切換回戰報時重置新增狀態
-          }}
-          size="large"
-          items={[
-            // 在你的 JSX 中找到這一段並加上 id
-            {
-              key: '1',
-              label: (<span><FormOutlined /> 本週即時戰報</span>),
-              children: (
-                /* 💡 在這裡加上 id */
-                <div id="warboard-content" style={{ background: '#fff', padding: '1px' }}>
-                  <Card variant="outlined" style={{
-                    height: '100%',
-                    borderRadius: '16px',
-                    boxShadow: '0 4px 12px rgba(0,0,0,0.05)'
-                  }}>
-                    <div style={{ marginBottom: '20px' }}>
-                      <Title level={4}>本週即時戰果</Title>
-                      <Text type="secondary"><CalendarOutlined /> 統計區間：{warData.start_date} 至今</Text>
-                    </div>
-                    <Table
-                      columns={columns}
-                      dataSource={warData.data}
-                      rowKey="id"
-                      expandable={{ expandedRowRender, defaultExpandAllRows: true, showExpandColumn: false }}
-                      pagination={false}
-                      locale={{ emptyText: <Empty description="本週尚未有達成目標" /> }}
-                    />
-                  </Card>
-                  <div style={{ marginTop: '20px', display:'flex', justifyContent:'center' }}>
-                    <Space style={{ marginBottom: 16 }}>
-                      <Button icon={<FilePdfOutlined />} onClick={exportToPDF}>匯出 PDF</Button>
-                      <Button icon={<CopyOutlined />} onClick={copyAsMarkdown}>複製 Markdown</Button>
-                    </Space>
-                  </div>
-                </div>
-                
-              )
-            },
-            {
-              key: '2',
-              label: (<span><HistoryOutlined /> 匯報管理</span>),
-              children: (
-                <div style={{ transition: 'all 0.3s' }}>
-                  {isAdding ? (
-                    /* 新增模式：顯示表單 */
-                    <Space direction="vertical" style={{ width: '100%' }}>
-                      <Button
-                        icon={<LeftOutlined />}
-                        onClick={() => setIsAdding(false)}
-                        style={{ marginBottom: '16px' }}
-                      >
-                        返回歷史清單
-                      </Button>
-                      <ReportFormPage
-                        weeklyData={warData.data}
-                        onSuccess={() => {
-                          setIsAdding(false);
-                          // 這裡可以觸發 WeeklyReportList 的重新抓取邏輯
-                        }}
-                      />
-                    </Space>
-                  ) : (
-                    /* 預設模式：顯示列表與新增按鈕 */
-                    <Space direction="vertical" style={{ width: '100%' }}>
-                      <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
-                        <Button
-                          type="primary"
-                          icon={<PlusOutlined />}
-                          size="large"
-                          onClick={() => setIsAdding(true)}
-                          disabled={warData.data.length === 0} // 沒戰果不讓寫匯報
-                        >
-                          新增本週匯報
-                        </Button>
+            {/* 💡 新增篩選按鈕 */}
+            <Radio.Group
+              value={filter}
+              onChange={(e) => setFilter(e.target.value)}
+              buttonStyle="solid"
+            >
+              <Radio.Button value="all">全部</Radio.Button>
+              <Radio.Button value="work">正式商務 (Work)</Radio.Button>
+              <Radio.Button value="side">個人開發 (Side)</Radio.Button>
+            </Radio.Group>
+          </div>
+
+          <Tabs
+            activeKey={activeTab}
+            onChange={(key) => {
+              setActiveTab(key);
+              if (key === '1') setIsAdding(false); // 切換回戰報時重置新增狀態
+            }}
+            size="large"
+            items={[
+              // 在你的 JSX 中找到這一段並加上 id
+              {
+                key: '1',
+                label: (<span><FormOutlined /> 本週即時戰報</span>),
+                children: (
+                  /* 💡 在這裡加上 id */
+                  <div id="warboard-content" style={{ background: '#fff', padding: '1px' }}>
+                    <Card variant="outlined" style={{
+                      height: '100%',
+                      borderRadius: '16px',
+                      boxShadow: '0 4px 12px rgba(0,0,0,0.05)'
+                    }}>
+                      <div style={{ marginBottom: '20px' }}>
+                        <Title level={4}>本週即時戰果</Title>
+                        <Text type="secondary"><CalendarOutlined /> 統計區間：{warData.start_date} 至今</Text>
                       </div>
-                      <WeeklyReportList />
-                    </Space>
-                  )}
-                </div>
-              )
-            }
-          ]}
-        />
-        
-      </div>
+                      <Table
+                        columns={columns}
+                        dataSource={warData.data}
+                        rowKey="id"
+                        expandable={{ expandedRowRender, defaultExpandAllRows: true, showExpandColumn: false }}
+                        pagination={false}
+                        locale={{ emptyText: <Empty description="本週尚未有達成目標" /> }}
+                      />
+                    </Card>
+                    <div style={{ marginTop: '20px', display: 'flex', justifyContent: 'center' }}>
+                      <Space style={{ marginBottom: 16 }}>
+                        <Button icon={<FilePdfOutlined />} onClick={exportToPDF}>匯出 PDF</Button>
+                        <Button icon={<CopyOutlined />} onClick={copyAsMarkdown}>複製 Markdown</Button>
+                      </Space>
+                    </div>
+                  </div>
 
-    </div>
+                )
+              },
+              {
+                key: '2',
+                label: (<span><HistoryOutlined /> 匯報管理</span>),
+                children: (
+                  <div style={{ transition: 'all 0.3s' }}>
+                    {isAdding ? (
+                      /* 新增模式：顯示表單 */
+                      <Space direction="vertical" style={{ width: '100%' }}>
+                        <Button
+                          icon={<LeftOutlined />}
+                          onClick={() => setIsAdding(false)}
+                          style={{ marginBottom: '16px' }}
+                        >
+                          返回歷史清單
+                        </Button>
+                        <ReportFormPage
+                          weeklyData={warData.data}
+                          onSuccess={() => {
+                            setIsAdding(false);
+                            // 這裡可以觸發 WeeklyReportList 的重新抓取邏輯
+                          }}
+                        />
+                      </Space>
+                    ) : (
+                      /* 預設模式：顯示列表與新增按鈕 */
+                      <Space direction="vertical" style={{ width: '100%' }}>
+                        <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+                          <Button
+                            type="primary"
+                            icon={<PlusOutlined />}
+                            size="large"
+                            onClick={() => setIsAdding(true)}
+                            disabled={warData.data.length === 0} // 沒戰果不讓寫匯報
+                          >
+                            新增本週匯報
+                          </Button>
+                        </div>
+                        <WeeklyReportList />
+                      </Space>
+                    )}
+                  </div>
+                )
+              }
+            ]}
+          />
+
+        </div>
+    </Card>
   );
 };
 

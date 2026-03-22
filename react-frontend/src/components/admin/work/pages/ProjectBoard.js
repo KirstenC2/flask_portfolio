@@ -177,6 +177,7 @@ const ProjectBoard = ({ projectId, onBack }) => {
       background: '#fff',
       borderRadius: '12px',
       padding: '24px',
+      margin:'20px',
       overflow: 'hidden'
     }}>
       <Header style={{

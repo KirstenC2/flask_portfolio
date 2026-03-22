@@ -8,12 +8,16 @@ from . import admin_bp, token_required
 @admin_bp.route('/warboard', methods=['GET'])
 @token_required
 def get_warboard_data(current_admin):
+    project_type = request.args.get('type', 'all')
     now = datetime.utcnow()
     days_since_monday = now.weekday() 
     monday_date = now.date() - timedelta(days=days_since_monday)
     this_week_start = datetime.combine(monday_date, time.min)
     
-    all_projects = Project.query.all()
+    if project_type == 'all':
+        all_projects = Project.query.all()
+    else:
+        all_projects = Project.query.filter_by(project_type=project_type).all()
     warboard_list = []
 
     for project in all_projects:

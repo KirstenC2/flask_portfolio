@@ -15,7 +15,8 @@ class Project(db.Model):
     project_url = db.Column(db.String(200), nullable=True)
     github_url = db.Column(db.String(200), nullable=True)
     date_created = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
-
+    status = db.Column(db.String(20), nullable=False, default='active')
+    
     def __repr__(self):
         return f"Project('{self.title}', '{self.technologies}')"
 

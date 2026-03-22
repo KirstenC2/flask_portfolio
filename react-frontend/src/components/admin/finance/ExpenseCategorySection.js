@@ -65,9 +65,9 @@ const ExpenseCategorySection = ({ categories, refreshAll }) => {
             console.log(values);
             const config = { headers: { Authorization: `Bearer ${token}` } };
             if (editingCategory) {
-                await axios.put(`${API_BASE}/expense-categories/${editingCategory.id}`, values, config);
+                await axios.put(`${API_BASE}/expense/categories/${editingCategory.id}`, values, config);
             } else {
-                await axios.post(`${API_BASE}/expense-categories`, values, config);
+                await axios.post(`${API_BASE}/expense/categories`, values, config);
             }
             message.success('操作成功');
             setIsModalOpen(false);
@@ -77,7 +77,7 @@ const ExpenseCategorySection = ({ categories, refreshAll }) => {
 
     const handleDelete = async (id) => {
         try {
-            await axios.delete(`${API_BASE}/expense-categories/${id}`, { headers: { Authorization: `Bearer ${token}` } });
+            await axios.delete(`${API_BASE}/expense/categories/${id}`, { headers: { Authorization: `Bearer ${token}` } });
             message.success('類別已刪除');
             refreshAll();
         } catch (error) { message.error('刪除失敗'); }

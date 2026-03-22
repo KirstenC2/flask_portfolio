@@ -143,6 +143,19 @@
   color: white;
 }
 
+.action-icon-btn {
+  background-color: transparent;
+  border: none;
+  cursor: pointer;
+  padding: 0.4rem 0.8rem;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.3rem;
+  font-size: 0.9rem;
+}
+
 .save-btn,
 .cancel-btn,
 .add-btn {

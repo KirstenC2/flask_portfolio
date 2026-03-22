@@ -1,7 +1,8 @@
 from . import admin_bp, token_required
 from flask import request, jsonify
-from models import db, Project, ThinkingProject, DevFeature, TechMeetingMinute
+from models import DevTask, db, Project, ThinkingProject, DevFeature, TechMeetingMinute, TaskLog
 from datetime import datetime, timedelta
+from sqlalchemy.orm import joinedload,subqueryload
 # ----------------------
 # Projects CRUD (Admin)
 # ----------------------
@@ -15,13 +16,14 @@ def _project_to_dict(p: Project):
         'goals': p.goals,
         'features': p.features,
         'image_url': p.image_url,
+        'status': p.status,
         'project_url': p.project_url,
         'github_url': p.github_url,
         'project_type': p.project_type,
         'date_created': p.date_created.isoformat() if p.date_created else None
     }
 
-from sqlalchemy.orm import joinedload
+
 
 @admin_bp.route('/projects', methods=['GET', 'OPTIONS'])
 @token_required
@@ -49,7 +51,9 @@ def get_projects(current_admin):
             "description": p.description,
             "technologies": p.technologies,
             "image_url": p.image_url,
+            "status": p.status,
             "project_type": p.project_type,
+            "project_status": p.status,
             "date_created": p.date_created.isoformat(),
             # 3. 戰情室所需的關鍵統計
             "stats": stats, 
@@ -241,61 +245,70 @@ def get_warboard_stats(current_admin):
     })
 
 
-@admin_bp.route('/projects/info/<int:project_id>', methods=['GET', 'OPTIONS'])
+
+
+@admin_bp.route('/projects/info/<int:project_id>', methods=['GET'])
 @token_required
 def get_projects_info(current_admin, project_id):
-    # 這裡的邏輯原本回傳的是列表，我們維持結構
-    query = Project.query
-    if project_id:
-        query = query.filter_by(id=project_id)
-    
-    projects = query.all()
-    
-    result = []
-    for p in projects:
-        # 1. 額外查詢屬於這個專案的戰略分析紀錄
-        # 假設你的 ThinkingProject 模型中 ref_id 是存專案 ID
-        analyses = ThinkingProject.query.filter_by(
-            ref_id=p.id, 
-            ref_type='project'
-        ).all()
+    # 1. 預加載專案、功能、任務 (一條 SQL 搞定所有基礎資料)
+    query = Project.query.options(
+        subqueryload(Project.dev_features).subqueryload(DevFeature.tasks)
+    ).filter_by(id=project_id)
 
-        project_data = {
-            "id": p.id,
-            "title": p.title,
-            "technologies": p.technologies,
-            "project_type": p.project_type,
-            "date_created": p.date_created.isoformat(),
-            
-            # 2. 注入歷史分析紀錄列表
-            "thinking_analyses": [
-                {
-                    "id": a.id,
-                    "title": a.title,
-                    "template_id": a.template_id,
-                    "created_at": a.created_at.isoformat() if a.created_at else None
-                } for a in analyses
-            ],
+    project = query.first()
+    if not project:
+        return jsonify([]), 404
+    
+    # 2. 收集所有相關的 Task ID，準備做大量查詢
+    all_task_ids = [t.id for f in project.dev_features for t in f.tasks]
 
-            "dev_features": [
-                {
-                    "id": f.id,
-                    "title": f.title,
-                    "description": f.description,
-                    "tasks": [
-                        {
-                            "id": t.id,
-                            "content": t.content,
-                            "status": t.status,
-                            "priority": t.priority
-                        } for t in sorted(f.tasks, key=lambda x: x.priority)
-                    ]
-                } for f in p.dev_features
-            ]
+    # 3. 效能關鍵：一次性抓取「哪些 Task 有 Bug/Solution」
+    # 產出格式會像這樣: { (task_id, 'bug'), (task_id, 'solution') }
+    intel_records = db.session.query(TaskLog.task_id, TaskLog.log_type)\
+        .filter(TaskLog.task_id.in_(all_task_ids))\
+        .filter(TaskLog.log_type.in_(['bug', 'solution','question']))\
+        .distinct().all() if all_task_ids else []
+
+    # 轉成集合 (Set) 方便在迴圈中極速查找 (O(1) 複雜度)
+    bug_set = {r.task_id for r in intel_records if r.log_type == 'bug'}
+    sol_set = {r.task_id for r in intel_records if r.log_type == 'solution'}
+    question_set = {r.task_id for r in intel_records if r.log_type == 'question'}
+    # 4. 抓取分析紀錄 (維持原本邏輯)
+    analyses = ThinkingProject.query.filter_by(ref_id=project.id, ref_type='project').all()
+
+    # 5. 組裝最終 JSON
+    project_data = {
+        "id": project.id,
+        "title": project.title,
+        "technologies": project.technologies,
+        "project_type": project.project_type,
+        "date_created": project.date_created.isoformat() if project.date_created else None,
+        "thinking_analyses": [
+            {"id": a.id, "title": a.title, "template_id": a.template_id} for a in analyses
+        ],
+        "dev_features": []
+    }
+
+    for f in project.dev_features:
+        feature_item = {
+            "id": f.id,
+            "title": f.title,
+            "tasks": []
         }
-        result.append(project_data)
+        # 排序並注入情報 (現在是在 Python 記憶體裡比對，超快)
+        for t in sorted(f.tasks, key=lambda x: x.priority):
+            feature_item["tasks"].append({
+                "id": t.id,
+                "content": t.content,
+                "status": t.status,
+                "priority": t.priority,
+                "has_bugs": t.id in bug_set,
+                "has_solutions": t.id in sol_set,
+                "has_questions": t.id in question_set
+            })
+        project_data["dev_features"].append(feature_item)
         
-    return jsonify(result)
+    return jsonify([project_data])
 
 @admin_bp.route('/projects', methods=['POST', 'OPTIONS'])
 @token_required

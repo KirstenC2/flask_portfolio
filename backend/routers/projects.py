@@ -26,6 +26,7 @@ def get_project_detail(project_id):
         "features": project.features, # 確保資料庫有這欄位
         "project_type": project.project_type,
         "project_url": project.project_url,
+        "status": project.status,
         "github_url": project.github_url,
         "date_created": project.date_created.isoformat()
     })
@@ -48,6 +49,7 @@ def get_admin_projects():
         "features": project.features,
         "project_type": project.project_type,
         "project_url": project.project_url,
+        "status": project.status,
         "github_url": project.github_url,
         "date_created": project.date_created.isoformat()
     } for project in projects])

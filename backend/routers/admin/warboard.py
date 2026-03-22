@@ -1,19 +1,16 @@
 from datetime import datetime, time, timedelta
 from flask import request, jsonify
-from models import Project
-from models.template_models import ThinkingTemplate, TemplateStep, ThinkingProject, ProjectContent, db
-from . import admin_bp, APP_SECRET_KEY, token_required
+from models import Project,TaskLog
+from models.template_models import ThinkingProject, ProjectContent, db
+from . import admin_bp, token_required
 
 
 @admin_bp.route('/warboard', methods=['GET'])
 @token_required
 def get_warboard_data(current_admin):
-    # --- 計算本週一 00:00:00 的時間點 ---
     now = datetime.utcnow()
-    # weekday(): 週一為 0, 週日為 6
     days_since_monday = now.weekday() 
     monday_date = now.date() - timedelta(days=days_since_monday)
-    # 結合日期與午夜 0 點，得到本週的起始時間
     this_week_start = datetime.combine(monday_date, time.min)
     
     all_projects = Project.query.all()
@@ -28,22 +25,45 @@ def get_warboard_data(current_admin):
         }
 
         for feature in project.dev_features:
-            # 關鍵過濾：狀態為 done，且完成時間落在本週一之後
-            completed_tasks = [
-                {
-                    "id": t.id,
-                    "content": t.content,
-                    "date_completed": t.date_completed.isoformat() if t.date_completed else None
-                }
-                for t in feature.tasks 
-                if t.status == 'done' and t.date_completed and t.date_completed >= this_week_start
-            ]
+            feature_tasks_with_logs = []
+            
+            for t in feature.tasks:
+                # 1. 抓取本週的關鍵日誌 (Bug 或 Solution)
+                # 這裡不限於 task 狀態，只要日誌是這週寫的就抓
+                weekly_logs = [
+                    {
+                        "id": log.id,
+                        "log_type": log.log_type,
+                        "content": log.content,
+                        "date": log.date_created.isoformat()
+                    }
+                    for log in TaskLog.query.filter(
+                        TaskLog.task_id == t.id,
+                        TaskLog.log_type.in_(['bug', 'solution']),
+                        TaskLog.date_created >= this_week_start
+                    ).all()
+                ]
 
-            if completed_tasks:
+                # 2. 判斷這個 Task 是否該出現在戰報中：
+                # 條件 A: 本週完成了
+                is_completed_this_week = (t.status == 'done' and t.date_completed and t.date_completed >= this_week_start)
+                # 條件 B: 雖然沒完成，但本週有寫 Bug/Solution 紀錄
+                has_weekly_intel = len(weekly_logs) > 0
+
+                if is_completed_this_week or has_weekly_intel:
+                    feature_tasks_with_logs.append({
+                        "id": t.id,
+                        "content": t.content,
+                        "status": t.status, # 讓前端知道這項完成了沒
+                        "date_completed": t.date_completed.isoformat() if t.date_completed else None,
+                        "logs": weekly_logs # 這裡帶入剛才過濾出的日誌
+                    })
+
+            if feature_tasks_with_logs:
                 project_data["features"].append({
                     "id": feature.id,
                     "title": feature.title,
-                    "tasks": completed_tasks
+                    "tasks": feature_tasks_with_logs
                 })
 
         if project_data["features"]:

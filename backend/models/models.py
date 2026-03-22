@@ -16,6 +16,7 @@ class Project(db.Model):
     project_url = db.Column(db.String(200), nullable=True)
     github_url = db.Column(db.String(200), nullable=True)
     date_created = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
+    status = db.Column(db.String(10), nullable=False, default='active')
 
     dev_features = db.relationship('DevFeature', backref='project', lazy=True)
     # 在 Project 類別內加入
@@ -68,6 +69,8 @@ class DevTask(db.Model):
     dev_feature_id = db.Column(db.Integer, db.ForeignKey('dev_features.id'), nullable=True)
     date_created = db.Column(db.DateTime, default=datetime.utcnow)
     date_completed = db.Column(db.DateTime, nullable=True)
+
+    logs = db.relationship('TaskLog', backref='task', lazy=True, cascade="all, delete-orphan")
 
 class Skill(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -250,3 +253,26 @@ class TechMeetingMinute(db.Model):
 
     def __repr__(self):
         return f"<TechMeetingMinute '{self.title}' on {self.date}>"
+
+
+class TaskLog(db.Model):
+    """
+    針對特定 DevTask 的詳細執行紀錄
+    """
+    __tablename__ = 'task_logs'
+    id = db.Column(db.Integer, primary_key=True)
+    
+    # 關聯到具體的 Task
+    task_id = db.Column(db.Integer, db.ForeignKey('dev_tasks.id'), nullable=False)
+    
+    # 紀錄類型：例如 'note' (筆記), 'bug' (問題), 'solution' (解法), 'link' (參考資料)
+    log_type = db.Column(db.String(20), default='note')
+    
+    # 紀錄內容 (支援 Markdown 字串)
+    content = db.Column(db.Text, nullable=False)
+
+    # 時間戳記
+    date_created = db.Column(db.DateTime, default=datetime.utcnow)
+
+    def __repr__(self):
+        return f"<TaskLog {self.log_type} for Task {self.task_id}>"

@@ -91,8 +91,9 @@ def _unified_transaction_to_dict(t):
     """
     # 基礎資料
     data = {
-        "id": t.id,
+        "transaction_id": t.id,
         "amount": float(t.amount),
+        "id":t.expense.id if t.expense else None,
         # 將 date 改為 expense_date 以符合前端原本的預期
         "expense_date": t.transaction_date.strftime('%Y-%m-%d %H:%M'),
         "type": t.transaction_type,
@@ -137,28 +138,22 @@ def _unified_transaction_to_dict(t):
 #     expenses = query.order_by(Transaction.transaction_date.desc()).all()
 #     return jsonify([_expense_to_dict(e) for e in expenses])
 
-@admin_bp.route('/expenses/<int:expense_id>', methods=['PUT', 'OPTIONS'])
+@admin_bp.route('/expenses/<int:expense_id>', methods=['PUT'])
 @token_required
 def update_admin_expense(current_admin, expense_id):
-    # CHANGE THIS: Look up by transaction_id instead of the PK id
-    e = Expense.query.filter_by(transaction_id=expense_id).first_or_404()
-    
-    tx = e.transaction 
+    e = Expense.query.get_or_404(expense_id)
+    tx = e.transaction # 直接抓關聯的交易
     data = request.get_json(force=True) or {}
     
-    # Now the rest of your logic will work:
-    if 'category_id' in data: 
-        e.category_id = int(data['category_id'])
+    # 更新 Expense 欄位
+    if 'title' in data: e.title = data['title'].strip()
+    if 'category_id' in data: e.category_id = data['category_id']
     
-    if 'title' in data: 
-        e.title = data['title'].strip()
-    
-    # Update Transaction fields
-    if tx:
-        if 'amount' in data: 
-            tx.amount = Decimal(str(data['amount']))
-        if 'expense_date' in data: 
-            tx.transaction_date = datetime.fromisoformat(data['expense_date'])
+    # 更新 Transaction 欄位
+    if 'amount' in data: tx.amount = Decimal(str(data['amount']))
+    if 'note' in data: tx.note = data['note']
+    if 'expense_date' in data: tx.transaction_date = datetime.fromisoformat(data['expense_date'])
+    if 'status' in data: tx.status = data['status']
         
     db.session.commit()
     return jsonify(_expense_to_dict(e))

@@ -25,7 +25,7 @@ const MotorFormModal = ({ open, onCancel, onFinish, editingRecord }) => {
             open={open}
             onCancel={onCancel}
             onOk={() => form.submit()}
-            destroyOnClose
+            destroyOnHidden
         >
             <Form form={form} layout="vertical" onFinish={onFinish}>
                 <Form.Item name="maintenance_date" label="保養日期" rules={[{ required: true, message: '請選擇日期' }]}>

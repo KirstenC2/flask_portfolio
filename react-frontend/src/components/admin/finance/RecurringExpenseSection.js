@@ -138,7 +138,7 @@ const RecurringExpenseSection = ({ recurringExpenses, categories, refreshAll }) 
                 onOk={handleSave}
                 onCancel={() => setIsModalOpen(false)}
                 confirmLoading={loading}
-                destroyOnClose
+                destroyOnHidden
             >
                 <Form form={form} layout="vertical">
                     <Form.Item name="name" label="支出項目名稱" rules={[{ required: true }]}>

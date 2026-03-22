@@ -21,7 +21,7 @@ const SavingGoals = ({ goals, onRefresh }) => {
     }
 
     return (
-        <Card style={{ height: '100%' }} bordered={false}>
+        <Card style={{ height: '100%' }} variant="outlined">
             <Title level={4} style={{ marginBottom: 24 }}>🎯 進行中的目標</Title>
             <Row gutter={[16, 16]}>
                 {goals.map((goal) => {

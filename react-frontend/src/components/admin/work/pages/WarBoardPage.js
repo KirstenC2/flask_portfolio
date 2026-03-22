@@ -159,7 +159,7 @@ const WarBoardPage = () => {
               children: (
                 /* 💡 在這裡加上 id */
                 <div id="warboard-content" style={{ background: '#fff', padding: '1px' }}>
-                  <Card bordered={false} style={{
+                  <Card variant="outlined" style={{
                     height: '100%',
                     borderRadius: '16px',
                     boxShadow: '0 4px 12px rgba(0,0,0,0.05)'

@@ -49,7 +49,7 @@ const DiaryStats = () => {
             <Row gutter={[16, 16]}>
                 {/* 概覽卡片 */}
                 <Col xs={24} md={8}>
-                    <Card bordered={false} hoverable style={{ height: '100%' }}>
+                    <Card variant="outlined" hoverable style={{ height: '100%' }}>
                         <Statistic title="已記錄天數" value={stats.summary.total} suffix="天" />
                         <Divider style={{ margin: '12px 0' }} />
                         <Text type="secondary">正能量百分比</Text>
@@ -63,7 +63,7 @@ const DiaryStats = () => {
 
                 {/* 情緒佔比圓餅圖 */}
                 <Col xs={24} md={16}>
-                    <Card title="情緒分佈" bordered={false} style={{ height: '100%' }}>
+                    <Card title="情緒分佈" variant="outlined" style={{ height: '100%' }}>
                         <div style={{ height: 300 }}>
                             <ResponsiveContainer width="100%" height="100%">
                                 <PieChart>
@@ -88,7 +88,7 @@ const DiaryStats = () => {
 
                 {/* 心情走勢折線圖 */}
                 <Col span={24}>
-                    <Card title="心情起伏走勢" bordered={false} style={{ height: '100%' }}>
+                    <Card title="心情起伏走勢" variant="outlined" style={{ height: '100%' }}>
                         <div style={{ height: 350 }}>
                             <ResponsiveContainer width="100%" height="100%">
                                 <LineChart data={stats.lineData}>

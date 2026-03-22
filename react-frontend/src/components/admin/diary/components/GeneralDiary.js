@@ -162,7 +162,7 @@ const Diary = () => {
 
     return (
         <div className="diary-page-container" style={{ padding: '20px' }}>
-            <Card bordered={false} className="full-calendar-card" style={{ height: '100%' }}>
+            <Card variant="outlined" className="full-calendar-card" style={{ height: '100%' }}>
                 <div style={{ marginBottom: '16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                     <h2>My Diary Calendar</h2>
                     <Button type="primary" icon={<FontAwesomeIcon icon={faPlus} />} onClick={() => handleDateClick(new Date())}>
@@ -189,7 +189,7 @@ const Diary = () => {
                 footer={null}
                 width={800}
                 centered
-                destroyOnClose
+                destroyOnHidden
             >
                 {editMode ? (
                     <div className="diary-form">

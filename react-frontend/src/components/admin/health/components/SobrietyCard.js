@@ -44,7 +44,7 @@ const SobrietyCard = () => {
                         title="已連續清醒"
                         value={data.days_count}
                         suffix="DAYS"
-                        valueStyle={{ color: data.encouragement.color, fontSize: '32px', fontWeight: 'bold' }}
+                        styles={{ color: data.encouragement.color, fontSize: '32px', fontWeight: 'bold' }}
                         prefix={data.days_count >= 7 ? <TrophyOutlined /> : <FireOutlined />}
                     />
                     <Tag color={data.encouragement.color} style={{ borderRadius: '4px', padding: '4px 12px' }}>

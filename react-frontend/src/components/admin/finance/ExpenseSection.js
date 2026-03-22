@@ -193,7 +193,7 @@ const ExpenseSection = ({
 
     return (
         <section>
-            <Card bordered={false} className="full-calendar-card" style={{ height: '100%' }}>
+            <Card variant="outlined" className="full-calendar-card" style={{ height: '100%' }}>
                 <Title level={2} style={{ margin: 0, padding: '20px 0' }}>財務支出管理</Title>
 
                 {/* 控制區域 */}

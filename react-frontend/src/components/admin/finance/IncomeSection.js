@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
-import { TrendingUp, DollarSign, Wallet, Calendar as CalendarIcon, ListFilter, ChevronLeft, ChevronRight, PlusCircle } from 'lucide-react';
+import { TrendingUp, Wallet, Calendar as CalendarIcon, ListFilter, ChevronLeft, ChevronRight, PlusCircle } from 'lucide-react';
 import { Card, Table, Tag, Typography, DatePicker, Space, Row, Col, Spin, Button, Form, Select, Input, InputNumber, message } from 'antd';
 import dayjs from 'dayjs';
 import { StatRow } from './StatRow'; // 延用你的 StatRow
@@ -93,7 +93,7 @@ const IncomeSection = ({ incomeCategories = [] }) => {
 
     return (
         <section className="income-section">
-            <Card bordered={false} className="main-card">
+            <Card variant="outlined" className="main-card">
                 <Title level={2} style={{ margin: 0, padding: '20px 0', color: '#065f46' }}>收入來源管理</Title>
                 {/* 控制與統計區 */}
                 <div className="control-panel" style={{ marginBottom: 24 }}>

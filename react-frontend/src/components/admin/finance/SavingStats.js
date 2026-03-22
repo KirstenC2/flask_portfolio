@@ -16,7 +16,7 @@ const SavingStats = ({ totalSaved, totalTarget }) => {
                 title="已儲蓄總額"
                 value={totalSaved}
                 precision={0}
-                valueStyle={{ color: '#1677ff', fontWeight: '800' }}
+                styles={{ color: '#1677ff', fontWeight: '800' }}
                 prefix={<span className="text-2xl">$</span>}
               />
             </Col>
@@ -25,7 +25,7 @@ const SavingStats = ({ totalSaved, totalTarget }) => {
                 title="總目標金額"
                 value={totalTarget}
                 precision={0}
-                valueStyle={{ color: '#8c8c8c' }}
+                styles={{ color: '#8c8c8c' }}
                 prefix={<TrophyOutlined className="mr-1" />}
               />
             </Col>

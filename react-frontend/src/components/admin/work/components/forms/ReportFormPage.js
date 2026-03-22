@@ -92,7 +92,7 @@ const ReportFormPage = ({ weeklyData }) => {
 
     return (
         <div style={{ maxWidth: '900px', margin: '0 auto', padding: '20px' }}>
-            <Card bordered={false} style={{ height: '100%', borderRadius: '15px', boxShadow: '0 4px 20px rgba(0,0,0,0.08)' }}>
+            <Card variant="outlined" style={{ height: '100%', borderRadius: '15px', boxShadow: '0 4px 20px rgba(0,0,0,0.08)' }}>
                 <Title level={2}><EditOutlined /> 思維框架匯報</Title>
                 <Space direction="vertical" style={{ width: '100%' }} size="large">
 

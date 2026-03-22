@@ -78,7 +78,7 @@ const SobrietyMilestones = () => { // 不再依賴父組件傳入，自己去抓
                 <Steps
                     size="small"
                     current={currentStep}
-                    labelPlacement="vertical"
+                    titlePlacement="vertical"
                     items={milestones.map((m, index) => {
                         const isUnlocked = daysCount >= m.days;
                         const isNextGoal = index === activeStepIndex;

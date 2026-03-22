@@ -228,7 +228,7 @@ const MotorManagementPanel = () => {
                 />
             </div>
 
-            <Card bordered={false} className="main-glass-card" style={{ marginTop: 16 }}>
+            <Card variant="outlined" className="main-glass-card" style={{ marginTop: 16 }}>
                 {/* 動態渲染目前選中的 Tab 內容 */}
                 {tabComponents[activeTab] || tabComponents['maintenance']}
             </Card>

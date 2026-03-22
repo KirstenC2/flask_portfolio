@@ -50,11 +50,11 @@ const DebtSection = ({ debts = [], newDebt, setNewDebt, onCreate, onAddPayment, 
 
     return (
         <section>
-            <Card bordered={false} className="full-calendar-card" style={{ height: '100%' }}>
+            <Card variant="outlined" className="full-calendar-card" style={{ height: '100%' }}>
                 <Title level={2} style={{ margin: 0, padding: '20px 0' }}>債務管理</Title>
 
             {/* 統計與快速新增 */}
-            <Card bordered={false} style={{ marginBottom: 20, borderRadius: 12, height: "100%" }}>
+            <Card variant="outlined" style={{ marginBottom: 20, borderRadius: 12, height: "100%" }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '20px' }}>
                     <Space size="large">
                         <Statistic
@@ -62,7 +62,7 @@ const DebtSection = ({ debts = [], newDebt, setNewDebt, onCreate, onAddPayment, 
                             value={totalRemaining}
                             prefix={<FallOutlined style={{ color: '#ff4d4f' }} />}
                             precision={0}
-                            valueStyle={{ color: '#ff4d4f', fontWeight: 'bold' }}
+                            styles={{ color: '#ff4d4f', fontWeight: 'bold' }}
                         />
                         <Space.Compact style={{ marginLeft: 20 }}>
                             {['all', 'active', 'paid'].map(s => (
@@ -166,7 +166,7 @@ const DebtSection = ({ debts = [], newDebt, setNewDebt, onCreate, onAddPayment, 
                 open={isPayModalOpen}
                 onOk={handlePaymentSubmit}
                 onCancel={() => setIsPayModalOpen(false)}
-                destroyOnClose
+                destroyOnHidden
             >
                 <Form form={form} layout="vertical">
                     <Form.Item name="amount" label="金額" rules={[{ required: true }]}>

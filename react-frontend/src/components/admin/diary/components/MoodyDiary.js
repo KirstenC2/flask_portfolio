@@ -137,7 +137,7 @@ const MoodyDiary = () => {
 
     return (
         <div className="diary-main-container" style={{ padding: '20px' }}>
-            <Card bordered={false} className="full-calendar-card" style={{ height: '100%' }}>
+            <Card variant="outlined" className="full-calendar-card" style={{ height: '100%' }}>
                 <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
                     <div>
                         <h2 style={{ margin: 0 }}>情緒與反思日誌</h2>
@@ -171,7 +171,7 @@ const MoodyDiary = () => {
                 footer={null}
                 width={850}
                 centered
-                destroyOnClose
+                destroyOnHidden
             >
                 <div className="mood-modal-body" style={{ paddingTop: '10px' }}>
                     {editMode ? (

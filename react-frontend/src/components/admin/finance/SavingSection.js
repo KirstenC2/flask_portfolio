@@ -132,7 +132,7 @@ const SavingSection = ({ refreshAll, selectedYear, setSelectedYear, selectedMont
     };
 
     return (
-        <Card bordered={false} style={{ height: '100%' }}>
+        <Card variant="outlined" style={{ height: '100%' }}>
             <ConfigProvider theme={{ token: { borderRadius: 12, colorPrimary: '#5ec2c2' } }}>
                 <Row justify="space-between" align="middle" style={{ marginBottom: 32 }}>
                     <Col>
@@ -155,7 +155,7 @@ const SavingSection = ({ refreshAll, selectedYear, setSelectedYear, selectedMont
                             title={`${currentViewDate.format('M')} 月總收入`}
                             value={currentMonthTotal}
                             prefix="$"
-                            valueStyle={{ color: '#5ec2c2' }}
+                            styles={{ color: '#5ec2c2' }}
                         />
                     </Col>
                 </Row>
@@ -177,7 +177,7 @@ const SavingSection = ({ refreshAll, selectedYear, setSelectedYear, selectedMont
                                         value={totalMonthlySavingGoal}
                                         prefix={<RocketOutlined />}
                                         suffix="元"
-                                        valueStyle={{ fontSize: '20px' }}
+                                        styles={{ fontSize: '20px' }}
                                     />
                                 </Col>
 
@@ -189,7 +189,7 @@ const SavingSection = ({ refreshAll, selectedYear, setSelectedYear, selectedMont
                                         value={Math.round(estimatedFixedExpenses)}
                                         prefix={<SafetyCertificateOutlined />}
                                         suffix="元"
-                                        valueStyle={{ fontSize: '20px' }}
+                                        styles={{ fontSize: '20px' }}
                                     />
                                 </Col>
 
@@ -212,7 +212,7 @@ const SavingSection = ({ refreshAll, selectedYear, setSelectedYear, selectedMont
                                         value={Math.round(disposableIncome)}
                                         prefix={<WalletOutlined />}
                                         suffix="元"
-                                        valueStyle={{
+                                        styles={{
                                             color: disposableIncome < 0 ? '#ff4d4f' : '#52c41a',
                                             fontSize: '24px', // 讓結果稍微大一點點
                                             fontWeight: 'bold'

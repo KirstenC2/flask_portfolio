@@ -34,7 +34,7 @@ const MotorTaxModal = ({ open, onCancel, onFinish, editingTax }) => {
             open={open}
             onCancel={onCancel}
             onOk={handleSubmit}
-            destroyOnClose // 確保關閉時銷毀子組件，避免舊資料殘留
+            destroyOnHidden // 確保關閉時銷毀子組件，避免舊資料殘留
         >
             <Form form={form} layout="vertical">
                 <Form.Item 

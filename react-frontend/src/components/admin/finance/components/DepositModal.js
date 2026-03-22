@@ -34,7 +34,7 @@ const DepositModal = ({ visible, onCancel, goal, onSuccess }) => {
             open={visible}
             onOk={handleSubmit}
             onCancel={onCancel}
-            destroyOnClose
+            destroyOnHidden
         >
             <Form form={form} layout="vertical" initialValues={{ date: dayjs(), amount: goal?.monthly_push }}>
                 <Form.Item label="存款金額" name="amount" rules={[{ required: true, message: '請輸入金額' }]}>

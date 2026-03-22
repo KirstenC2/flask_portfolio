@@ -124,7 +124,7 @@ const ExpenseCategorySection = ({ categories, refreshAll }) => {
                 open={isModalOpen}
                 onOk={handleOk}
                 onCancel={() => setIsModalOpen(false)}
-                destroyOnClose
+                destroyOnHidden
             >
                 <Form form={form} layout="vertical">
                     <Form.Item name="name" label="類別名稱" rules={[{ required: true }]}>

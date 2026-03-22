@@ -150,7 +150,7 @@ const ThinkingProjectForm = ({ projectIdFromContext, templateId, existingAnalysi
     // D. 預設 Landing Page：點擊大按鈕時顯示
     return (
         <div style={{ maxWidth: 700, margin: '60px auto' }}>
-            <Card bordered={false} style={{ borderRadius: 16, boxShadow: '0 4px 20px rgba(0,0,0,0.05)', padding: '20px' }}>
+            <Card variant="outlined" style={{ borderRadius: 16, boxShadow: '0 4px 20px rgba(0,0,0,0.05)', padding: '20px' }}>
                 <div style={{ textAlign: 'center', marginBottom: 32 }}>
                     <BulbOutlined style={{ fontSize: 48, color: '#5ec2c2', marginBottom: 16 }} />
                     <Title level={2}>麥肯錫戰略分析</Title>

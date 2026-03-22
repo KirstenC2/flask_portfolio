@@ -22,9 +22,9 @@ const FinancePanel = () => {
         filterStatus, setFilterStatus, stats,
         selectedYear, setSelectedYear,
         selectedMonth, setSelectedMonth,
-        incomes, setIncomes,
-        incomeCategories, setIncomeCategories,
-        recurringExpenses, setRecurringExpenses
+        incomes,
+        incomeCategories,
+        recurringExpenses, createExpense, createDebt, setRecurringExpenses
     } = useFinanceData();
 
     const [newDebt, setNewDebt] = useState({ title: '', total_amount: '' });
@@ -37,10 +37,14 @@ const FinancePanel = () => {
 
     // --- Action Handlers ---
     const handleCreateDebt = async (e) => {
-        e.preventDefault();
-        await financeApi.createDebt(newDebt);
-        setNewDebt({ title: '', total_amount: '' });
-        refreshAll();
+        if (e && e.preventDefault) e.preventDefault(); // 防止表單刷新
+
+        // 確保這裡傳入的是你的 state，而不是 e
+        const result = await createDebt(newDebt);
+
+        if (result.success) {
+            setNewDebt({ title: '', total_amount: '' });
+        }
     };
 
     const handleAddPayment = async (debtId, paymentData) => {
@@ -112,7 +116,7 @@ const FinancePanel = () => {
                 refreshAll={refreshAll}
             />
         ),
-        'recurring-mgmt':(
+        'recurring-mgmt': (
             <RecurringExpenseSection
                 categories={categories}
                 recurringExpenses={recurringExpenses}

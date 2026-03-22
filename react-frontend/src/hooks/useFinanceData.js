@@ -1,6 +1,5 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { financeApi } from '../services/financeApi';
-import dayjs from 'dayjs'; // 建議引入 dayjs 處理時間比較方便
 
 export const useFinanceData = () => {
     const [rawDebts, setRawDebts] = useState([]);
@@ -48,9 +47,6 @@ export const useFinanceData = () => {
                 const historyList = Array.isArray(dh) ? dh : (dh?.data || []);
                 const recurringList = Array.isArray(recurringExpenses) ? recurringExpenses : (recurringExpenses?.data || []);
 
-                console.log("成功解析分類:", categoryList);
-                console.log("成功解析收入分類:", incomeCategoryList);
-
                 setCategories(categoryList);
                 setIncomeCategories(incomeCategoryList);
                 setIncomes(incomeList);
@@ -79,6 +75,44 @@ export const useFinanceData = () => {
         }
     }, []);
 
+    // 建立債務
+    const createDebt = useCallback(async (debtData) => {
+        try {
+            await financeApi.createDebt(debtData);
+            await refreshAll(); // 成功後自動刷新列表
+            return { success: true };
+        } catch (err) {
+            console.error("建立債務失敗:", err);
+            return { success: false, error: err };
+        }
+    }, [refreshAll]);
+
+    // 新增還款紀錄
+    const addPayment = useCallback(async (debtId, paymentData) => {
+        try {
+            await financeApi.addPayment(debtId, paymentData);
+            await refreshAll();
+            return { success: true };
+        } catch (err) {
+            console.error("新增還款失敗:", err);
+            return { success: false, error: err };
+        }
+    }, [refreshAll]);
+
+    // 建立支出
+    const createExpense = useCallback(async (expenseData) => {
+        try {
+            await financeApi.createExpense(expenseData);
+            // 支出通常影響統計，所以建議 refreshPeriodic 也要跑
+            await refreshAll();
+            await refreshPeriodic(selectedYear, selectedMonth);
+            return { success: true };
+        } catch (err) {
+            console.error("建立支出失敗:", err);
+            return { success: false, error: err };
+        }
+    }, [refreshAll, refreshPeriodic, selectedYear, selectedMonth]);
+
     // 當年份或月份改變時，觸發刷新
     useEffect(() => {
         refreshPeriodic(selectedYear, selectedMonth); // 💡 修正：傳入兩個參數
@@ -104,6 +138,9 @@ export const useFinanceData = () => {
         selectedMonth,      // 已新增
         setSelectedMonth,    // 已新增
         refreshAll,
+        createDebt,
+        addPayment,
+        createExpense,
         setDebts: setRawDebts,
         setExpenses,
         setIncomes,

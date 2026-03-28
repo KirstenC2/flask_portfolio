@@ -5,6 +5,7 @@ import {
     faCommentDots, faBan, faEdit, faTrashAlt, faBug, faLightbulb, faCircleQuestion
 } from '@fortawesome/free-solid-svg-icons';
 import { TASK_TYPE_CONFIG, PRIORITY_OPTIONS } from '../constants/task';
+import '../style/AdminProjectDetail.css';
 
 const TaskRow = ({ task, actions, onOpenLog }) => {
     const [isEditing, setIsEditing] = useState(false);
@@ -14,14 +15,14 @@ const TaskRow = ({ task, actions, onOpenLog }) => {
 
     const typeCfg = TASK_TYPE_CONFIG[task.task_type] || TASK_TYPE_CONFIG.feature;
     const handleKeyDown = (e, type) => {
-            if (e.key === 'Enter') {
-                if (type === 'edit') handleSave();
-                if (type === 'cancel') handleCancelSubmit();
-            } else if (e.key === 'Escape') {
-                if (type === 'edit') setIsEditing(false);
-                if (type === 'cancel') setIsCanceling(false);
-            }
-        };
+        if (e.key === 'Enter') {
+            if (type === 'edit') handleSave();
+            if (type === 'cancel') handleCancelSubmit();
+        } else if (e.key === 'Escape') {
+            if (type === 'edit') setIsEditing(false);
+            if (type === 'cancel') setIsCanceling(false);
+        }
+    };
     const handleSave = async () => {
         try {
             // 1. 執行更新
@@ -38,9 +39,9 @@ const TaskRow = ({ task, actions, onOpenLog }) => {
     };
 
     const handleCancelSubmit = async () => {
-        const success = await actions.handleUpdate(task.id, { 
-            status: 'canceled', 
-            cancel_reason: cancelReason 
+        const success = await actions.handleUpdate(task.id, {
+            status: 'canceled',
+            cancel_reason: cancelReason
         });
         if (success) setIsCanceling(false);
     };
@@ -73,8 +74,19 @@ const TaskRow = ({ task, actions, onOpenLog }) => {
                         ))}
                     </select>
                 ) : (
-                    <span style={{ color: typeCfg.color, fontSize: '11px', fontWeight: 'bold' }}>
-                        {typeCfg.label}
+                    <span style={{
+                        fontSize: '10px',
+                        color: typeCfg.color,
+                        background: `${typeCfg.color}15`, // 15 是透明度，產生淺色背景
+                        border: `1px solid ${typeCfg.color}50`,
+                        padding: '0 5px',
+                        borderRadius: '4px',
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        fontWeight: 'bold'
+                    }}>
+                        <FontAwesomeIcon icon={typeCfg.icon} style={{ marginRight: '3px', fontSize: '9px' }} />
+                        {task.task_type.toUpperCase()}
                     </span>
                 )}
             </td>
@@ -83,12 +95,12 @@ const TaskRow = ({ task, actions, onOpenLog }) => {
             <td>
                 {isCanceling ? (
                     <div className="table-inline-edit">
-                        <input 
-                            className="table-input-text" 
-                            value={cancelReason} 
-                            onChange={e => setCancelReason(e.target.value)} 
-                            placeholder="原因..." 
-                            autoFocus 
+                        <input
+                            className="table-input-text"
+                            value={cancelReason}
+                            onChange={e => setCancelReason(e.target.value)}
+                            placeholder="原因..."
+                            autoFocus
                             onKeyDown={(e) => handleKeyDown(e, 'cancel')}
                         />
                         <button
@@ -103,10 +115,10 @@ const TaskRow = ({ task, actions, onOpenLog }) => {
                         <button className="btn-cancel-sm" onClick={() => setIsCanceling(false)}><FontAwesomeIcon icon={faTimes} /></button>
                     </div>
                 ) : isEditing ? (
-                    <input 
-                        className="table-input-text" 
-                        value={editData.content} 
-                        onChange={e => setEditData({ ...editData, content: e.target.value })} 
+                    <input
+                        className="table-input-text"
+                        value={editData.content}
+                        onChange={e => setEditData({ ...editData, content: e.target.value })}
                         onKeyDown={(e) => handleKeyDown(e, 'edit')}
                         autoFocus
                     />
@@ -126,9 +138,9 @@ const TaskRow = ({ task, actions, onOpenLog }) => {
             {/* 優先級 */}
             <td className="cell-center">
                 {isEditing ? (
-                    <select 
-                        className="table-select" 
-                        value={editData.priority} 
+                    <select
+                        className="table-select"
+                        value={editData.priority}
                         onChange={e => setEditData({ ...editData, priority: Number(e.target.value) })}
                         onKeyDown={(e) => handleKeyDown(e, 'edit')}
                     >

@@ -2,7 +2,8 @@ from . import admin_bp, token_required
 from flask import request, jsonify
 from models import DevTask, db, Project, ThinkingProject, DevFeature, TechMeetingMinute, TaskLog
 from datetime import datetime, timedelta
-from sqlalchemy.orm import joinedload,subqueryload
+from sqlalchemy.orm import subqueryload
+from sqlalchemy import func
 # ----------------------
 # Projects CRUD (Admin)
 # ----------------------
@@ -223,7 +224,7 @@ def delete_meeting(current_admin, meeting_id):
 @admin_bp.route('/projects/warboard-stats', methods=['GET', 'OPTIONS'])
 @token_required
 def get_warboard_stats(current_admin):
-    projects = Project.query.all()
+    projects = Project.query.filter_by(status='active').all()
     output = []
     
     # 用於全局統計
@@ -241,7 +242,6 @@ def get_warboard_stats(current_admin):
             'name': p.title,
             'progress': stats['percent'],
             'remaining': stats['remaining'],
-            'status': 'Delayed' if stats['has_delay'] else ('Completed' if stats['percent'] == 100 else 'Normal'),
             'type': p.project_type
         })
         
@@ -383,3 +383,81 @@ def delete_admin_project(current_admin, project_id):
     db.session.delete(p)
     db.session.commit()
     return jsonify({'message': 'Project deleted'})
+
+
+@admin_bp.route('/work/statistics', methods=['GET'])
+@token_required
+def get_task_statistics(current_admin):
+    try:
+        # 1. 取得所有活躍專案的 ID 列表
+        active_project_ids = [p.id for p in Project.query.filter_by(status='active').all()]
+
+        if not active_project_ids:
+            return jsonify({
+                "status": "success",
+                "data": {"done": 0, "pending": 0, "bugs": 0, "canceled": 0, "completion_rate": 0, "total_tasks": 0}
+            }), 200
+
+        # 2. 統計任務狀態 (僅限活躍專案)
+        # 透過 DevTask -> DevFeature -> Project 的路徑進行過濾
+        status_counts = db.session.query(
+            DevTask.status, func.count(DevTask.id)
+        ).join(DevFeature, DevTask.dev_feature_id == DevFeature.id)\
+         .filter(DevFeature.project_id.in_(active_project_ids))\
+         .filter(DevTask.status != 'canceled')\
+         .group_by(DevTask.status).all()
+        
+        status_map = {status: count for status, count in status_counts}
+
+        # 3. 統計 Bug 數量 (僅限活躍專案且不重複的 Task)
+        bug_count = db.session.query(func.count(func.distinct(TaskLog.task_id)))\
+            .join(DevTask, TaskLog.task_id == DevTask.id)\
+            .join(DevFeature, DevTask.dev_feature_id == DevFeature.id)\
+            .filter(DevFeature.project_id.in_(active_project_ids))\
+            .filter(TaskLog.log_type == 'bug').scalar()
+
+        # 4. 數據整理
+        done = status_map.get('done', 0)
+        # 包含 pending, doing, todo
+        pending = status_map.get('pending', 0) + status_map.get('doing', 0) + status_map.get('todo', 0)
+        canceled = status_map.get('canceled', 0)
+        
+        # 計算完成率 (不計入已取消)
+        total_active = done + pending
+        completion_rate = round((done / total_active) * 100) if total_active > 0 else 0
+
+        return jsonify({
+            "status": "success",
+            "active": active_project_ids,
+            "data": {
+                "done": done,
+                "pending": pending,
+                "bugs": bug_count or 0,
+                "canceled": canceled,
+                "completion_rate": completion_rate,
+                "total_tasks": done + pending + canceled
+            }
+        }), 200
+
+    except Exception as e:
+        print(f"DEBUG Error: {str(e)}") 
+        return jsonify({"status": "error", "message": str(e)}), 500
+
+@property
+def progress_stats(self):
+    # 只抓取非 canceled 的任務
+    all_tasks = [t for f in self.dev_features for t in f.tasks if t.status != 'canceled']
+    
+    total = len(all_tasks)
+    if total == 0:
+        return {'percent': 0, 'remaining': 0}
+    
+    # 統計 done 的數量
+    done_count = len([t for t in all_tasks if t.status == 'done'])
+    remaining = total - done_count
+    percent = round((done_count / total) * 100)
+    
+    return {
+        'percent': percent,
+        'remaining': remaining
+    }

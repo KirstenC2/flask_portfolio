@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Row, Col, Card, Select, Button, Checkbox, Tag, Space, Typography, Empty, message, Spin, Popconfirm } from 'antd';
-import { ReloadOutlined, DeleteOutlined, ProjectOutlined, PushpinOutlined, HolderOutlined, CheckCircleOutlined } from '@ant-design/icons';
+import { Row, Col, Card, Select, Button, Checkbox, Tag, Space, Typography, Empty, message, Popconfirm } from 'antd';
+import { ReloadOutlined, DeleteOutlined, PushpinOutlined, HolderOutlined } from '@ant-design/icons';
 
 // dnd-kit 核心組件
 import { 
@@ -8,10 +8,11 @@ import {
   useSensor, useSensors, DragOverlay, useDroppable 
 } from '@dnd-kit/core';
 import { 
-  arrayMove, SortableContext, sortableKeyboardCoordinates, 
+  SortableContext, sortableKeyboardCoordinates, 
   verticalListSortingStrategy, useSortable 
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
+
 
 const { Title, Text } = Typography;
 const { Option } = Select;

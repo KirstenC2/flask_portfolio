@@ -32,3 +32,31 @@
 .main-glass-card{
   height: 100%;
 }
+
+.metrics-container-card {
+    border-radius: 16px !important;
+    overflow: hidden;
+}
+
+/* 讓 MotorMetrics 內部的卡片不要有邊框，看起來像是一體的 */
+.metrics-container-card .ant-card {
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+}
+
+.motor-img-wrapper img {
+    transition: transform 0.3s ease;
+}
+
+.motor-img-wrapper img:hover {
+    transform: scale(1.05);
+}
+
+.glass-nav-container {
+    background: rgba(255, 255, 255, 0.8);
+    backdrop-filter: blur(10px);
+    padding: 0 24px;
+    border-radius: 12px;
+    border: 1px solid rgba(0, 0, 0, 0.05);
+}

@@ -14,7 +14,7 @@ import MotorTable from './components/MotorTable';
 import MotorFormModal from './components/MotorFormModal';
 import MotorTaxesView from './components/MotorTaxesView';
 import MotorTaxModal from './components/MotorTaxModal';
-
+import MotorFuelAnalysis from './components/MotorFuelAnalysis';
 
 import './MotorManagementPanel.css';
 import '../../../common/global.css';
@@ -160,13 +160,19 @@ const MotorManagementPanel = () => {
                         </Button>
                     </Col>
                 </Row>
+
+
                 <MotorMetrics records={records} />
+                <MotorFuelAnalysis />
                 <MotorTable
                     records={records}
                     loading={loading}
                     onEdit={handleOpenModal}
                     onDelete={handleDelete}
                 />
+
+                
+
             </>
         ),
         'document-mgmt': (

@@ -155,5 +155,12 @@ export const financeApi = {
         method: 'DELETE',
         headers: getHeaders()
     }).then(handleResponse),
+    getAllowanceSummary: async (year, month) => {
+        const response = await fetch(`${API_BASE}/admin/expenses/allowance-summary`, {
+            params: { year, month },
+            headers: getHeaders()
+        }).then(handleResponse);
+        return response;
+    },
 
 };

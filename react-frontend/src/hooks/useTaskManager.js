@@ -35,17 +35,18 @@ export const useTaskManager = (feature_id, tasks, onUpdate) => {
     const handleUpdate = async (taskId, fields) => {
         try {
             const res = await taskApi.update(taskId, fields);
-            
-            // 重要：判斷是否成功
+
             if (res.ok) {
                 console.log("Update success, refreshing...");
-                // 呼叫父組件的 fetchProjectDetail，傳入 true 避免 Loading 閃爍
-                await onUpdate(true); 
+                await onUpdate(true);
+                return true; // 告訴組件成功了！
             } else {
                 console.error("Update failed with status:", res.status);
+                return false; // 告訴組件失敗了
             }
         } catch (err) {
             console.error("Update task error:", err);
+            return false; // 告訴組件失敗了
         }
     };
 
@@ -54,19 +55,19 @@ export const useTaskManager = (feature_id, tasks, onUpdate) => {
 
         try {
             const res = await taskApi.create(feature_id, taskData);
-            
+
             // Debug 用：確認 API 是否成功
             console.log("POST Task Status:", res.status);
 
             if (res.ok) {
                 // 這裡最重要：一定要看到這個 console 執行
                 console.log("Attempting to trigger onUpdate...");
-                
+
                 // 執行父組件傳進來的 fetchProjectDetail
-                await onUpdate(true); 
-                
+                await onUpdate(true);
+
                 setCurrentPage(1);
-                return true; 
+                return true;
             }
         } catch (err) {
             console.error("Add task failed:", err);

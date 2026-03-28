@@ -321,6 +321,7 @@ def get_projects_info(current_admin, project_id):
                         "content": t.content,
                         "status": t.status,
                         "priority": t.priority,
+                        "task_type": t.task_type,
                         "has_bugs": t.id in bug_set,
                         "has_solutions": t.id in sol_set,
                         "has_questions": t.id in question_set
@@ -329,70 +330,6 @@ def get_projects_info(current_admin, project_id):
             } for f in project.dev_features
         ]
     })
-
-
-# @admin_bp.route('/projects/info/<int:project_id>', methods=['GET'])
-# @token_required
-# def get_projects_info(current_admin, project_id):
-#     # 1. 預加載專案、功能、任務 (一條 SQL 搞定所有基礎資料)
-#     query = Project.query.options(
-#         subqueryload(Project.dev_features).subqueryload(DevFeature.tasks)
-#     ).filter_by(id=project_id)
-
-#     project = query.first()
-#     if not project:
-#         return jsonify([]), 404
-    
-#     # 2. 收集所有相關的 Task ID，準備做大量查詢
-#     all_task_ids = [t.id for f in project.dev_features for t in f.tasks]
-
-#     # 3. 效能關鍵：一次性抓取「哪些 Task 有 Bug/Solution」
-#     # 產出格式會像這樣: { (task_id, 'bug'), (task_id, 'solution') }
-#     intel_records = db.session.query(TaskLog.task_id, TaskLog.log_type)\
-#         .filter(TaskLog.task_id.in_(all_task_ids))\
-#         .filter(TaskLog.log_type.in_(['bug', 'solution','question']))\
-#         .distinct().all() if all_task_ids else []
-
-#     # 轉成集合 (Set) 方便在迴圈中極速查找 (O(1) 複雜度)
-#     bug_set = {r.task_id for r in intel_records if r.log_type == 'bug'}
-#     sol_set = {r.task_id for r in intel_records if r.log_type == 'solution'}
-#     question_set = {r.task_id for r in intel_records if r.log_type == 'question'}
-#     # 4. 抓取分析紀錄 (維持原本邏輯)
-#     analyses = ThinkingProject.query.filter_by(ref_id=project.id, ref_type='project').all()
-
-#     # 5. 組裝最終 JSON
-#     project_data = {
-#         "id": project.id,
-#         "title": project.title,
-#         "technologies": project.technologies,
-#         "project_type": project.project_type,
-#         "date_created": project.date_created.isoformat() if project.date_created else None,
-#         "thinking_analyses": [
-#             {"id": a.id, "title": a.title, "template_id": a.template_id} for a in analyses
-#         ],
-#         "dev_features": []
-#     }
-
-#     for f in project.dev_features:
-#         feature_item = {
-#             "id": f.id,
-#             "title": f.title,
-#             "tasks": []
-#         }
-#         # 排序並注入情報 (現在是在 Python 記憶體裡比對，超快)
-#         for t in sorted(f.tasks, key=lambda x: x.priority):
-#             feature_item["tasks"].append({
-#                 "id": t.id,
-#                 "content": t.content,
-#                 "status": t.status,
-#                 "priority": t.priority,
-#                 "has_bugs": t.id in bug_set,
-#                 "has_solutions": t.id in sol_set,
-#                 "has_questions": t.id in question_set
-#             })
-#         project_data["dev_features"].append(feature_item)
-        
-#     return jsonify([project_data])
 
 @admin_bp.route('/projects', methods=['POST', 'OPTIONS'])
 @token_required

@@ -3,6 +3,7 @@ from . import token_required, admin_bp
 from flask import request, jsonify
 from models import db, Project, Skill, Study, Experience, ExperienceProject, Education, Message, Admin, LifeEvent
 from flask_cors import CORS
+from datetime import datetime
 
 CORS(admin_bp, 
      resources={"/api/admin/*": {"origins": "http://localhost:3000"}},
@@ -167,22 +168,33 @@ def create_experience(current_admin):
     db.session.add(exp)
     db.session.commit()
     return jsonify(_exp_to_dict(exp)), 201
-@admin_bp.route('/experience/<int:id>', methods=['PUT', 'OPTIONS'])
+
+@admin_bp.route('/experience/<int:id>', methods=['PUT'])
 @token_required
 def update_experience(current_admin, id):
     exp = Experience.query.get_or_404(id)
     data = request.json
     
-    # 1. 更新基本欄位 (確保包含 description)
+    # 1. 基本文字欄位
     exp.title = data.get('title', exp.title)
     exp.company = data.get('company', exp.company)
-    exp.description = data.get('description', exp.description)  # <-- 補上這一行
-    
-    # 2. 更新日期與狀態 (如果你前端有傳這些的話)
+    exp.description = data.get('description', exp.description)
+    exp.leaving_reason = data.get('leaving_reason', exp.leaving_reason)
     exp.is_current = data.get('is_current', exp.is_current)
     exp.order = data.get('order', exp.order)
+
+    # 2. 關鍵修正：更新日期欄位
+    # 我們需要將前端傳來的 "YYYY-MM-DD" 字串轉為 Python date 物件
+    if 'start_date' in data and data['start_date']:
+        exp.start_date = datetime.strptime(data['start_date'], '%Y-%m-%d').date()
     
-    # 3. 處理關聯技能 (維持原樣)
+    if 'end_date' in data:
+        if data['is_current'] or not data['end_date']:
+            exp.end_date = None
+        else:
+            exp.end_date = datetime.strptime(data['end_date'], '%Y-%m-%d').date()
+
+    # 3. 處理關聯技能
     if 'skill_ids' in data:
         new_skills = Skill.query.filter(Skill.id.in_(data['skill_ids'])).all()
         exp.skills = new_skills

@@ -1,11 +1,12 @@
 from . import admin_bp, token_required
 from flask import request, jsonify
-from models.finance_models import db, Expense, ExpenseCategory, Transaction  # 確保匯入 Transaction
+from models.finance_models import db, Expense, ExpenseCategory, Transaction, Income  # 確保匯入 Transaction 和 Income
 from datetime import datetime
 from sqlalchemy import func, extract
 from decimal import Decimal
 import calendar
-from sqlalchemy import cast, Date
+from sqlalchemy import cast, Date, or_
+
 # --- Helper 轉換函式 ---
 
 def _expense_to_dict(e: Expense):
@@ -23,6 +24,53 @@ def _expense_to_dict(e: Expense):
         'created_at': e.transaction.created_at.isoformat()
     }
 
+@admin_bp.route('/expenses/allowance-summary', methods=['GET'])
+@token_required
+def get_allowance_summary(current_admin):
+    # 取得參數，預設為當前年月
+    year = request.args.get('year', type=int) or datetime.utcnow().year
+    month = request.args.get('month', type=int) or datetime.utcnow().month
+    
+    # 1. 總收入 (Total Income)
+    total_income = db.session.query(func.sum(Transaction.amount))\
+        .join(Income)\
+        .filter(
+            extract('year', Transaction.transaction_date) == year,
+            extract('month', Transaction.transaction_date) == month,
+            Transaction.status == 'COMPLETED'
+        ).scalar() or Decimal('0.00')
+
+    # 若本月尚未入帳，設定保底值 65,000 確保前端有預算顯示
+    display_income = max(total_income, Decimal('65000'))
+    
+    # 2. 總支出 (Total Expenses) - 包含所有 Expense 與 Debt Payment，完全不進行 title 過濾
+    total_expenses = db.session.query(func.sum(Transaction.amount))\
+        .filter(
+            Transaction.transaction_type.in_(['expense', 'debt_payment']),
+            Transaction.status == 'COMPLETED',
+            extract('year', Transaction.transaction_date) == year,
+            extract('month', Transaction.transaction_date) == month
+        ).scalar() or Decimal('0.00')
+
+    # 3. 核心計算邏輯
+    # 可動用金額 = 總收入 * 55%
+    allowance_rate = Decimal('0.55')
+    monthly_budget = display_income * allowance_rate
+    
+    # 剩餘零用錢 = 可動用金額 - 總支出
+    remaining = monthly_budget - total_expenses
+
+    return jsonify({
+        "year": year,
+        "month": month,
+        "total_income": float(total_income),
+        "display_income_used": float(display_income),
+        "total_expenses": float(round(total_expenses, 2)),
+        "monthly_budget": float(round(monthly_budget, 2)),
+        "remaining": float(round(remaining, 2)),
+        "analysis": "安全" if remaining > 0 else "超支預警"
+    })
+    
 # --- Expenses CRUD ---
 
 @admin_bp.route('/expenses', methods=['POST', 'OPTIONS'])
@@ -218,13 +266,15 @@ def create_category():
 def get_expense_stats(current_admin):
     year = request.args.get('year', type=int) or datetime.utcnow().year
     
-    # 在 PostgreSQL 中使用 to_char 而不是 strftime
+    # 核心修正：明確指定要加總的類型，避免重複計算儲蓄或預留款
+    # 這裡只抓：expense (一般支出) 和 debt_payment (還債)
     stats = db.session.query(
         func.to_char(Transaction.transaction_date, 'YYYY-MM').label('month'),
         func.sum(Transaction.amount).label('total')
-    ).join(Expense).filter(
-        db.extract('year', Transaction.transaction_date) == year,
-        Transaction.status == 'COMPLETED'
+    ).filter(
+        Transaction.transaction_type.in_(['expense', 'debt_payment']),
+        Transaction.status == 'COMPLETED',
+        db.extract('year', Transaction.transaction_date) == year
     ).group_by('month').order_by('month').all()
 
     return jsonify([{"month": s.month, "total": float(s.total)} for s in stats]), 200
@@ -309,3 +359,62 @@ def get_daily_summary(current_admin):
         } for s in summary
     ])
 
+
+@admin_bp.route('/expenses/analysis/fuel', methods=['GET'])
+@token_required
+def get_fuel_analysis(current_admin):
+    year = request.args.get('year', type=int) or datetime.utcnow().year
+    month = request.args.get('month', type=int)
+    category_id = 13 
+
+    # 1. 抓取包含「汽油」或「加油」的交易數據 (包含日期與金額)
+    query = db.session.query(
+            Transaction.transaction_date,
+            Transaction.amount
+        )\
+        .join(Expense, Expense.transaction_id == Transaction.id)\
+        .filter(
+            Expense.category_id == category_id,
+            Transaction.status == 'COMPLETED',
+            extract('year', Transaction.transaction_date) == year,
+            or_(
+                Expense.title.ilike('%汽油%'),
+                Expense.title.ilike('%加油%')
+            )
+        )
+    
+    if month:
+        query = query.filter(extract('month', Transaction.transaction_date) == month)
+    
+    records = query.order_by(Transaction.transaction_date.asc()).all()
+    
+    if not records:
+        return jsonify({"count": 0, "total_amount": 0, "average_days": 0, "intervals": []})
+
+    # 2. 邏輯計算
+    dates = [r.transaction_date for r in records]
+    amounts = [float(r.amount) for r in records]
+    
+    # 計算加油間隔
+    intervals = []
+    for i in range(1, len(dates)):
+        diff = dates[i] - dates[i-1]
+        intervals.append({
+            "from": dates[i-1].strftime('%m-%d'),
+            "to": dates[i].strftime('%m-%d'),
+            "days": diff.days,
+            "amount": amounts[i] # 這次加油花了多少
+        })
+
+    total_amount = sum(amounts)
+    avg_per_fill = total_amount / len(amounts) if amounts else 0
+    avg_days = sum(item['days'] for item in intervals) / len(intervals) if intervals else 0
+
+    return jsonify({
+        "count": len(dates),
+        "total_amount": round(total_amount, 0),      # 本月油錢總支出
+        "avg_per_fill": round(avg_per_fill, 0),     # 平均每次加油花費
+        "average_days": round(avg_days, 1),
+        "intervals": intervals,
+        "last_fuel_date": dates[-1].strftime('%Y-%m-%d')
+    })

@@ -10,9 +10,10 @@ admin_bp = Blueprint('admin', __name__, url_prefix='/api/admin')
 def token_required(f):
     @wraps(f)
     def decorated(*args, **kwargs):
-        # 1. Handle OPTIONS immediately
+        # 💡 關鍵修正：如果是預檢請求，直接回傳成功（204 No Content）
+        # 這樣就不會進入後面的 Token 檢查邏輯
         if request.method == 'OPTIONS':
-            return ('', 204)
+            return '', 204
 
         token = None
         if 'Authorization' in request.headers:
@@ -24,7 +25,6 @@ def token_required(f):
             return jsonify({'message': 'Token is missing!'}), 401
 
         try:
-            # Note: Ensure APP_SECRET_KEY is accessible here
             data = jwt.decode(token, APP_SECRET_KEY, algorithms=['HS256'])
             current_admin = Admin.query.get(data['admin_id'])
             if not current_admin:
@@ -32,10 +32,8 @@ def token_required(f):
         except Exception as e:
             return jsonify({'message': f'Token error: {str(e)}'}), 401
 
-        # 2. Pass current_admin to the actual route function
         return f(current_admin, *args, **kwargs)
     return decorated
-
 
 # Crucial: Import the routes AFTER defining admin_bp to avoid circular imports
 from . import health,auth, skills, education, life_events,study, experience, dev_tasks, templates,warboard, motor, incomes, savings, recurring_expenses, quotation, projects, expenses, task_logs, message

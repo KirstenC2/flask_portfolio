@@ -82,6 +82,7 @@ class DevTask(db.Model):
     status = db.Column(db.String(20), default='pending') 
     priority = db.Column(db.Integer, default=1)   
     cancel_reason = db.Column(db.String(255), nullable=True)
+    task_type = db.Column(db.String(20), default='feature', nullable=False)
     dev_feature_id = db.Column(db.Integer, db.ForeignKey('dev_features.id'), nullable=True)
     date_created = db.Column(db.DateTime, default=datetime.utcnow)
     date_completed = db.Column(db.DateTime, nullable=True)
@@ -287,8 +288,24 @@ class TaskLog(db.Model):
     # 紀錄內容 (支援 Markdown 字串)
     content = db.Column(db.Text, nullable=False)
 
+    # 儲存問題的答案或決策結果
+    responses = db.Column(db.JSON, default=list)
+    
+    # 標記問題是否已解決 (布林值方便篩選)
+    is_resolved = db.Column(db.Boolean, default=False)
+    
+    # 紀錄解答時間
+    date_resolved = db.Column(db.DateTime, nullable=True)
+
     # 時間戳記
     date_created = db.Column(db.DateTime, default=datetime.utcnow)
 
+    def resolve(self, responses):
+        """便利方法：快速標記問題已解決"""
+        self.responses.append(responses)
+        self.is_resolved = True
+        self.date_resolved = datetime.utcnow()
+
     def __repr__(self):
-        return f"<TaskLog {self.log_type} for Task {self.task_id}>"
+        status = "[Resolved]" if self.is_resolved else "[Pending]"
+        return f"<TaskLog {self.log_type} {status} for Task {self.task_id}>"

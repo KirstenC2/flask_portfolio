@@ -22,11 +22,9 @@ def _dev_feature_to_dict(df: DevFeature):
         'project_title': df.project.title,
         'tasks': [_dev_task_to_dict(t) for t in df.tasks]
     }
-# ====
-#   task
-# ===
 
-@admin_bp.route('/tasks/<int:task_id>', methods=['DELETE','OPTIONS'])
+
+@admin_bp.route('/tasks/<int:task_id>', methods=['DELETE'])
 @token_required
 def delete_dev_task(current_admin, task_id):
     task = DevTask.query.get_or_404(task_id)
@@ -35,7 +33,7 @@ def delete_dev_task(current_admin, task_id):
     return jsonify({'message': 'Task deleted successfully'})
     
 
-@admin_bp.route('/tasks/<int:task_id>', methods=['PATCH','OPTIONS'])
+@admin_bp.route('/tasks/<int:task_id>', methods=['PATCH'])
 @token_required
 def edit_dev_task(current_admin, task_id):
     task = DevTask.query.get_or_404(task_id)
@@ -51,7 +49,8 @@ def edit_dev_task(current_admin, task_id):
             task.date_completed = None
             
         task.status = new_status
-
+    if 'task_type' in data:
+        task.task_type = data['task_type']
     if 'content' in data:
         task.content = data['content']
     if 'cancel_reason' in data:
@@ -109,7 +108,7 @@ def get_feature_detail(current_admin, feature_id):
     })
 
 
-@admin_bp.route('features/<int:feature_id>/tasks', methods=['POST','OPTIONS'])
+@admin_bp.route('/features/<int:feature_id>/tasks', methods=['POST'])
 @token_required
 def add_new_dev_task(current_admin, feature_id):
     data = request.get_json()
@@ -117,6 +116,7 @@ def add_new_dev_task(current_admin, feature_id):
     task = DevTask(
         dev_feature_id=feature_id,
         content=data.get('content'),
+        task_type=data.get('task_type'),
         status=data.get('status'),
         priority=data.get('priority'),
         cancel_reason=data.get('cancel_reason')
@@ -127,13 +127,14 @@ def add_new_dev_task(current_admin, feature_id):
     
     return jsonify(_dev_task_to_dict(task))
 
-@admin_bp.route('/task/new', methods=['POST','OPTIONS'])
+@admin_bp.route('/task/new', methods=['POST'])
 @token_required
 def add_new_todo_task(current_admin):
     data = request.get_json()
     
     task = DevTask(
         content=data.get('content'),
+        task_type=data.get('task_type'),
         status='pending',
         priority=data.get('priority')
     )
@@ -144,7 +145,7 @@ def add_new_todo_task(current_admin):
     return jsonify(_dev_task_to_dict(task))
 
 
-@admin_bp.route('projects/<int:project_id>/features', methods=['POST','OPTIONS'])
+@admin_bp.route('/projects/<int:project_id>/features', methods=['POST'])
 @token_required
 def add_new_feature(current_admin, project_id):
     data = request.get_json()
